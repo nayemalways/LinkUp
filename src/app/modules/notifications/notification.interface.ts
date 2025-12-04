@@ -47,5 +47,5 @@ export interface INotificationPreference {
   user: Types.ObjectId;
   type: NotificationType;
   channel: IChannel;
-  categoriy: NotificationCategory;
+  category: NotificationCategory;
 }
