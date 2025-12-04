@@ -31,23 +31,18 @@ const createUserService = async (payload: Partial<IUser>) => {
   const creatUser = await User.create(userPayload);
 
   // Send OTP to verify
-  sendEmail({
-    to: creatUser.email,
-    subject: 'User verify OTP',
-    templateName: 'otp',
-    templateData: {
-      name: creatUser.name,
-      otp: creatUser.otp,
-    },
-  });
+  // sendEmail({
+  //   to: creatUser.email,
+  //   subject: 'User verify OTP',
+  //   templateName: 'otp',
+  //   templateData: {
+  //     name: creatUser.name,
+  //     otp: creatUser.otp,
+  //   },
+  // });
 
 
-  // Reset user OTP after 2 min
-  setTimeout(async () => {
-     creatUser.otp = "0";
-     creatUser.save();
-  }, 1000 * 60 * 2 );
-
+ 
   // Delete User if he is not verified within __ time
   setTimeout(async () => {
     if(!creatUser.isVerified) {
@@ -74,10 +69,7 @@ const verifyUserService = async (email: string, otp: string) => {
     throw new AppError(400, 'User not found by this email!');
   }
 
-  if (isUser.otp !== otp || otp.length < 4) {
-    throw new AppError(400, 'Invalid OTP!');
-  }
-
+ 
 
   const updateUser = await User.findOneAndUpdate(
     { email },
