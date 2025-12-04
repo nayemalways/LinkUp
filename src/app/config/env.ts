@@ -48,16 +48,16 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'JWT_REFRESH_SECRET',
     'JWT_REFRESH_EXPIRATION',
     'BCRYPT_SALT_ROUND',
- 
+
     'FRONTEND_URL',
- 
+
     'CLOUDINARY_NAME',
     'CLOUDINARY_SECRET',
     'CLOUDINARY_API_KEY',
 
     'REQUEST_RATE_LIMIT',
     'REQUEST_RATE_LIMIT_TIME',
-     
+
     'REDIS_HOST',
     'REDIS_PORT',
     'REDIS_USERNAME',
@@ -67,11 +67,11 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'EMAIL_USER',
     'EMAIL_PASSWORD',
 
-    "GOOGLE_OAUTH_SECRET",
-    "GOOGLE_OAUTH_ID",
-    "GOOGLE_CALLBACK_URL",
+    'GOOGLE_OAUTH_SECRET',
+    'GOOGLE_OAUTH_ID',
+    'GOOGLE_CALLBACK_URL',
 
-    "EXPRESS_SESSION_SECRET"
+    'EXPRESS_SESSION_SECRET',
   ];
 
   requireEnvVariables.forEach((KEY) => {
@@ -97,8 +97,10 @@ const loadEnvVarbles = (): EnvInterfaces => {
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
     CLOUDINARY_NAME: process.env.CLOUDINARY_NAME as string,
 
-    REQUEST_RATE_LIMIT_TIME: Number(process.env.REQUEST_RATE_LIMIT_TIME) as number,
-    REQUEST_RATE_LIMIT:Number( process.env.REQUEST_RATE_LIMIT) as number,
+    REQUEST_RATE_LIMIT_TIME: Number(
+      process.env.REQUEST_RATE_LIMIT_TIME
+    ) as number,
+    REQUEST_RATE_LIMIT: Number(process.env.REQUEST_RATE_LIMIT) as number,
 
     REDIS_HOST: process.env.REDIS_HOST as string,
     REDIS_PORT: process.env.REDIS_PORT as string,

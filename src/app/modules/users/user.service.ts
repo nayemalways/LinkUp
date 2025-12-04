@@ -4,7 +4,6 @@ import User from './user.model';
 import { sendEmail } from '../../utils/sendMail';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 
-
 const createUserService = async (payload: Partial<IUser>) => {
   const { email, ...rest } = payload;
   const isUser = await User.findOne({ email });
@@ -19,7 +18,7 @@ const createUserService = async (payload: Partial<IUser>) => {
   };
 
   const generateOTP = randomOTPGenerator(1000, 9999);
- 
+
   const userPayload = {
     email,
     auths: authUser,
@@ -41,15 +40,24 @@ const createUserService = async (payload: Partial<IUser>) => {
   //   },
   // });
 
+  // Reset user OTP after 2 min
+  setTimeout(
+    async () => {
+      creatUser.otp = '0';
+      creatUser.save();
+    },
+    1000 * 60 * 2
+  );
 
- 
   // Delete User if he is not verified within __ time
-  setTimeout(async () => {
-    if(!creatUser.isVerified) {
-      await User.findByIdAndDelete(creatUser._id);
-    }
-  }, 1000 * 60 * 60 * 24 );
-
+  setTimeout(
+    async () => {
+      if (!creatUser.isVerified) {
+        await User.findByIdAndDelete(creatUser._id);
+      }
+    },
+    1000 * 60 * 60 * 24
+  );
 
   return {
     _id: creatUser._id,
@@ -69,7 +77,9 @@ const verifyUserService = async (email: string, otp: string) => {
     throw new AppError(400, 'User not found by this email!');
   }
 
- 
+  if (isUser.otp !== otp || otp.length < 4) {
+    throw new AppError(400, 'Invalid OTP!');
+  }
 
   const updateUser = await User.findOneAndUpdate(
     { email },

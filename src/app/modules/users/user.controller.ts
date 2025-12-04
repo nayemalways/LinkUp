@@ -5,7 +5,6 @@ import { userServices } from './user.service';
 import { createUserTokens } from '../../utils/user.tokens';
 import { SetCookies } from '../../utils/setCookie';
 
-
 const createUser = CatchAsync(async (req: Request, res: Response) => {
   const result = await userServices.createUserService(req.body);
 
@@ -26,11 +25,7 @@ const verifyUser = CatchAsync(async (req: Request, res: Response) => {
   const email = req.cookies['email'] as string;
   const otp = req.params.otp;
 
-
-  const result = await userServices.verifyUserService(
-    email,
-    otp
-  );
+  const result = await userServices.verifyUserService(email, otp);
 
   const jwtPayload = {
     _id: result?._id,
@@ -42,7 +37,6 @@ const verifyUser = CatchAsync(async (req: Request, res: Response) => {
   // Set refreshToken and accessToken in Cookies
   const userTokens = await createUserTokens(jwtPayload);
   SetCookies(res, userTokens);
-
 
   SendResponse(res, {
     success: true,

@@ -2,7 +2,11 @@
 import { NextFunction, Request, Response } from 'express';
 import mongoSanitize from 'express-mongo-sanitize';
 
-export const safeSanitizeMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const safeSanitizeMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     // body & params safe
     if (req.body) req.body = mongoSanitize.sanitize(req.body);
@@ -15,11 +19,11 @@ export const safeSanitizeMiddleware = (req: Request, res: Response, next: NextFu
       cleanedQuery[safeKey] = req.query[key];
     }
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    Object.keys(req.query).forEach(k => delete req.query[k]);
+    Object.keys(req.query).forEach((k) => delete req.query[k]);
     Object.assign(req.query, cleanedQuery);
 
     next();
   } catch (err) {
     next(err);
   }
-}
+};

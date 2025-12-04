@@ -5,7 +5,6 @@ import stream from 'stream';
 import AppError from '../errorHelpers/AppError';
 import env from './env';
 
-
 cloudinary.config({
   cloud_name: env?.CLOUDINARY_NAME,
   api_key: env.CLOUDINARY_API_KEY,
@@ -60,4 +59,3 @@ export const deleteImageFromCLoudinary = async (url: string) => {
 };
 
 export const cloudinaryUpload = cloudinary;
-

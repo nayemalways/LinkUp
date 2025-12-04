@@ -6,7 +6,6 @@ import app from './app';
 import envVars from './app/config/env';
 import { connectRedis } from './app/config/redis.config';
 
- 
 dotenv.config();
 
 let server: Server;
@@ -26,19 +25,11 @@ const startServer = async () => {
   }
 };
 
-
 // Booom and start the server
 (async () => {
   await connectRedis();
   await startServer();
 })();
-
-
-
-
-
-
-
 
 // SIGTERM signal detected and close the server
 process.on('SIGTERM', () => {
@@ -74,7 +65,10 @@ process.on('SIGINT', (error) => {
 
 // Unhandled rejection eror
 process.on('unhandledRejection', (error) => {
-  console.log('Unhandled rejection detected and server shutting down...', error);
+  console.log(
+    'Unhandled rejection detected and server shutting down...',
+    error
+  );
 });
 
 // Unhandled rejection eror

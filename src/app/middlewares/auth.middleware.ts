@@ -10,7 +10,10 @@ export const checkAuth =
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const accessToken = req.headers.authorization;
-      const verifyUser = verifyToken( accessToken as string, env.JWT_SECRET ) as JwtPayload;
+      const verifyUser = verifyToken(
+        accessToken as string,
+        env.JWT_SECRET
+      ) as JwtPayload;
 
       /*
       ----------------------------------------------------------------
@@ -18,15 +21,17 @@ export const checkAuth =
       ----------------------------------------------------------------
       */
 
-       
       // CHECK Verified
       if (!verifyUser) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Not Authorized')
-      };
+        throw new AppError(httpStatus.BAD_REQUEST, 'Not Authorized');
+      }
 
       if (!restRole.includes(verifyUser.role)) {
-        throw new AppError( httpStatus.FORBIDDEN, 'You are not permitted to access this route')
-      };
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          'You are not permitted to access this route'
+        );
+      }
 
       req.user = verifyUser; // Set an global type for this line see on: interface > intex.d.ts
       next();

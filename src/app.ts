@@ -9,16 +9,17 @@ import { safeSanitizeMiddleware } from './app/middlewares/mongoSanitizer';
 import env from './app/config/env';
 import expressSession from 'express-session';
 import passport from 'passport';
-import './app/config/passport.config'
-
+import './app/config/passport.config';
 
 const app = express();
 
-app.use(expressSession({
-  secret: env.EXPRESS_SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false
-}));
+app.use(
+  expressSession({
+    secret: env.EXPRESS_SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
 app.use(passport.initialize()); // Initilazed Passport
 app.use(passport.session()); // Create a session
@@ -31,8 +32,12 @@ app.use(safeSanitizeMiddleware);
 // THROTTLING
 const limiter = rateLimit({
   windowMs: env.REQUEST_RATE_LIMIT_TIME * 60 * 1000, // Assuming time in minutes from env
-  max: env.REQUEST_RATE_LIMIT,  
-  message: {success: false, statusCode: 400, message: "Too many requests, please try again later."}
+  max: env.REQUEST_RATE_LIMIT,
+  message: {
+    success: false,
+    statusCode: 400,
+    message: 'Too many requests, please try again later.',
+  },
 });
 
 app.use(limiter);

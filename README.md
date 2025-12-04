@@ -25,12 +25,4 @@ A production-ready Event Management RESTApi built with **Node.js**, **Express.js
 
 ---
 
-## Features
-
-- **Authentication**: A secure authentication using email-password and social login(Instagram).
-- **Event Booking**: User can browse event and book.
-- **Nearby Event**: User can see nearby events using map and can book.
-- .....
-
----
-
+## Folder Structure
