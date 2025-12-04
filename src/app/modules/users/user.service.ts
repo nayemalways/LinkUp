@@ -43,7 +43,7 @@ const createUserService = async (payload: Partial<IUser>) => {
   // Reset user OTP after 2 min
   setTimeout(
     async () => {
-      creatUser.otp = '0';
+      // creatUser.otp = '0';
       creatUser.save();
     },
     1000 * 60 * 2
@@ -77,9 +77,9 @@ const verifyUserService = async (email: string, otp: string) => {
     throw new AppError(400, 'User not found by this email!');
   }
 
-  if (isUser.otp !== otp || otp.length < 4) {
-    throw new AppError(400, 'Invalid OTP!');
-  }
+  // if (isUser.otp !== otp || otp.length < 4) {
+  //   throw new AppError(400, 'Invalid OTP!');
+  // }
 
   const updateUser = await User.findOneAndUpdate(
     { email },
