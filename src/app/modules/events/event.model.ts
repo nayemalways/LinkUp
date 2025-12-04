@@ -12,7 +12,7 @@ const eventSchema = new mongoose.Schema<IEvent>(
     co_hosts: { type: Schema.Types.ObjectId, ref: 'user' },
     category: { type: Schema.Types.ObjectId, required: true, ref: 'category' },
     reviews: { type: Schema.Types.ObjectId, ref: 'review' },
-    title: { type: String, required: true, ref: 'event' },
+    title: { type: String, required: true },
     description: { type: String },
     images: { type: [String], required: true },
     venue: { type: String, required: true },
@@ -23,15 +23,13 @@ const eventSchema = new mongoose.Schema<IEvent>(
     event_status: {
       type: String,
       enum: [...Object.values(EventStatus)],
-      required: true,
-      ref: 'event',
-    },
+      required: true
+          },
     featured: {
       type: String,
       enum: [...Object.values(Featured)],
-      required: true,
-      ref: 'event',
-    },
+      required: true
+        },
     price: { type: Number, required: true },
     max_attendence: { type: Number },
     age_limit: { type: Number },
@@ -40,14 +38,13 @@ const eventSchema = new mongoose.Schema<IEvent>(
       type: String,
       enum: [...Object.values(EventVisibility)],
       required: true,
-      ref: 'event',
     },
     coord: { type: { lat: { type: Number }, long: { type: Number } } },
     address: {
-      city: { type: String, required: true },
-      state: { type: String, required: true },
-      postal: { type: String, required: true },
-      country: { type: String, required: true },
+      city: { type: String  },
+      state: { type: String },
+      postal: { type: String },
+      country: { type: String },
     },
   },
   {
