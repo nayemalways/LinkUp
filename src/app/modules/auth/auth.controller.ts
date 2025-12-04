@@ -39,8 +39,6 @@ const googleCallback = CatchAsync(
   }
 );
 
-
-
 const credentialsLogin = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate('local', async (err: any, user: any, info: any) => {

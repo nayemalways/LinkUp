@@ -1,9 +1,9 @@
-import { JwtPayload } from "jsonwebtoken";
-import env from "../config/env";
-import { generateToken } from "./jwt";
+import { JwtPayload } from 'jsonwebtoken';
+import env from '../config/env';
+import { generateToken } from './jwt';
 
 export const createUserTokens = async (user: JwtPayload) => {
-  const jwtPayload  = {
+  const jwtPayload = {
     userId: user?._id,
     email: user?.email,
     role: user?.role,

@@ -5,9 +5,16 @@ import { userZodSchema } from './user.validate';
 
 const router = express.Router();
 
-router.post('/create', validateRequest(userZodSchema), userControllers.createUser);
-router.get('/verify/:otp', validateRequest(userZodSchema), userControllers.verifyUser);
+router.post(
+  '/create',
+  validateRequest(userZodSchema),
+  userControllers.createUser
+);
+router.get(
+  '/verify/:otp',
+  validateRequest(userZodSchema),
+  userControllers.verifyUser
+);
 router.get('/resend-otp', userControllers.resendOTP);
-
 
 export const userRoutes = router;

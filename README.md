@@ -26,4 +26,3 @@ A production-ready backend boilerplate built with **Express.js** and **TypeScrip
 ---
 
 ## Folder Structure
-
