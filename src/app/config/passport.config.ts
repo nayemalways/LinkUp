@@ -24,26 +24,26 @@ passport.use(
           return done(null, false, { message: 'User does not exist!' });
         }
 
-        const isGoogleUser = user.auths?.some(
-          (provider) => provider.provider === 'google'
-        );
-        const isFacebookUser = user.auths?.some(
-          (provider) => provider.provider === 'facebook'
-        );
+        // const isGoogleUser = user.auths?.some(
+        //   (provider) => provider.provider === 'google'
+        // );
+        // const isFacebookUser = user.auths?.some(
+        //   (provider) => provider.provider === 'facebook'
+        // );
 
-        if (isGoogleUser) {
-          return done(null, false, {
-            message:
-              'You are authenticate through Google. If you want to login with credentials, then at first login with Google and set a password to your gmail an then you can login with email and password!',
-          });
-        }
+        // if (isGoogleUser) {
+        //   return done(null, false, {
+        //     message:
+        //       'You are authenticate through Google. If you want to login with credentials, then at first login with Google and set a password to your gmail an then you can login with email and password!',
+        //   });
+        // }
 
-        if (isFacebookUser) {
-          return done(null, false, {
-            message:
-              'You are authenticate through Facebook. If you want to login with credentials, then at first login with Facebook and set a password to your gmail an then you can login with email and password!',
-          });
-        }
+        // if (isFacebookUser) {
+        //   return done(null, false, {
+        //     message:
+        //       'You are authenticate through Facebook. If you want to login with credentials, then at first login with Facebook and set a password to your gmail an then you can login with email and password!',
+        //   });
+        // }
 
         // Matching Password
         const isMatchPassowrd = await bcrypt.compare(

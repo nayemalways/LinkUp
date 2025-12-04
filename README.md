@@ -1,8 +1,8 @@
-# BackendBoilerplate
+# LinkUp
 
-### Node.js + TypeScript Backend Starter
+### A Event Management application
 
-A production-ready backend boilerplate built with **Express.js** and **TypeScript**, designed for quickly setting up robust APIs with best practices for **security, error handling, and scalability**.
+A production-ready Event Management RESTApi built with **Node.js**, **Express.js**, **MongoDB** and **TypeScript**, robust APIs with best practices for **security, error handling, and scalability**.
 
 ---
 

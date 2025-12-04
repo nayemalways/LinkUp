@@ -30,15 +30,15 @@ const createUserService = async (payload: Partial<IUser>) => {
   const creatUser = await User.create(userPayload);
 
   // Send OTP to verify
-  sendEmail({
-    to: creatUser.email,
-    subject: 'User verify OTP',
-    templateName: 'otp',
-    templateData: {
-      name: creatUser.name,
-      otp: creatUser.otp,
-    },
-  });
+  // sendEmail({
+  //   to: creatUser.email,
+  //   subject: 'User verify OTP',
+  //   templateName: 'otp',
+  //   templateData: {
+  //     name: creatUser.name,
+  //     otp: creatUser.otp,
+  //   },
+  // });
 
   // Reset user OTP after 2 min
   setTimeout(
