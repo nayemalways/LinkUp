@@ -1,35 +1,56 @@
 import { NextFunction, Request, Response } from 'express';
 import { verifyToken } from '../utils/jwt';
 import { JwtPayload } from 'jsonwebtoken';
+import { IsActive } from '../modules/users/user.interface';
 import AppError from '../errorHelpers/AppError';
 import httpStatus from 'http-status-codes';
 import env from '../config/env';
+import User from '../modules/users/user.model';
+
+
 
 export const checkAuth =
   (...restRole: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const accessToken = req.headers.authorization;
+      const accessToken = req.headers.authorization; // GET TOKEN
+
+      // if(!authHeader || !authHeader.startsWith("Bearer ")) {
+      //   throw new AppError(httpStatus.UNAUTHORIZED, "Token not provided!");
+      // }
+
+      // const accessToken = authHeader.split(" ")[1];
+
+      // VERIFY ACCESS TOKEN
       const verifyUser = verifyToken(
         accessToken as string,
-        env.JWT_SECRET
+        env.JWT_ACCESS_SECRET
       ) as JwtPayload;
-
-      /*
-      ----------------------------------------------------------------
-      // More checking will be execute here based on application need
-      ----------------------------------------------------------------
-      */
 
       // CHECK Verified
       if (!verifyUser) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Not Authorized');
+        throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token!');
       }
 
-      if (!restRole.includes(verifyUser.role)) {
+    
+      const isUser = await User.findById(verifyUser?.userId ); // IS USER EXISTS
+
+      if(!isUser) {
+        throw new AppError(httpStatus.UNAUTHORIZED, 'No user found!');
+      }
+
+      if (isUser.isActive === IsActive.INACTIVE || isUser.isActive === IsActive.BLOCKED) {
+        throw new AppError(httpStatus.FORBIDDEN, "User is Blocked or Inactive!");
+      }   
+
+      if(isUser.isDeleted) {
+        throw new AppError(httpStatus.FORBIDDEN, "User deleted!");
+      }
+
+      if (restRole.length && !restRole.includes(verifyUser.role)) {
         throw new AppError(
           httpStatus.FORBIDDEN,
-          'You are not permitted to access this route'
+          'You are not permitted to access this route!'
         );
       }
 
