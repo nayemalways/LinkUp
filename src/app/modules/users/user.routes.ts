@@ -6,10 +6,11 @@ import { userZodSchema } from './user.validate';
 const router = express.Router();
 
 router.post(
-  '/create',
+  '/registration',
   validateRequest(userZodSchema),
-  userControllers.createUser
+  userControllers.registerUser
 );
+
 router.get(
   '/verify/:otp',
   validateRequest(userZodSchema),

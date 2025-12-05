@@ -1,12 +1,14 @@
 import z from 'zod';
-import { Role } from './user.interface';
+import { IsActive, Role } from './user.interface';
 
+// Create Schema
 export const userZodSchema = z.object({
-  name: z
+  fullName: z
     .string({ error: 'Name must be string type!' })
-    .min(3, 'Name must be at least minimum 3 characters!')
+    .min(3, 'Name must be at least 3 characters!')
     .max(100, 'Name must be maximum 100 characters! '),
   email: z.string().email(),
+  phone: z.string({message: 'Phone number must be string type!'}).optional(),
   password: z
     .string({ error: 'Password shuld be string type!' })
     .min(6, 'Password length shuld be at least 6!')
@@ -15,15 +17,28 @@ export const userZodSchema = z.object({
         'Password must be at least 1 uppercase character, 1 special charater, 1 number!',
     })
     .optional(),
+  avatar: z.string({ error: 'Image should be string' }).optional(),
+  gender: z.enum(['male', 'female', 'other']).optional(),
 });
 
+// Update Schema
 export const userUpdateZodSchema = z.object({
-  name: z
+  fullName: z
     .string({ error: 'Name must be string type!' })
-    .min(3, 'Name must be at least minimum 3 characters!')
-    .max(100, 'Name must be maximum 100 characters! ')
-    .optional(),
-  picture: z.string({ error: 'Image should be string' }).optional(),
-  otp: z.string('OTP type should be string!').optional(),
-  role: z.enum(Object.values(Role)).optional(),
+    .min(3, 'Name must be at least 3 characters!')
+    .max(100, 'Name must be maximum 100 characters! '),
+  phone: z.string({message: 'Phone number must be string type!'}).optional(),
+  avatar: z.string({ error: 'Image should be string' }).optional(),
+  gender: z.enum(['male', 'female', 'other']),
+  role: z.enum([Role.USER, Role.ADMIN, Role.ORGANIZER]),
+  interests: z.array(z.string()).optional(),
+  isActive: z.enum([IsActive.ACTIVE, IsActive.INACTIVE, IsActive.BLOCKED]).optional(),
+  isDeleted: z.boolean().optional(),
+  isVerified: z.boolean().optional(),
+  coord: z.object({
+    lat: z.number(),
+    long: z.number(),
+  }).optional()
 });
+
+ 

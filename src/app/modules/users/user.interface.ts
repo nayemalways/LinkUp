@@ -22,11 +22,11 @@ export interface ICoord {
 
 export interface IUser {
   _id?: string;
-  name: string;
+  fullName: string;
   email: string;
   avatar?: string;
   password?: string;
-  gender: string;
+  gender?: string;
   role?: Role;
   phone?: string;
   interests: string[];

@@ -10,6 +10,7 @@ import env from './app/config/env';
 import expressSession from 'express-session';
 import passport from 'passport';
 import './app/config/passport.config';
+import { twilio } from './app/config/twilio.config';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use(limiter);
 app.get('/', (req: Request, res: Response) => {
   res.send('<h1>Congratulations! Your server is running hoohhuh😍</h1>');
 });
+
 
 // GLOBAL ROUTES
 app.use('/api/v1', router);

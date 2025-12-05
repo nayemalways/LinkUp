@@ -16,11 +16,11 @@ const authProviderSchema = new mongoose.Schema<IAuthProvider>(
 
 const userSchema = new mongoose.Schema<IUser>(
   {
-    name: { type: String, required: true },
+    fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     avatar: { type: String },
-    password: { type: String },
-    gender: { type: String, required: true },
+    password: { type: String, select: false },
+    gender: { type: String },
     phone: { type: String },
     interests: [{ type: String }],
     isActive: {

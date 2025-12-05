@@ -5,18 +5,13 @@ import { userServices } from './user.service';
 import { createUserTokens } from '../../utils/user.tokens';
 import { SetCookies } from '../../utils/setCookie';
 
-const createUser = CatchAsync(async (req: Request, res: Response) => {
+const registerUser = CatchAsync(async (req: Request, res: Response) => {
   const result = await userServices.createUserService(req.body);
-
-  res.cookie('email', result.email, {
-    httpOnly: true,
-    secure: false,
-  });
 
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'Users fetched successfully!',
+    message: 'Users created successfully!',
     data: result,
   });
 });
@@ -61,7 +56,7 @@ const resendOTP = CatchAsync(async (req: Request, res: Response) => {
 });
 
 export const userControllers = {
-  createUser,
+  registerUser,
   verifyUser,
   resendOTP,
 };

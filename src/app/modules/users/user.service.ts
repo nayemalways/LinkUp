@@ -1,72 +1,39 @@
 import AppError from '../../errorHelpers/AppError';
 import { IAuthProvider, IUser } from './user.interface';
 import User from './user.model';
-import { sendEmail } from '../../utils/sendMail';
+// import { sendEmail } from '../../utils/sendMail';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 
+
+
+
+// CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
   const { email, ...rest } = payload;
   const isUser = await User.findOne({ email });
 
   if (isUser) {
-    throw new AppError(400, 'User aleready exist with this email!');
+    throw new AppError(400, 'User aleready exist. Please login!');
   }
 
+  // Save User Auth
   const authUser: IAuthProvider = {
     provider: 'credentials',
     providerId: payload.email as string,
   };
 
-  const generateOTP = randomOTPGenerator(1000, 9999);
-
   const userPayload = {
     email,
     auths: authUser,
-    otp: generateOTP,
-
     ...rest,
   };
 
-  const creatUser = await User.create(userPayload);
-
-  // Send OTP to verify
-  // sendEmail({
-  //   to: creatUser.email,
-  //   subject: 'User verify OTP',
-  //   templateName: 'otp',
-  //   templateData: {
-  //     name: creatUser.name,
-  //     otp: creatUser.otp,
-  //   },
-  // });
-
-  // Reset user OTP after 2 min
-  setTimeout(
-    async () => {
-      // creatUser.otp = '0';
-      creatUser.save();
-    },
-    1000 * 60 * 2
-  );
-
-  // Delete User if he is not verified within __ time
-  setTimeout(
-    async () => {
-      if (!creatUser.isVerified) {
-        await User.findByIdAndDelete(creatUser._id);
-      }
-    },
-    1000 * 60 * 60 * 24
-  );
-
-  return {
-    _id: creatUser._id,
-    name: creatUser.name,
-    email: creatUser.email,
-    role: creatUser.role,
-  };
+  const creatUser = (await User.create( userPayload )) // Create user
+  creatUser.password = undefined; // prevent password unveiling
+  return creatUser;
 };
 
+// VERIFY USER
 const verifyUserService = async (email: string, otp: string) => {
   if (!email || !otp) {
     throw new AppError(400, 'OTP required!');
@@ -101,6 +68,7 @@ const verifyUserService = async (email: string, otp: string) => {
   return updateUser;
 };
 
+// RESEND OTP
 const resendOTPService = async (email: string) => {
   if (!email) {
     throw new AppError(400, 'Email required!');
@@ -136,20 +104,20 @@ const resendOTPService = async (email: string) => {
   );
 
   // Send OTP to verify
-  sendEmail({
-    to: isUser.email,
-    subject: 'User verify OTP',
-    templateName: 'otp',
-    templateData: {
-      name: isUser.name,
-      otp: generateOTP,
-    },
-  });
+  // sendEmail({
+  //   to: isUser.email,
+  //   subject: 'User verify OTP',
+  //   templatefullName: 'otp',
+  //   templateData: {
+  //     fullName: isUser.fullName,
+  //     otp: generateOTP,
+  //   },
+  // });
 
   return isUser;
 };
 
-// Export All Services
+// EXPORT ALL SERVICE
 export const userServices = {
   createUserService,
   resendOTPService,

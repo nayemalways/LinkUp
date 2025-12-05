@@ -13,6 +13,10 @@ interface EnvInterfaces {
 
   FRONTEND_URL: string;
 
+  AUTH_TOKEN: string;
+  ACCOUNT_SID: string;
+  TRIAL_PHONE_NUMBER: string;
+
   CLOUDINARY_SECRET: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_NAME: string;
@@ -50,6 +54,10 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'BCRYPT_SALT_ROUND',
 
     'FRONTEND_URL',
+
+    'ACCOUNT_SID',
+    'AUTH_TOKEN',
+    'TRIAL_PHONE_NUMBER',
 
     'CLOUDINARY_NAME',
     'CLOUDINARY_SECRET',
@@ -92,6 +100,10 @@ const loadEnvVarbles = (): EnvInterfaces => {
     JWT_REFRESH_EXPIRATION: process.env.JWT_REFRESH_EXPIRATION as string,
 
     FRONTEND_URL: process.env.FRONTEND_URL as string,
+
+    AUTH_TOKEN: process.env.AUTH_TOKEN as string,
+    ACCOUNT_SID: process.env.ACCOUNT_SID as string,
+    TRIAL_PHONE_NUMBER: process.env.TRIAL_PHONE_NUMBER as string,
 
     CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET as string,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
