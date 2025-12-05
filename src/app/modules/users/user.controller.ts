@@ -4,7 +4,8 @@ import { SendResponse } from '../../utils/SendResponse';
 import { userServices } from './user.service';
 import { createUserTokens } from '../../utils/user.tokens';
 import { SetCookies } from '../../utils/setCookie';
-
+import { JwtPayload } from 'jsonwebtoken';
+ 
 const registerUser = CatchAsync(async (req: Request, res: Response) => {
   const result = await userServices.createUserService(req.body);
 
@@ -16,6 +17,37 @@ const registerUser = CatchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+// GET ME
+const getMe = CatchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user as JwtPayload;
+  const result = await userServices.getMeService(userId);
+
+  SendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "User fetched successfull!",
+    data: result
+  })
+})
+
+// USER UPDATE
+const userUpdate = CatchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.userId;
+  const payload = req.body;
+  const decodedToken = req.user as JwtPayload;
+
+  const result = await userServices.userUpdateService(userId, payload, decodedToken);
+
+  SendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "User updated successfull!",
+    data: result
+  })
+})
+
+// VERIFY USER
 const verifyUser = CatchAsync(async (req: Request, res: Response) => {
   const email = req.cookies['email'] as string;
   const otp = req.params.otp;
@@ -43,6 +75,7 @@ const verifyUser = CatchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// RESEND OTP
 const resendOTP = CatchAsync(async (req: Request, res: Response) => {
   const email = req.cookies['email'] as string;
   await userServices.resendOTPService(email);
@@ -55,8 +88,12 @@ const resendOTP = CatchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+// EXPORT ALL CONTROLLERS
 export const userControllers = {
   registerUser,
   verifyUser,
   resendOTP,
+  getMe,
+  userUpdate
 };

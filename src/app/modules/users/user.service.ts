@@ -1,11 +1,9 @@
 import AppError from '../../errorHelpers/AppError';
-import { IAuthProvider, IUser } from './user.interface';
+import { IAuthProvider, IUser, Role } from './user.interface';
 import User from './user.model';
-// import { sendEmail } from '../../utils/sendMail';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
-
-
-
+import { StatusCodes } from 'http-status-codes';
+import { JwtPayload } from 'jsonwebtoken';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -28,10 +26,105 @@ const createUserService = async (payload: Partial<IUser>) => {
     ...rest,
   };
 
-  const creatUser = (await User.create( userPayload )) // Create user
-  creatUser.password = undefined; // prevent password unveiling
+  const creatUser = await User.create(userPayload); // Create user
+  // creatUser.password = undefined; // prevent password unveiling
   return creatUser;
 };
+
+// GET ME
+const getMeService = async (userId: string) => {
+  const user = await User.findById(userId, { password: 0 });
+  return user;
+};
+
+// USER UPDATE
+const userUpdateService = async (
+  userId: string,
+  payload: Partial<IUser>,
+  decodedToken: JwtPayload
+) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
+  }
+
+  // USER & ORGANIZER can ONLY update their own profile - Only admin can update others
+  if (
+    (decodedToken.role === Role.USER || decodedToken.role === Role.ORGANIZER) &&
+    decodedToken.userId !== userId
+  ) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'You can only update your own profile'
+    );
+  }
+
+  // Block password update from this route
+  if (payload.password) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "You can't update your password from this route!"
+    );
+  }
+
+  // Role update protection
+  if (payload.role) {
+    if (
+      decodedToken.role === Role.USER ||
+      decodedToken.role === Role.ORGANIZER
+    ) {
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to update roles!'
+      );
+    }
+  }
+
+  // USER & ORGANIZER cannot update isActive, isDeleted, isVerified
+  if (
+    payload?.isActive !== undefined ||
+    payload?.isDeleted !== undefined ||
+    payload?.isVerified !== undefined
+  ) {
+    if (
+      decodedToken.role === Role.USER ||
+      decodedToken.role === Role.ORGANIZER
+    ) {
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to update account status!'
+      );
+    }
+  }
+
+  // FIELD WHITELISTING for USER & ORGANIZER
+  if (
+    decodedToken.role === Role.USER ||
+    decodedToken.role === Role.ORGANIZER
+  ) {
+
+    const allowedUpdates = [ 'fullName', 'avatar', 'gender', 'phone', 'interests', 'coord',];
+
+    Object.keys(payload).forEach((key) => {
+      if (!allowedUpdates.includes(key)) {
+        throw new AppError(
+          StatusCodes.FORBIDDEN,
+          `You are not allowed to update: ${key}`
+        );
+      }
+    });
+  }
+
+  // Update User
+  const updatedUser = await User.findByIdAndUpdate(userId, payload, {
+    new: true,
+    runValidators: true,
+  });
+
+  return updatedUser;
+};
+
+
 
 // VERIFY USER
 const verifyUserService = async (email: string, otp: string) => {
@@ -122,4 +215,6 @@ export const userServices = {
   createUserService,
   resendOTPService,
   verifyUserService,
-};
+  getMeService,
+  userUpdateService,
+}
