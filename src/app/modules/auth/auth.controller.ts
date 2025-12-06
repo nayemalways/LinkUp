@@ -34,7 +34,7 @@ const credentialsLogin = CatchAsync(
 // GET NEW ACCESS TOKEN
 const getNeAccessToken = CatchAsync(async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
-  const result = await authService.getNewAccessToken(refreshToken);
+  const result = await authService.getNewAccessTokenService(refreshToken);
 
   SendResponse(res, {
     success: true,
@@ -63,7 +63,7 @@ const changePassword = CatchAsync(async (req: Request, res: Response) => {
 // FORGET PASSWORD
 const forgetPassword = CatchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
-  const result = await authService.forgetPasswrod( email );
+  const result = await authService.forgetPasswrodService( email );
 
   SendResponse(res, {
     success: true,
@@ -74,9 +74,25 @@ const forgetPassword = CatchAsync(async (req: Request, res: Response) => {
 
 })
 
+// RESET PASSWORD
+const resetPassword = CatchAsync(async (req: Request, res: Response) => {
+  const { email, otp } = req.params;
+  const { newPassword } = req.body;
+  const result = await authService.resetPasswordService( email, otp, newPassword );
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Password reset success!",
+    data: result
+  })
+
+})
+
 export const authController = {
   credentialsLogin,
   getNeAccessToken,
   changePassword,
-  forgetPassword
+  forgetPassword,
+  resetPassword
 };

@@ -10,8 +10,10 @@ import { sendEmail } from '../../utils/sendMail';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { redisClient } from '../../config/redis.config';
 
+
+
 // GET NEW ACCESS TOKEN
-const getNewAccessToken = async (refreshToken: string) => {
+const getNewAccessTokenService = async (refreshToken: string) => {
   if (!refreshToken) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Refresh token needed!');
   }
@@ -74,7 +76,7 @@ const changePasswordService = async (userId: string, payload:{oldPassword: strin
 }
 
 // FORGET PASSWORD
-const forgetPasswrod = async (email: string) => {
+const forgetPasswrodService = async (email: string) => {
     const user = await User.findOne({ email });
      if (!user) {
         throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
@@ -95,7 +97,7 @@ const forgetPasswrod = async (email: string) => {
     await redisClient.set(`otp:${user.email}`, hashedOTP, { EX: 120 }); // 2 min
 
     // SENDING OTP TO EMAIL
-    sendEmail({
+    await sendEmail({
         to: user.email,
         subject: "LinkUp:Password Reset OTP",
         templateName: 'resetPassword',
@@ -108,8 +110,49 @@ const forgetPasswrod = async (email: string) => {
     return null;
 }
 
+// RESET PASSWORD
+const resetPasswordService = async (email: string, otp: string, newPassword: string) => {
+    if (!email) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Email required!");
+    }
+
+    // CHECK USER
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND,  "No user found!");
+    }
+
+    if (!otp || otp.length < 6) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Wrong OTP!");
+    }
+
+    // OTP MATCHING PART
+    const getOTP = await redisClient.get(`otp:${email}`);
+
+    if (!getOTP) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "OTP has expired!");
+    }
+
+    const isOTPMatched = await bcrypt.compare(otp, getOTP); // COMPARE WITH OTP
+
+    if (!isOTPMatched) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "OTP is not matched!");
+    }
+
+    // SET NEW PASSWORD
+    user.password = newPassword;
+    await user.save();
+
+    // DELETED OTP AFTER USED
+    await redisClient.del(`otp:${email}`);
+
+
+    return null;
+}
+
 export const authService = {
-  getNewAccessToken,
+  getNewAccessTokenService,
   changePasswordService,
-  forgetPasswrod
+  forgetPasswrodService,
+  resetPasswordService
 };
