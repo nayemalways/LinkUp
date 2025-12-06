@@ -10,10 +10,11 @@ import env from './app/config/env';
 import expressSession from 'express-session';
 import passport from 'passport';
 import './app/config/passport.config';
-import { twilio } from './app/config/twilio.config';
+
 
 const app = express();
 
+app.set('trust proxy', 1);
 app.use(
   expressSession({
     secret: env.EXPRESS_SESSION_SECRET,
