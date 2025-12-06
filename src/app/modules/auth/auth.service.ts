@@ -6,6 +6,9 @@ import User from '../users/user.model';
 import { IsActive } from '../users/user.interface';
 import { createUserTokens, CustomJwtPayload } from '../../utils/user.tokens';
 import bcrypt from 'bcrypt';
+import { sendEmail } from '../../utils/sendMail';
+import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
+import { redisClient } from '../../config/redis.config';
 
 // GET NEW ACCESS TOKEN
 const getNewAccessToken = async (refreshToken: string) => {
@@ -70,7 +73,43 @@ const changePasswordService = async (userId: string, payload:{oldPassword: strin
     return null;
 }
 
+// FORGET PASSWORD
+const forgetPasswrod = async (email: string) => {
+    const user = await User.findOne({ email });
+     if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+     }
+
+     if (user.isDeleted) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "User was deleted!");
+     }
+
+     if (user.isActive === IsActive.INACTIVE || user.isActive === IsActive.BLOCKED) {
+        throw new AppError(StatusCodes.BAD_REQUEST, `User is ${user.isActive}`);
+     }
+
+    const otp =   randomOTPGenerator(100000, 999999).toString(); // Generate OTP
+    const hashedOTP = await bcrypt.hash(otp, Number(env.BCRYPT_SALT_ROUND)); // Hashed OTP
+
+    // CACHED OTP TO REDIS
+    await redisClient.set(`otp:${user.email}`, hashedOTP, { EX: 120 }); // 2 min
+
+    // SENDING OTP TO EMAIL
+    sendEmail({
+        to: user.email,
+        subject: "LinkUp:Password Reset OTP",
+        templateName: 'resetPassword',
+        templateData: {
+            name: user.fullName,
+            otp
+        }
+    });
+
+    return null;
+}
+
 export const authService = {
   getNewAccessToken,
-  changePasswordService
+  changePasswordService,
+  forgetPasswrod
 };

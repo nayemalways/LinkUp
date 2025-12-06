@@ -60,8 +60,23 @@ const changePassword = CatchAsync(async (req: Request, res: Response) => {
 
 })
 
+// FORGET PASSWORD
+const forgetPassword = CatchAsync(async (req: Request, res: Response) => {
+  const { email } = req.params;
+  const result = await authService.forgetPasswrod( email );
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Password reset OTP send to your email!",
+    data: result
+  })
+
+})
+
 export const authController = {
   credentialsLogin,
   getNeAccessToken,
-  changePassword
+  changePassword,
+  forgetPassword
 };
