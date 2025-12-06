@@ -3,9 +3,10 @@ import { NextFunction, Request, Response } from 'express';
 import { CatchAsync } from '../../utils/CatchAsync';
 import passport from 'passport';
 import AppError from '../../errorHelpers/AppError';
-import httpStatus from 'http-status-codes';
+import httpStatus, { StatusCodes } from 'http-status-codes';
 import { createUserTokens } from '../../utils/user.tokens';
 import { SendResponse } from '../../utils/SendResponse';
+import { authService } from './auth.service';
 
  // Login User
 const credentialsLogin = CatchAsync(
@@ -29,6 +30,20 @@ const credentialsLogin = CatchAsync(
   }
 );
 
+const getNeAccessToken = CatchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  const result = await authService.getNewAccessToken(refreshToken);
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "New accessToken generated!",
+    data: result
+  })
+
+})
+
 export const authController = {
   credentialsLogin,
+  getNeAccessToken
 };
