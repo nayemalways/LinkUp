@@ -7,6 +7,7 @@ import { IsActive } from '../users/user.interface';
 import { createUserTokens, CustomJwtPayload } from '../../utils/user.tokens';
 import bcrypt from 'bcrypt';
 
+// GET NEW ACCESS TOKEN
 const getNewAccessToken = async (refreshToken: string) => {
   if (!refreshToken) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Refresh token needed!');
@@ -42,6 +43,7 @@ const getNewAccessToken = async (refreshToken: string) => {
   };
 };
 
+// CHANGE PASSWORD
 const changePasswordService = async (userId: string, payload:{oldPassword: string, newPassword: string}) => {
     const user = await User.findById(userId).select("+password");
     if (!user) {

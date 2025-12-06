@@ -31,6 +31,7 @@ const credentialsLogin = CatchAsync(
   }
 );
 
+// GET NEW ACCESS TOKEN
 const getNeAccessToken = CatchAsync(async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
   const result = await authService.getNewAccessToken(refreshToken);
@@ -44,7 +45,7 @@ const getNeAccessToken = CatchAsync(async (req: Request, res: Response) => {
 
 })
 
-
+// CHANGE PASSWORD
 const changePassword = CatchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as JwtPayload;
   const { oldPassword, newPassword } = req.body;
