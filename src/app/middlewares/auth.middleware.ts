@@ -44,7 +44,7 @@ export const checkAuth =
       }   
 
       if(isUser.isDeleted) {
-        throw new AppError(httpStatus.FORBIDDEN, "User deleted!");
+        throw new AppError(httpStatus.FORBIDDEN, "The user was deleted!");
       }
 
       if (restRole.length && !restRole.includes(verifyUser.role)) {
