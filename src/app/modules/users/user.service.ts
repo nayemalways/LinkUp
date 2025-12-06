@@ -124,7 +124,30 @@ const userUpdateService = async (
   return updatedUser;
 };
 
+const userDeleteService = async (userId: string, decodedToken: JwtPayload) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+  }
 
+  if (user.isDeleted) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "User already deleted!");
+  }
+
+  const allowedRoles = [Role.ADMIN];
+
+
+if (!allowedRoles.includes(decodedToken.role)) {
+  if (decodedToken.userId !== userId) {
+    throw new AppError(StatusCodes.FORBIDDEN, "You can't delete others!");
+  }
+}
+
+  user.isDeleted = true;
+  await user.save();
+
+  return null;
+}
 
 // VERIFY USER
 const verifyUserService = async (email: string, otp: string) => {
@@ -217,4 +240,5 @@ export const userServices = {
   verifyUserService,
   getMeService,
   userUpdateService,
+  userDeleteService
 }

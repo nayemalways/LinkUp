@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export enum Role {
   USER = 'USER',
   ADMIN = 'ADMIN',
@@ -21,13 +23,13 @@ export interface ICoord {
 }
 
 export interface IUser {
-  _id?: string;
+  _id?: Types.ObjectId;
   fullName: string;
   email: string;
   avatar?: string;
   password?: string;
   gender?: string;
-  role?: Role;
+  role: Role;
   phone?: string;
   interests: string[];
   isActive?: IsActive;

@@ -15,12 +15,9 @@ router.post(
 
 router.get('/get_me', checkAuth(...Object.keys(Role)), userControllers.getMe);
 router.patch('/:userId', checkAuth(...Object.keys(Role)), userControllers.userUpdate);
+router.delete('/:userId', checkAuth(...Object.keys(Role)), userControllers.userDelete);
 
-router.get(
-  '/verify/:otp',
-  validateRequest(userZodSchema),
-  userControllers.verifyUser
-);
+router.get('/verify/:otp', validateRequest(userZodSchema), userControllers.verifyUser);
 router.get('/resend-otp', userControllers.resendOTP);
 
 export const userRoutes = router;

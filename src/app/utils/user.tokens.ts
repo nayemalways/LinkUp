@@ -1,22 +1,12 @@
 import { JwtPayload } from 'jsonwebtoken';
 import env from '../config/env';
 import { generateToken } from './jwt';
-import {  Role } from '../modules/users/user.interface';
-import { Types } from 'mongoose';
 
-export interface CustomJwtPayload extends JwtPayload {
-  userId: Types.ObjectId;
-  email: string;
-  role: Role;
-  isVerified?: boolean;
-}
-
-export const createUserTokens = async (user: CustomJwtPayload) => {
-  const jwtPayload: CustomJwtPayload = {
-    userId: user._id,
-    email: user.email,
-    role: user.role,
-    isVerified: user?.isVerified
+export const createUserTokens = async (user: JwtPayload) => {
+  const jwtPayload = {
+    userId: user?._id,
+    email: user?.email,
+    role: user?.role,
   };
 
   // Jsonwebtoken

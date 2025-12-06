@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import app from './app';
 import envVars from './app/config/env';
 import { connectRedis } from './app/config/redis.config';
+import { adminCreate } from './app/utils/seedAdmin';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ const startServer = async () => {
 (async () => {
   await connectRedis();
   await startServer();
+  await adminCreate();
 })();
 
 // SIGTERM signal detected and close the server

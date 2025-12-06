@@ -5,6 +5,8 @@ import { userServices } from './user.service';
 import { createUserTokens } from '../../utils/user.tokens';
 import { SetCookies } from '../../utils/setCookie';
 import { JwtPayload } from 'jsonwebtoken';
+import { Role } from './user.interface';
+import { Types } from 'mongoose';
  
 const registerUser = CatchAsync(async (req: Request, res: Response) => {
   const result = await userServices.createUserService(req.body);
@@ -47,6 +49,22 @@ const userUpdate = CatchAsync(async (req: Request, res: Response) => {
   })
 })
 
+// USER UPDATE
+const userDelete = CatchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.userId;
+  const decodedToken = req.user as JwtPayload;
+
+  const result = await userServices.userDeleteService(userId, decodedToken);
+
+  SendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "User deleted successfull!",
+    data: result
+  })
+})
+
+
 // VERIFY USER
 const verifyUser = CatchAsync(async (req: Request, res: Response) => {
   const email = req.cookies['email'] as string;
@@ -55,14 +73,14 @@ const verifyUser = CatchAsync(async (req: Request, res: Response) => {
   const result = await userServices.verifyUserService(email, otp);
 
   const jwtPayload = {
-    _id: result?._id,
-    email: result?.email,
-    role: result?.role,
+    userId: result?._id as Types.ObjectId,
+    email: result?.email as string,
+    role: result?.role as Role,
     isVerified: result?.isVerified,
   };
 
   // Set refreshToken and accessToken in Cookies
-  const userTokens = await createUserTokens(jwtPayload);
+  const userTokens = await createUserTokens(jwtPayload );
   SetCookies(res, userTokens);
 
   SendResponse(res, {
@@ -95,5 +113,6 @@ export const userControllers = {
   verifyUser,
   resendOTP,
   getMe,
-  userUpdate
+  userUpdate,
+  userDelete
 };
