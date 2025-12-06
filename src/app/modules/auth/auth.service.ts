@@ -5,6 +5,7 @@ import env from '../../config/env';
 import User from '../users/user.model';
 import { IsActive } from '../users/user.interface';
 import { createUserTokens, CustomJwtPayload } from '../../utils/user.tokens';
+import bcrypt from 'bcrypt';
 
 const getNewAccessToken = async (refreshToken: string) => {
   if (!refreshToken) {
@@ -37,10 +38,37 @@ const getNewAccessToken = async (refreshToken: string) => {
 
   return {
     newAccessToken: userToken.accessToken,
-    newRefreshToken: userToken.refreshToken
+    newRefreshToken:  userToken.refreshToken
   };
 };
 
+const changePasswordService = async (userId: string, payload:{oldPassword: string, newPassword: string}) => {
+    const user = await User.findById(userId).select("+password");
+    if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+    }
+
+    if (!payload.oldPassword) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Please provide your old password!");
+    }
+
+    if (!payload.newPassword) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Please provide your new password!");
+    }
+
+    const matchPassword = await bcrypt.compare(payload.oldPassword, user.password as string);
+    if (!matchPassword) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Password doesn't matched!");
+    }
+
+    user.password = payload.newPassword;
+    await user.save();
+
+
+    return null;
+}
+
 export const authService = {
   getNewAccessToken,
+  changePasswordService
 };

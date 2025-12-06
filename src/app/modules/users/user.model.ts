@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 import { IAuthProvider, IsActive, IUser, Role } from './user.interface';
 import bcrypt from 'bcrypt';
@@ -43,12 +44,17 @@ const userSchema = new mongoose.Schema<IUser>(
 // Hashed password
 userSchema.pre('save', async function (next) {
   if (!this?.password) next();
-  const hashedPassword = await bcrypt.hash(
+  
+  try {
+    const hashedPassword = await bcrypt.hash(
     this?.password as string,
     parseInt(env?.BCRYPT_SALT_ROUND)
   );
   this.password = hashedPassword;
-  next();
+  next()
+  } catch (error: any) {
+    next(error)
+  }
 });
 
 const User = mongoose.model<IUser>('user', userSchema);

@@ -7,6 +7,7 @@ import httpStatus, { StatusCodes } from 'http-status-codes';
 import { createUserTokens } from '../../utils/user.tokens';
 import { SendResponse } from '../../utils/SendResponse';
 import { authService } from './auth.service';
+import { JwtPayload } from 'jsonwebtoken';
 
  // Login User
 const credentialsLogin = CatchAsync(
@@ -43,7 +44,23 @@ const getNeAccessToken = CatchAsync(async (req: Request, res: Response) => {
 
 })
 
+
+const changePassword = CatchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user as JwtPayload;
+  const { oldPassword, newPassword } = req.body;
+  const result = await authService.changePasswordService(userId, {oldPassword, newPassword});
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Password has been changed!",
+    data: result
+  })
+
+})
+
 export const authController = {
   credentialsLogin,
-  getNeAccessToken
+  getNeAccessToken,
+  changePassword
 };
