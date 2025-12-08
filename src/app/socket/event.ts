@@ -1,11 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const SocketEvents = (socket: any) => {
- 
-    socket.on("message", (msg: string) => {
-        console.log("message event: ", msg);
-        socket.emit("receive_message", msg);
+
+    // User joins their personal room
+    socket.on("join-user", (userId: string) => {
+        socket.join(userId);
+        console.log("User joined in the room: ", userId);
+    })
+
+    // User joins event room
+    socket.on("join-event", (eventId: string) => {
+        socket.join(`event:${eventId.trim()}`);
     });
-    
+
 }

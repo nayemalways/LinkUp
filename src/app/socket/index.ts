@@ -15,9 +15,8 @@ export const initSocket = (server: any) => {
 
     io.on("connection", (socket) => {
         console.log("User connected:", socket.id);
-        
 
-        // All events
+        // All events Registered
         SocketEvents(socket);
 
         socket.on("disconnect", () => {

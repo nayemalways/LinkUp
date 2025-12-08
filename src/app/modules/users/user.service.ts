@@ -5,6 +5,8 @@ import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
 import { validatePhone } from '../../utils/phoneNumberValidatior';
+import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
+import { NotificationType } from '../notifications/notification.interface';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -34,7 +36,20 @@ const createUserService = async (payload: Partial<IUser>) => {
 
 // GET ME
 const getMeService = async (userId: string) => {
-  const user = await User.findById(userId, { password: 0 });
+  const user = await User.findById(userId, { password: 0 }) as IUser;
+
+  if(!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  if (user._id) {
+    sendPersonalNotification( user._id.toString(), {
+      title: "User Fetched successfully!",
+      message: "User is being fetchec. This is an description",
+      type: NotificationType.MESSAGE_RECEIVED
+    } );
+  }
+
   return user;
 };
 
