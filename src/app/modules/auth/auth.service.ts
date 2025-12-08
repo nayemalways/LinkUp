@@ -35,10 +35,12 @@ const getNewAccessTokenService = async (refreshToken: string) => {
    
 
   const jwtPayload = {
-    userId: isUserExists?._id,
+    _id: isUserExists?._id,
     email: isUserExists?.email,
     role: isUserExists?.role,
   };
+
+//   console.log("refresh", jwtPayload);
 
   const userToken = await createUserTokens(jwtPayload); // Jsonwebtoken
 
