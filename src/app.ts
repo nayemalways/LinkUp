@@ -10,9 +10,14 @@ import env from './app/config/env';
 import expressSession from 'express-session';
 import passport from 'passport';
 import './app/config/passport.config';
-
+import http from "http";
+import { initSocket } from './app/socket';
 
 const app = express();
+const server =  http.createServer(app);
+
+// Init Socket connection
+initSocket(server);
 
 app.set('trust proxy', 1);
 app.use(
@@ -58,4 +63,4 @@ app.use(globalErrorHandler);
 // NO ROUTE MATCH
 app.use(NotFound);
 
-export default app;
+export default server;
