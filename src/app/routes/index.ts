@@ -18,3 +18,6 @@ const moduleRoutes = [
 moduleRoutes.forEach((r) => {
   router.use(r.path, r.route);
 });
+
+// http:localhost:5002/user/register
+// http:localhost:5002/api/v1/user/update

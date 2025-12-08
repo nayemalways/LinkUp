@@ -8,7 +8,10 @@ export const userZodSchema = z.object({
     .min(3, 'Name must be at least 3 characters!')
     .max(100, 'Name must be maximum 100 characters! '),
   email: z.string().email(),
-  phone: z.string({message: 'Phone number must be string type!'}).optional(),
+  phone: z.
+        string({message: 'Phone number must be string type!'})
+        .regex(/^\+[1-9]\d{7,14}$/, {error: "Invalid phone number format!"})
+        .optional(),
   password: z
     .string({ error: 'Password shuld be string type!' })
     .min(6, 'Password length shuld be at least 6!')

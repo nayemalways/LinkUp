@@ -4,6 +4,7 @@ import User from './user.model';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
+import { validatePhone } from '../../utils/phoneNumberValidatior';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -65,6 +66,11 @@ const userUpdateService = async (
       StatusCodes.BAD_REQUEST,
       "You can't update your password from this route!"
     );
+  }
+
+  // Phone number validation by - E.164 Rules
+  if (payload.phone) {
+    validatePhone(payload.phone);
   }
 
   // Role update protection
