@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema<IUser>(
     avatar: { type: String },
     password: { type: String, select: false },
     gender: { type: String },
+    fcmToken: { type: String },
     phone: { type: String },
     interests: [{ type: String }],
     isActive: {

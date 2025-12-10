@@ -30,6 +30,7 @@ export interface IUser {
   avatar?: string;
   password?: string;
   gender?: string;
+  fcmToken?: string;
   role: Role;
   phone?: string;
   interests: string[];
