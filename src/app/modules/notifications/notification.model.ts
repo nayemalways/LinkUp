@@ -3,12 +3,14 @@ import { INotification, INotificationPreference, NotificationCategory, Notificat
 
 
 const notificationSchema = new Schema<INotification>({
-    user: [{type: Schema.Types.ObjectId, ref: 'User'}],
+    user: {type: Schema.Types.ObjectId, ref: 'User'},
+    eventId: {type: Schema.Types.ObjectId, ref: 'User'},
+    chatId: {type: Schema.Types.ObjectId, ref: 'User'},
     type: {type: String, required: true, enum: [...Object.values(NotificationType)]},
     title: {type: String, required: true},
     description: {type: String},
-    isRead: {type: Boolean, default: false},
-    data: {type: Object}
+    data: {type: Object},
+    isRead: {type: Boolean, default: false}
 }, {
     timestamps: true,
     versionKey: false
@@ -28,6 +30,8 @@ const notificationPreferenceSchema = new Schema<INotificationPreference>({
     versionKey: false
 })
 
+// Indexing for faster loading
+notificationSchema.index({ user: 1, createdAt: -1 });
 
 export const Notification = model<INotification>('Notification', notificationSchema);
 export const NotificationPreference = model<INotificationPreference>('NotificationPreference', notificationPreferenceSchema);
