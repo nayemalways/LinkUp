@@ -43,11 +43,13 @@ const getMeService = async (userId: string) => {
   }
 
   if (user._id) {
-    sendPersonalNotification( user._id.toString(), {
-      title: "User Fetched successfully!",
-      message: "User is being fetchec. This is an description",
-      type: NotificationType.MESSAGE_RECEIVED
-    } );
+    sendPersonalNotification({
+      title: "User fetched successfully!",
+      user: user._id,
+      type: NotificationType.CHAT,
+      description: "User fetching description.",
+
+    });
   }
 
   return user;
@@ -124,7 +126,7 @@ const userUpdateService = async (
     decodedToken.role === Role.ORGANIZER
   ) {
 
-    const allowedUpdates = [ 'fullName', 'avatar', 'gender', 'phone', 'interests', 'coord',];
+    const allowedUpdates = [ 'fullName', 'avatar', 'gender', 'phone', 'interests', 'coord', 'fcmToken'];
 
     Object.keys(payload).forEach((key) => {
       if (!allowedUpdates.includes(key)) {
