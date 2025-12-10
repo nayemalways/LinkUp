@@ -5,8 +5,8 @@ import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
 import { validatePhone } from '../../utils/phoneNumberValidatior';
-import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
-import { NotificationType } from '../notifications/notification.interface';
+
+
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -40,16 +40,6 @@ const getMeService = async (userId: string) => {
 
   if(!user) {
     throw new AppError(404, "User not found");
-  }
-
-  if (user._id) {
-    sendPersonalNotification({
-      title: "User fetched successfully!",
-      user: user._id,
-      type: NotificationType.CHAT,
-      description: "User fetching description.",
-
-    });
   }
 
   return user;
