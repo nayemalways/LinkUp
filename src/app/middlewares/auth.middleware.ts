@@ -15,6 +15,10 @@ export const checkAuth =
     try {
       const accessToken = req.headers.authorization; // GET TOKEN
 
+      if (!accessToken) {
+        throw new AppError(401, "Unauthorized! token must required.")
+      }
+
       // if(!authHeader || !authHeader.startsWith("Bearer ")) {
       //   throw new AppError(httpStatus.UNAUTHORIZED, "Token not provided!");
       // }
