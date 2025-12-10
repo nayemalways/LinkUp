@@ -1,17 +1,12 @@
+import { INotification } from "../../modules/notifications/notification.interface";
 import { Notification } from "../../modules/notifications/notification.model";
 import { io } from "../../socket";
-import { NotificationPayload } from "./user.notification.utils";
+ 
 
 export const sendEventNotification = async (
-  eventId: string,
-  payload: NotificationPayload
+  payload: INotification
 ) => {
-  const notification = await Notification.create({
-    type: "event",
-    eventId,
-    title: payload.title,
-    message: payload.message,
-  });
+  const notification = await Notification.create(payload);
 
-  io.to(`event:${eventId}`).emit("notification", notification);
+  io.to(`event:${payload.eventId}`).emit("notification", notification);
 };

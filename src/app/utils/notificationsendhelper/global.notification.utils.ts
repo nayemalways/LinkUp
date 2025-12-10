@@ -1,16 +1,12 @@
+import { INotification } from "../../modules/notifications/notification.interface";
 import { Notification } from "../../modules/notifications/notification.model";
 import { io } from "../../socket";
-import { NotificationPayload } from "./user.notification.utils";
 
 
 export const sendGlobalNotification = async (
-  payload: NotificationPayload
+  payload: INotification
 ) => {
-  const notification = await Notification.create({
-    type: "global",
-    title: payload.title,
-    message: payload.message,
-  });
+  const notification = await Notification.create(payload);
 
   io.emit("notification", notification);
 };

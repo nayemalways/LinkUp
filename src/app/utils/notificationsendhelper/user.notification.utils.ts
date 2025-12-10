@@ -1,27 +1,14 @@
-import { NotificationType } from "../../modules/notifications/notification.interface";
+import { Types } from "mongoose";
+import { INotification } from "../../modules/notifications/notification.interface";
 import { Notification } from "../../modules/notifications/notification.model";
 import { io } from "../../socket";
 
 
-export interface NotificationPayload {
-  title: string;
-  message: string;
-  type: NotificationType
-};
-
-export const sendPersonalNotification = async (
-  receiverUserId: string,
-  payload: NotificationPayload
-) => {
-
+ 
+export const sendPersonalNotification = async ( payload: INotification ) => {
   // Save to DB (for offline support)
-  const notification = await Notification.create({
-    type:  payload.type,
-    userId: receiverUserId,
-    title: payload.title,
-    message: payload.message,
-  });
+  const notification = await Notification.create(payload);
 
   // Send real-time
-  io.to(receiverUserId).emit("notification", notification);
+  io.to((payload.user as Types.ObjectId).toString()).emit("notification", notification);
 };
