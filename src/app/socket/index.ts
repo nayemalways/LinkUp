@@ -2,6 +2,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Server } from "socket.io";
+import { SocketEvents } from "./event.socket";
 
 export let io: Server;
 export const onlineUsers: Record<string, string> = {}; // userId -> socketId
@@ -16,6 +17,9 @@ export const initSocket = (server: any) => {
 
   io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
+
+    // Register All event here
+    SocketEvents(socket);
 
     let userId: string | null = null;
 
