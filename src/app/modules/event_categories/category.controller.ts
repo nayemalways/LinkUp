@@ -29,8 +29,22 @@ const getEventCategory = CatchAsync(async (req: Request, res: Response, next: Ne
     })
 });
 
+// UPDATE EVENT CATEGORY
+const updateEventCategory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const {categoryId} = req.params;
+    const { category_name } = req.body;
+    const result = await categoryServices.updateEventCategoryService(categoryId, category_name);
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.CREATED,
+        message: "Category updated success!",
+        data: result
+    })
+});
+
 
 export const categoryControllers = {
     createEventCategory,
-    getEventCategory
+    getEventCategory,
+    updateEventCategory
 }

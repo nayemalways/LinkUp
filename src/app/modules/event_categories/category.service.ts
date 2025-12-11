@@ -28,7 +28,21 @@ const getEventCategoryService = async (isDeleted: boolean) => {
   return categories;
 };
 
+// UPDATE EVENT CATEGORY
+const updateEventCategoryService = async (categoryId: string, category_name: string) => {
+    const category = await Category.findById(categoryId);
+    if (!category) {
+        throw new AppError(StatusCodes.NOT_FOUND, "Category not found!");
+    }
+
+// Update Category
+  const updateCategory = await Category.findByIdAndUpdate(categoryId, { category_name }, { runValidators: true, new: true });
+
+  return updateCategory;
+};
+
 export const categoryServices = {
   createEventCategoryService,
   getEventCategoryService,
+  updateEventCategoryService
 };
