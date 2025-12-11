@@ -5,6 +5,7 @@ import { SendResponse } from "../../utils/SendResponse";
 import { StatusCodes } from "http-status-codes";
 import { categoryServices } from "./category.service";
 
+// CREATE EVENT CATEGORY
 const createEventCategory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { category_name } = req.body;
     const result = await categoryServices.createEventCategoryService(category_name);
@@ -16,7 +17,20 @@ const createEventCategory = CatchAsync(async (req: Request, res: Response, next:
     })
 });
 
+// GET EVENT CATEGORY
+const getEventCategory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const isDeleted  = req.query.isDeleted === 'true';
+    const result = await categoryServices.getEventCategoryService(isDeleted);
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.CREATED,
+        message: "Category fetched success!",
+        data: result
+    })
+});
+
 
 export const categoryControllers = {
-    createEventCategory
+    createEventCategory,
+    getEventCategory
 }

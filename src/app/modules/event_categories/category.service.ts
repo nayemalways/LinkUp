@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errorHelpers/AppError';
 import Category from './category.model';
 
+// CREATE EVENT CATEGORY
 const createEventCategoryService = async (category_name: string) => {
   if (!category_name) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Category name must required!');
@@ -20,6 +21,14 @@ const createEventCategoryService = async (category_name: string) => {
   return categoryCreate;
 };
 
+// GET EVENT CATEGORY
+const getEventCategoryService = async (isDeleted: boolean) => {
+
+  const categories = await Category.find({ isDeleted });
+  return categories;
+};
+
 export const categoryServices = {
   createEventCategoryService,
+  getEventCategoryService,
 };
