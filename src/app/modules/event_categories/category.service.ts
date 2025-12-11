@@ -41,8 +41,26 @@ const updateEventCategoryService = async (categoryId: string, category_name: str
   return updateCategory;
 };
 
+// DELETE EVENT CATEGORY
+const deleteEventCategoryService = async (categoryId: string) => {
+    const category = await Category.findById(categoryId);
+    if (!category) {
+        throw new AppError(StatusCodes.NOT_FOUND, "Category not found!");
+    }
+
+    if (category.isDeleted) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "This category is already deleted!");
+    }
+
+// Update Category
+  const deleteCategory = await Category.findByIdAndUpdate(categoryId, { isDeleted: true }, { runValidators: true, new: true });
+
+  return deleteCategory;
+};
+
 export const categoryServices = {
   createEventCategoryService,
   getEventCategoryService,
-  updateEventCategoryService
+  updateEventCategoryService,
+  deleteEventCategoryService
 };

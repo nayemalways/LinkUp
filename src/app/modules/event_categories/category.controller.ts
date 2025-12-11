@@ -42,9 +42,22 @@ const updateEventCategory = CatchAsync(async (req: Request, res: Response, next:
     })
 });
 
+// UPDATE EVENT CATEGORY
+const deleteEventCategory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const {categoryId} = req.params;
+    const result = await categoryServices.deleteEventCategoryService( categoryId );
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.CREATED,
+        message: "Category deleted success!",
+        data: result
+    })
+});
+
 
 export const categoryControllers = {
     createEventCategory,
     getEventCategory,
-    updateEventCategory
+    updateEventCategory,
+    deleteEventCategory
 }
