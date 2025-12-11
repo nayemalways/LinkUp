@@ -1,19 +1,25 @@
-import { StatusCodes } from "http-status-codes";
-import AppError from "../../errorHelpers/AppError";
-import Category from "./category.model";
-
+import { StatusCodes } from 'http-status-codes';
+import AppError from '../../errorHelpers/AppError';
+import Category from './category.model';
 
 const createEventCategoryService = async (category_name: string) => {
-    if (!category_name) {
-        throw new AppError(StatusCodes.NOT_FOUND, "Categor name must required!");
-    }
+  if (!category_name) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Category name must required!');
+  }
 
-    const category = await Category.create({ category_name });
+  const category = await Category.findOne({ category_name });
+  if (category) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      `${category_name} - already exist!`
+    );
+  }
 
-    return category;
-}
-
+  // Create Category
+  const categoryCreate = await Category.create({ category_name });
+  return categoryCreate;
+};
 
 export const categoryServices = {
-    createEventCategoryService
-} 
+  createEventCategoryService,
+};
