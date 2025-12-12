@@ -29,6 +29,7 @@ export interface INotification {
   user?: Types.ObjectId;
   eventId?: Types.ObjectId,
   chatId?: Types.ObjectId,
+  receiverIds?: Types.ObjectId[];
   type: NotificationType
   title: string;
   description?: string;

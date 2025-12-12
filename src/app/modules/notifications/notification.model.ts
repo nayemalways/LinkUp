@@ -6,6 +6,7 @@ const notificationSchema = new Schema<INotification>({
     user: {type: Schema.Types.ObjectId, ref: 'User'},
     eventId: {type: Schema.Types.ObjectId, ref: 'User'},
     chatId: {type: Schema.Types.ObjectId, ref: 'User'},
+    receiverIds: [{type: Schema.Types.ObjectId, ref: 'User'}],
     type: {type: String, required: true, enum: [...Object.values(NotificationType)]},
     title: {type: String, required: true},
     description: {type: String},
