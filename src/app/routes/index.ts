@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { userRoutes } from '../modules/users/user.routes';
 import { authRouter } from '../modules/auth/auth.routes';
+import { categoryRoutes } from '../modules/event_categories/category.routes';
+import { eventRouter } from '../modules/events/event.routes';
 
 export const router = Router();
 
@@ -12,6 +14,14 @@ const moduleRoutes = [
   {
     path: '/auth',
     route: authRouter,
+  },
+  {
+    path: '/category',
+    route: categoryRoutes,
+  },
+  {
+    path: '/event',
+    route: eventRouter,
   },
 ];
 
