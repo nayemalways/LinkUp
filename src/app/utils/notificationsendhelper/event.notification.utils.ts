@@ -7,6 +7,7 @@ export const sendEventNotification = async (
   payload: INotification
 ) => {
   const notification = await Notification.create(payload);
+  const eventRoom = `event:${payload.eventId}`;
 
-  io.to(`event:${payload.eventId}`).emit("notification", notification);
+  io.to(eventRoom).emit("notification", notification);
 };

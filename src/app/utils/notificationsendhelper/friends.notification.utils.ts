@@ -1,0 +1,51 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import admin from "firebase-admin";
+import { Notification } from "../../modules/notifications/notification.model";
+import { io, onlineUsers } from "../../socket";
+import { Types } from "mongoose";
+import { INotification } from "../../modules/notifications/notification.interface";
+import User from "../../modules/users/user.model";
+
+export const sendFriendsNotification = async (payload: INotification) => {
+  // Save notification in DB
+  const notification = await Notification.create(payload);
+  
+  // Separate online and offline friends
+  const onlineFriends: string[] = [];
+  const offlineFriendIds: Types.ObjectId[] = [];
+
+  (payload.receiverIds as Types.ObjectId[]).forEach(friendId => {
+    const friendIdStr = friendId.toString();
+    if (onlineUsers[friendIdStr]) {
+      io.to(friendIdStr).emit("notification", notification); // Online
+      onlineFriends.push(friendIdStr);
+    } else {
+      offlineFriendIds.push(friendId);
+    }
+  });
+
+  // Fetch FCM tokens for offline friends
+  if (offlineFriendIds.length > 0) {
+    const users = await User.find({ _id: { $in: offlineFriendIds } }).select("fcmToken");
+    const allTokens = users.flatMap(u => u.fcmToken); // flatten for multi-device
+
+    // Send push notifications in parallel batches
+    const batchSize = 500;
+    const batches = [];
+    for (let i = 0; i < allTokens.length; i += batchSize) {
+      batches.push(allTokens.slice(i, i + batchSize));
+    }
+
+    await Promise.all(
+      batches.map(batchTokens =>
+        (admin.messaging() as any).sendMulticast({
+          tokens: batchTokens,
+          notification: { title: notification.title, body: notification.description || "" },
+          data: notification.data || {},
+        })
+      )
+    );
+  }
+
+  return notification;
+};
