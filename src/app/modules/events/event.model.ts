@@ -24,12 +24,11 @@ const eventSchema = new mongoose.Schema<IEvent>(
       type: String,
       enum: [...Object.values(EventStatus)],
       required: true
-          },
+      },
     featured: {
       type: String,
-      enum: [...Object.values(Featured)],
-      required: true
-        },
+      enum: [...Object.values(Featured)]
+      },
     price: { type: Number, required: true },
     max_attendence: { type: Number },
     age_limit: { type: Number },
@@ -39,7 +38,7 @@ const eventSchema = new mongoose.Schema<IEvent>(
       enum: [...Object.values(EventVisibility)],
       required: true,
     },
-    coord: { type: { lat: { type: Number }, long: { type: Number } } },
+    coord: { type: { lat: { type: Number }, long: { type: Number } }, _id: false },
     address: {
       city: { type: String  },
       state: { type: String },
