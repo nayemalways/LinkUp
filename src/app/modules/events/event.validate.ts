@@ -1,11 +1,11 @@
 import z from "zod";
-import { EventStatus, EventVisibility, Featured } from "./event.interface";
+import { EventVisibility } from "./event.interface";
 
 // Coordinate schema
 const coordSchema = z.object({
   lat: z.number(),
   lng: z.number(),
-});
+}).optional();
 
 // Address schema
 const addressSchema = z.object({
@@ -13,7 +13,7 @@ const addressSchema = z.object({
   state: z.string(),
   postal: z.string(),
   country: z.string(),
-});
+}).optional();
 
 export const eventCreateSchema = z.object({
   co_hosts: z
@@ -38,24 +38,17 @@ export const eventCreateSchema = z.object({
     .min(5, "Description must be minimum 5 characters!")
     .max(500, "Description must be maximum 500 characters!"),
 
-  images: z
-    .array(z.string().url({ message: "Image must be a valid URL!" }))
-    .nonempty("At least one image is required!"),
-
+  images: z.array(z.string("Image must be string!")).optional(),
   venue: z.string({ message: "Venue must be string!" }),
 
   event_start: z.coerce.date({ message: "Event start must be a valid date!" }),
   event_end: z.coerce.date({ message: "Event end must be a valid date!" }),
 
   time_zone: z.string({ message: "Timezone must be string!" }),
-
   organization: z
                 .string()
                 .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId format!")
                 .optional(),
-
-  event_status: z.nativeEnum(EventStatus),
-  featured: z.nativeEnum(Featured),
 
   price: z
     .number({ message: "Price must be number!" })
