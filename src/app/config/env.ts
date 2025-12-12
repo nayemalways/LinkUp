@@ -42,6 +42,7 @@ interface EnvInterfaces {
   GOOGLE_CALLBACK_URL: string;
 
   EXPRESS_SESSION_SECRET: string;
+  BACKEND_URL: string;
 
   TYPE: string;
   PROJECT_ID: string;
@@ -98,6 +99,7 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'GOOGLE_CALLBACK_URL',
 
     'EXPRESS_SESSION_SECRET',
+    'BACKEND_URL',
     
     'TYPE',
     'PROJECT_ID',
@@ -162,6 +164,7 @@ const loadEnvVarbles = (): EnvInterfaces => {
     GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
 
     EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET as string,
+    BACKEND_URL: process.env.BACKEND_URL as string,
 
     TYPE: process.env.TYPE as string,
     PROJECT_ID: process.env.PROJECT_ID as string,
