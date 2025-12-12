@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { ICoord } from '../users/user.interface';
 
 export enum EventStatus {
+  UPCOMING = 'UPCOMING',
   ONGOING = 'ONGOING',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
@@ -30,14 +31,14 @@ export interface IEvent {
   event_end: Date;
   time_zone: string;
   organization?: Types.ObjectId;
-  event_status: EventStatus;
-  featured: Featured;
+  event_status?: EventStatus;
+  featured?: Featured;
   price: number;
   max_attendence: number;
   age_limit: number;
   avg_rating: number;
   visibility: EventVisibility;
-  coord: ICoord;
+  coord?: ICoord;
   address: {
     city: string;
     state: string;
