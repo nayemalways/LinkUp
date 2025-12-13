@@ -1,19 +1,14 @@
 import axios from "axios";
-import env from "../config/env";
 import { ICoord } from "../modules/users/user.interface";
 
 
 export const addressToLongLat = async (address: string): Promise<ICoord> => {
- const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
-  const response = await axios.get(url, {
-    headers: {
-    'User-Agent': `LinkUp/1.0 (${env.ADMIN_GMAIL})`,
-    'Referer': `${env.BACKEND_URL}`  
-    }
-  });
+  const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(address.trim())}&limit=1`;
+  const response = await axios.get(photonUrl);
+  const coordinates = response.data.features[0].geometry.coordinates; // Convention: [long, lat]
 
   return {
-    lat: response.data[0]?.lat,
-    long: response.data[0]?.lon
+    long: coordinates[0],
+    lat: coordinates[1]
   };
 }
