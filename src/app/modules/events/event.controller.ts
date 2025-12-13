@@ -7,6 +7,7 @@ import { eventServices } from "./event.service";
 import { JwtPayload } from "jsonwebtoken";
 
 
+// CREATE EVENT CONTROLLER
 const createEvent = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
 
@@ -25,6 +26,22 @@ const createEvent = CatchAsync(async (req: Request, res: Response, next: NextFun
 
 
 
+
+// GET EVENT CONTROLLER
+const getEvents = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const result = await eventServices.getEventsService();
+
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.CREATED,
+        message: "Event fetched successfully!",
+        data: result
+    })
+});
+
+
+
 export const eventControllers = {
-    createEvent
+    createEvent,
+    getEvents
 }

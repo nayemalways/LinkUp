@@ -16,5 +16,7 @@ router.post(
   eventControllers.createEvent       
 );
 
+router.get('/', eventControllers.getEvents);
+
 
 export const eventRouter = router;

@@ -15,7 +15,8 @@ import { sendFriendsNotification } from "../../utils/notificationsendhelper/frie
 import { NotificationType } from "../notifications/notification.interface";
 
 
-export const createEventService = async (payload: IEvent, user: JwtPayload) => {
+// CREATE EVENT SERVICE
+const createEventService = async (payload: IEvent, user: JwtPayload) => {
   // => Check for duplicate event title
   const existingEvent = await Event.findOne({ title: payload.title });
   if (existingEvent) {
@@ -29,6 +30,13 @@ export const createEventService = async (payload: IEvent, user: JwtPayload) => {
   // => -----Geocode address-------
   const addressLine = `${payload?.venue}, ${payload.address.city}, ${payload.address.state}, ${payload.address.postal}, ${payload.address.country}`;
   const coord = await addressToLongLat(addressLine);
+
+  if (!coord.lat || !coord.long) {
+    payload.images.forEach(image => deleteImageFromCLoudinary(image));
+    throw new AppError(StatusCodes.BAD_REQUEST, "Coord is empty");
+
+  }
+ 
   payload.coord = coord;
   payload.host = user.userId;
 
@@ -82,6 +90,13 @@ export const createEventService = async (payload: IEvent, user: JwtPayload) => {
 };
 
 
+const getEventsService = async () => {
+  const events = await Event.find({});
+  return events;
+}
+
+
 export const eventServices = {
   createEventService,
+  getEventsService
 };
