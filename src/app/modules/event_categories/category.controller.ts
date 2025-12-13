@@ -7,8 +7,8 @@ import { categoryServices } from "./category.service";
 
 // CREATE EVENT CATEGORY
 const createEventCategory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { category_name } = req.body;
-    const result = await categoryServices.createEventCategoryService(category_name);
+    const { category_name, category_icon } = req.body;
+    const result = await categoryServices.createEventCategoryService({category_icon, category_name});
     SendResponse(res, {
         success: true,
         statusCode: StatusCodes.CREATED,
@@ -32,8 +32,8 @@ const getEventCategory = CatchAsync(async (req: Request, res: Response, next: Ne
 // UPDATE EVENT CATEGORY
 const updateEventCategory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const {categoryId} = req.params;
-    const { category_name } = req.body;
-    const result = await categoryServices.updateEventCategoryService(categoryId, category_name);
+    const payload = req.body;
+    const result = await categoryServices.updateEventCategoryService(categoryId, payload);
     SendResponse(res, {
         success: true,
         statusCode: StatusCodes.CREATED,
