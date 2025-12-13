@@ -13,13 +13,17 @@ const createEventCategoryService = async (payload: {category_name: string, categ
   }
 
   // Check Already exist
-  const category = await Category.findOne({category_name: payload.category_name });
+  const category = await Category.findOne({category_name: payload.category_name.trim() });
   if (category) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
       `${category.category_name} - already exist!`
     );
   }
+
+  // Remove if after before white-space
+  payload.category_name = payload.category_name.trim();
+  payload.category_icon = payload.category_icon.trim();
 
   // Create Category
   const categoryCreate = await Category.create( payload );
