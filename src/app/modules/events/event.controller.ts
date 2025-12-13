@@ -29,7 +29,7 @@ const createEvent = CatchAsync(async (req: Request, res: Response, next: NextFun
 
 // GET EVENT CONTROLLER
 const getEvents = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const result = await eventServices.getEventsService();
+    const result = await eventServices.getEventsService(req.query as Record<string, string>);
 
     SendResponse(res, {
         success: true,

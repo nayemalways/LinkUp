@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 // -------------Chat GPT Code-----------------------
 import { StatusCodes } from "http-status-codes";
-import { EventStatus, IEvent } from "../../modules/events/event.interface";
+import { IEvent } from "../../modules/events/event.interface";
 import Event from "../../modules/events/event.model";
 import Group from "../../modules/groups/group.model";
 import User from "../../modules/users/user.model";
@@ -13,19 +13,23 @@ import FriendRequest from "../friends/friend.model";
 import { RequestStatus } from "../friends/friend.interface";
 import { sendFriendsNotification } from "../../utils/notificationsendhelper/friends.notification.utils";
 import { NotificationType } from "../notifications/notification.interface";
+import { QueryBuilder } from "../../utils/QueryBuilder";
 
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
+  // If host is not verified
+  if (!user.isVerified) {
+    payload.images?.forEach((image) => deleteImageFromCLoudinary(image));
+    throw new AppError(StatusCodes.FORBIDDEN, "Please verify your profile!");
+  }
+
   // => Check for duplicate event title
   const existingEvent = await Event.findOne({ title: payload.title });
   if (existingEvent) {
     payload.images?.forEach((image) => deleteImageFromCLoudinary(image));
     throw new AppError(StatusCodes.BAD_REQUEST, "An event already exists with this title!");
   }
-
-  // => ------Set event status-------
-  if (payload.event_start > new Date()) payload.event_status = EventStatus.UPCOMING;
 
   // => -----Geocode address-------
   const addressLine = `${payload?.venue}, ${payload.address.city}, ${payload.address.state}, ${payload.address.postal}, ${payload.address.country}`;
@@ -34,7 +38,6 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
   if (!coord.lat || !coord.long) {
     payload.images.forEach(image => deleteImageFromCLoudinary(image));
     throw new AppError(StatusCodes.BAD_REQUEST, "Coord is empty");
-
   }
  
   payload.coord = coord;
@@ -52,11 +55,11 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
     }),
   ]);
 
-  // Fix chat group's event ID after createEvent resolves
+  // => Fix chat group's event ID after createEvent resolves <=
   createChatGroup.event = createEvent._id; // Important to add
   await createChatGroup.save();
 
-  // => Send notifications asynchronously (fire-and-forget)
+  // => Send notifications asynchronously (fire-and-forget) <=
   (async () => {
     try {
       // Get -request accepted friends
@@ -90,9 +93,16 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
 };
 
 
-const getEventsService = async () => {
-  const events = await Event.find({});
-  return events;
+const getEventsService = async (query: Record<string, string>) => {
+ 
+  const qeuryBuilder = new QueryBuilder(Event.find(), query);
+  return await qeuryBuilder
+                                    .filter()
+                                    .textSearch()
+                                    .sort()
+                                    .select()
+                                    .paginate()
+                                    .join().build();
 }
 
 

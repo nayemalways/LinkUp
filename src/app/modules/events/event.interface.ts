@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { ICoord } from '../users/user.interface';
 
 export enum EventStatus {
-  UPCOMING = 'UPCOMING',
+  ACTIVE = 'ACTIVE',
   ONGOING = 'ONGOING',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',

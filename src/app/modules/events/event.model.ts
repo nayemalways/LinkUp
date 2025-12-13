@@ -23,6 +23,7 @@ const eventSchema = new mongoose.Schema<IEvent>(
     event_status: {
       type: String,
       enum: [...Object.values(EventStatus)],
+      default: EventStatus.ACTIVE,
       required: true
       },
     featured: {
@@ -51,6 +52,13 @@ const eventSchema = new mongoose.Schema<IEvent>(
     timestamps: true,
   }
 );
+
+// Indexing through search field
+eventSchema.index({
+  title: 'text',
+  description: 'text',
+  venue: 'text'
+})
 
 const Event = mongoose.model<IEvent>('event', eventSchema);
 
