@@ -57,7 +57,8 @@ const eventSchema = new mongoose.Schema<IEvent>(
 eventSchema.index({
   title: 'text',
   description: 'text',
-  venue: 'text'
+  venue: 'text',
+  'address.city': 'text'
 })
 
 const Event = mongoose.model<IEvent>('event', eventSchema);

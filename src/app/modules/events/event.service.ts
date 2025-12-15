@@ -92,7 +92,7 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
   return { event: createEvent, chatGroup: createChatGroup };
 };
 
-
+// GET EVENTS SERVICE
 const getEventsService = async (query: Record<string, string>) => {
  
   const qeuryBuilder = new QueryBuilder(Event.find(), query);
