@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { Query } from 'mongoose';
 import { excludeField } from '../modules/events/event.constant';
+import { ICoord } from '../modules/users/user.interface';
 
 export class QueryBuilder<T> {
   public queryModel: Query<T[], T>;
@@ -19,6 +20,23 @@ export class QueryBuilder<T> {
     }
 
     this.queryModel = this.queryModel.find(filter);
+    return this;
+  }
+
+  // FILTER BY DATE RANGE
+  dateFilter(): this {
+    const days = Number(this.query.dateRange);
+    if (!days || isNaN(days)) return this;
+
+    const now = new Date();
+
+    this.queryModel = this.queryModel.find({
+      event_start: {
+        $gte: now,
+        $lte: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
+      },
+    });
+
     return this;
   }
 
@@ -48,6 +66,52 @@ export class QueryBuilder<T> {
   select(): this {
     const fields = this.query.fields?.split(',').join(' ') || ''; // ex: "title description price" or "title,description,price"
     this.queryModel = this.queryModel.select(fields);
+    return this;
+  }
+
+  // Events by Category
+  category(): this {
+    const categoryId = this.query.category;
+    if (!categoryId) {
+      return this;
+    }
+
+    this.queryModel = this.queryModel.find({ category: categoryId });
+
+    return this;
+  }
+
+  // Geospatial Querying - nearby
+  nearby(userCurrentPosition: ICoord): this {
+    if (
+      !userCurrentPosition ||
+      userCurrentPosition.lat == null ||
+      userCurrentPosition.long == null
+    ) {
+      return this;
+    }
+
+    const maxDistance = Number(this.query.nearby); // meters
+
+    if (!maxDistance || maxDistance <= 0) {
+      return this;
+    }
+
+    // Use $nearSphere inside find() condition
+    const nearbyCondition = {
+      location: {
+        $nearSphere: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [userCurrentPosition.long, userCurrentPosition.lat],
+          },
+          $maxDistance: maxDistance,
+        },
+      },
+    };
+
+    this.queryModel = this.queryModel.find(nearbyCondition);
+
     return this;
   }
 
