@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema<IUser>(
     fcmToken: { type: String },
     phone: { type: String },
     interests: [{ type: String }],
+    instagramHandle: { type: String },
     isActive: {
       type: String,
       enum: [...Object.values(IsActive)],

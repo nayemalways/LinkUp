@@ -116,7 +116,7 @@ const userUpdateService = async (
     decodedToken.role === Role.ORGANIZER
   ) {
 
-    const allowedUpdates = [ 'fullName', 'avatar', 'gender', 'phone', 'interests', 'coord', 'fcmToken'];
+    const allowedUpdates = [ 'fullName', 'avatar', 'gender', 'phone', 'interests', 'coord', 'fcmToken', 'bio' ];
 
     Object.keys(payload).forEach((key) => {
       if (!allowedUpdates.includes(key)) {

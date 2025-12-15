@@ -31,6 +31,7 @@ export interface IUser {
   password?: string;
   gender?: string;
   fcmToken?: string;
+  instagramHandle?: string;
   role: Role;
   phone?: string;
   interests: string[];
