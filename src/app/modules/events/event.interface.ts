@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { ICoord } from '../users/user.interface';
+
 
 export enum EventStatus {
   ACTIVE = 'ACTIVE',
@@ -18,9 +18,18 @@ export enum EventVisibility {
   PRIVATE = 'PRIVATE',
 }
 
+export enum LocationType {
+  POINT = 'Point'
+}
+
+export interface ILocation {
+  type: LocationType,
+  coordinates: number[];
+}
+
 export interface IEvent {
   host: Types.ObjectId;
-  co_hosts?: Types.ObjectId;
+  co_host?: Types.ObjectId;
   category: Types.ObjectId;
   reviews?: Types.ObjectId;
   title: string;
@@ -38,7 +47,7 @@ export interface IEvent {
   age_limit: number;
   avg_rating: number;
   visibility: EventVisibility;
-  coord?: ICoord;
+  location?: ILocation;
   address: {
     city: string;
     state: string;

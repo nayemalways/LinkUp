@@ -1,34 +1,41 @@
 /* eslint-disable no-console */
 // -------------Chat GPT Code-----------------------
-import { StatusCodes } from "http-status-codes";
-import { IEvent } from "../../modules/events/event.interface";
-import Event from "../../modules/events/event.model";
-import Group from "../../modules/groups/group.model";
-import User from "../../modules/users/user.model";
-import { JwtPayload } from "jsonwebtoken";
-import { deleteImageFromCLoudinary } from "../../config/cloudinary.config";
-import AppError from "../../errorHelpers/AppError";
-import { addressToLongLat } from "../../utils/geocodeConvert.utils";
-import FriendRequest from "../friends/friend.model";
-import { RequestStatus } from "../friends/friend.interface";
-import { sendFriendsNotification } from "../../utils/notificationsendhelper/friends.notification.utils";
-import { NotificationType } from "../notifications/notification.interface";
-import { QueryBuilder } from "../../utils/QueryBuilder";
-
+import { StatusCodes } from 'http-status-codes';
+import { IEvent, LocationType } from '../../modules/events/event.interface';
+import Event from '../../modules/events/event.model';
+import Group from '../../modules/groups/group.model';
+import User from '../../modules/users/user.model';
+import { JwtPayload } from 'jsonwebtoken';
+import { deleteImageFromCLoudinary } from '../../config/cloudinary.config';
+import AppError from '../../errorHelpers/AppError';
+import { addressToLongLat } from '../../utils/geocodeConvert.utils';
+import FriendRequest from '../friends/friend.model';
+import { RequestStatus } from '../friends/friend.interface';
+import { sendFriendsNotification } from '../../utils/notificationsendhelper/friends.notification.utils';
+import { NotificationType } from '../notifications/notification.interface';
+import { QueryBuilder } from '../../utils/QueryBuilder';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
   // If host is not verified
   if (!user.isVerified) {
     payload.images?.forEach((image) => deleteImageFromCLoudinary(image));
-    throw new AppError(StatusCodes.FORBIDDEN, "Please verify your profile!");
+    throw new AppError(StatusCodes.FORBIDDEN, 'Please verify your profile!');
+  }
+
+  if (!payload.category) {
+    payload.images?.forEach((image) => deleteImageFromCLoudinary(image));
+    throw new AppError(StatusCodes.NOT_FOUND, 'Category must be include!');
   }
 
   // => Check for duplicate event title
   const existingEvent = await Event.findOne({ title: payload.title });
   if (existingEvent) {
     payload.images?.forEach((image) => deleteImageFromCLoudinary(image));
-    throw new AppError(StatusCodes.BAD_REQUEST, "An event already exists with this title!");
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'An event already exists with this title!'
+    );
   }
 
   // => -----Geocode address-------
@@ -36,11 +43,15 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
   const coord = await addressToLongLat(addressLine);
 
   if (!coord.lat || !coord.long) {
-    payload.images.forEach(image => deleteImageFromCLoudinary(image));
-    throw new AppError(StatusCodes.BAD_REQUEST, "Coord is empty");
+    payload.images.forEach((image) => deleteImageFromCLoudinary(image));
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Coord is empty');
   }
- 
-  payload.coord = coord;
+  const location = {
+    type: LocationType.POINT,
+    coordinates: [coord.long, coord.lat],
+  };
+
+  payload.location = location;
   payload.host = user.userId;
 
   // => -------Create event & chat group in parallel--------
@@ -49,7 +60,7 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
     Group.create({
       group_admin: user.userId,
       group_name: `Event: ${payload.title} Chat Group`,
-      group_image: payload.images?.[0] || "",
+      group_image: payload.images?.[0] || '',
       group_members: [user.userId],
       group_description: `This is the chat group for the event: ${payload.title}`,
     }),
@@ -62,7 +73,7 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
   // => Send notifications asynchronously (fire-and-forget) <=
   (async () => {
     try {
-      // Get -request accepted friends
+      // Get -accepted friends
       const friends = await FriendRequest.find({
         $or: [
           { sender: user.userId, status: RequestStatus.ACCEPTED },
@@ -70,8 +81,10 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
         ],
       });
 
-      const friendIds = friends.map(fr => (fr.sender.toString() === user.userId ? fr.receiver : fr.sender));
-      const host = await User.findById(user.userId).select("fullName avatar");
+      const friendIds = friends.map((fr) =>
+        fr.sender.toString() === user.userId ? fr.receiver : fr.sender
+      );
+      const host = await User.findById(user.userId).select('fullName avatar');
 
       await sendFriendsNotification({
         title: `Your friend - ${host?.fullName} just created an Event!`,
@@ -80,11 +93,11 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
         description: `${createEvent.title} is created. Tap to see details.`,
         data: {
           eventId: createEvent._id,
-          image: host?.avatar || "",
+          image: host?.avatar || '',
         },
       });
     } catch (err) {
-      console.error("Failed to send event notifications:", err);
+      console.error('Failed to send event notifications:', err);
     }
   })();
 
@@ -94,19 +107,18 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
 
 // GET EVENTS SERVICE
 const getEventsService = async (query: Record<string, string>) => {
- 
   const qeuryBuilder = new QueryBuilder(Event.find(), query);
   return await qeuryBuilder
-                                    .filter()
-                                    .textSearch()
-                                    .sort()
-                                    .select()
-                                    .paginate()
-                                    .join().build();
-}
-
+    .filter()
+    .textSearch()
+    .sort()
+    .select()
+    .paginate()
+    .join()
+    .build();
+};
 
 export const eventServices = {
   createEventService,
-  getEventsService
+  getEventsService,
 };
