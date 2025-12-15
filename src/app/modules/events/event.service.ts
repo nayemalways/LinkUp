@@ -14,6 +14,7 @@ import { RequestStatus } from '../friends/friend.interface';
 import { sendFriendsNotification } from '../../utils/notificationsendhelper/friends.notification.utils';
 import { NotificationType } from '../notifications/notification.interface';
 import { QueryBuilder } from '../../utils/QueryBuilder';
+import { ICoord } from '../users/user.interface';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
@@ -106,16 +107,33 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
 };
 
 // GET EVENTS SERVICE
-const getEventsService = async (query: Record<string, string>) => {
+const getEventsService = async (
+  _user: JwtPayload,
+  query: Record<string, string>
+) => {
+  const user = await User.findById(_user.userId);
+
+  // Query Builder
   const qeuryBuilder = new QueryBuilder(Event.find(), query);
-  return await qeuryBuilder
+  const events = await qeuryBuilder
+    .nearby(user?.coord as ICoord)
     .filter()
+    .category()
     .textSearch()
+    .dateFilter()
     .sort()
     .select()
     .paginate()
     .join()
     .build();
+
+  // Meta data
+  const metaData = await qeuryBuilder.getMeta();
+
+  return {
+    events,
+    metaData,
+  };
 };
 
 export const eventServices = {

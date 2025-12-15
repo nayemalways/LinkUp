@@ -6,6 +6,7 @@ import { multerUpload } from "../../config/multer.config";
 import { checkAuth } from "../../middlewares/auth.middleware";
 import { Role } from "../users/user.interface";
 
+
 const router = Router();
 
 router.post(
@@ -16,7 +17,7 @@ router.post(
   eventControllers.createEvent       
 );
 
-router.get('/', eventControllers.getEvents);
+router.get('/', checkAuth(...Object.keys(Role)),  eventControllers.getEvents);
 
 
 export const eventRouter = router;
