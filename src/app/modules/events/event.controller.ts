@@ -51,8 +51,8 @@ const getEvents = CatchAsync(
 const getSingleEvent = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
-    const { eventId } = req.params;
-
+    const eventId  = req.params?.eventId;
+    
     const result = await eventServices.getSingleEventService(user, eventId );
 
     SendResponse(res, {

@@ -138,6 +138,11 @@ const getEventsService = async (
 
 // GET SINGLE EVENT SERVICE
 const getSingleEventService = async (_user: JwtPayload, eventId: string) => {
+
+  if (!eventId) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Event id required!");
+  }
+
   const user = await User.findById(_user.userId);
   if (!user) {
     throw new AppError(StatusCodes.BAD_REQUEST, "User not found!");
