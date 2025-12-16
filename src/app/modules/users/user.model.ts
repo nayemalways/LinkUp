@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { IAuthProvider, IsActive, IUser, Role } from './user.interface';
 import bcrypt from 'bcrypt';
 import env from '../../config/env';
@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema<IUser>(
     gender: { type: String },
     fcmToken: { type: String },
     phone: { type: String },
-    interests: [{ type: String }],
+    interests: [{ type: Types.ObjectId }],
     instagramHandle: { type: String },
     isActive: {
       type: String,

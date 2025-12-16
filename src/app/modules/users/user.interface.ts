@@ -35,7 +35,7 @@ export interface IUser {
   instagramHandle?: string;
   role: Role;
   phone?: string;
-  interests: string[];
+  interests?: Types.ObjectId[];
   isActive?: IsActive;
   isDeleted?: boolean;
   isVerified?: boolean;
