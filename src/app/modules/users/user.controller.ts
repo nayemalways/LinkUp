@@ -36,8 +36,13 @@ const getMe = CatchAsync(async (req: Request, res: Response) => {
 // USER UPDATE
 const userUpdate = CatchAsync(async (req: Request, res: Response) => {
   const userId = req.params.userId;
-  const payload = req.body;
+  const body = req.body;
   const decodedToken = req.user as JwtPayload;
+
+  const payload = {
+    ...body,
+    avatar: req.file?.path as string
+  }
 
   const result = await userServices.userUpdateService(userId, payload, decodedToken);
 

@@ -6,12 +6,18 @@ export const userZodSchema = z.object({
   fullName: z
     .string({ error: 'Name must be string type!' })
     .min(3, 'Name must be at least 3 characters!')
-    .max(100, 'Name must be maximum 100 characters! '),
+    .max(100, 'Name must be maximum 100 characters!')
+    .optional(),
+  organizationName: z
+    .string({ error: 'Organization name must be string type!' })
+    .min(3, 'Organization name must be at least 3 characters!')
+    .max(100, 'Organization name must be maximum 100 characters!')
+    .optional(),
   email: z.string().email(),
-  phone: z.
-        string({message: 'Phone number must be string type!'})
-        .regex(/^\+[1-9]\d{7,14}$/, {error: "Invalid phone number format!"})
-        .optional(),
+  phone: z
+    .string({ message: 'Phone number must be string type!' })
+    .regex(/^\+[1-9]\d{7,14}$/, { error: 'Invalid phone number format!' })
+    .optional(),
   password: z
     .string({ error: 'Password shuld be string type!' })
     .min(6, 'Password length shuld be at least 6!')
@@ -27,22 +33,32 @@ export const userZodSchema = z.object({
 // Update Schema
 export const userUpdateZodSchema = z.object({
   fullName: z
-    .string({ error: 'Name must be string type!' })
-    .min(3, 'Name must be at least 3 characters!')
-    .max(100, 'Name must be maximum 100 characters! '),
-  phone: z.string({message: 'Phone number must be string type!'}).optional(),
+    .string({ error: 'Full name must be string type!' })
+    .min(3, 'Full name must be at least 3 characters!')
+    .max(100, 'Full name must be maximum 100 characters!')
+    .optional(),
+  organizationName: z
+    .string({ error: 'Organization name must be string type!' })
+    .min(3, 'Organization name must be at least 3 characters!')
+    .max(100, 'Organization name must be maximum 100 characters!')
+    .optional(),
+  phone: z.string({ message: 'Phone number must be string type!' }).optional(),
   avatar: z.string({ error: 'Image should be string' }).optional(),
-  gender: z.enum(['male', 'female', 'other']),
-  fcmToken: z.string("FCM token must be in string type!"),
-  role: z.enum([Role.USER, Role.ADMIN, Role.ORGANIZER]),
+  gender: z.enum(['male', 'female', 'other']).optional(),
+  fcmToken: z.string('FCM token must be in string type!').optional(),
+  role: z.enum([Role.USER, Role.ADMIN, Role.ORGANIZER]).optional(),
   interests: z.array(z.string()).optional(),
-  isActive: z.enum([IsActive.ACTIVE, IsActive.INACTIVE, IsActive.BLOCKED]).optional(),
+  isActive: z
+    .enum([IsActive.ACTIVE, IsActive.INACTIVE, IsActive.BLOCKED])
+    .optional(),
   isDeleted: z.boolean().optional(),
   isVerified: z.boolean().optional(),
-  coord: z.object({
-    lat: z.number(),
-    long: z.number(),
-  }).optional()
+  coord: z
+    .object({
+      lat: z.number(),
+      long: z.number(),
+    })
+    .optional(),
 });
 
 export const passwordZodSchema = z.object({
@@ -52,7 +68,5 @@ export const passwordZodSchema = z.object({
     .regex(/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/, {
       message:
         'Password must be at least 1 uppercase character, 1 special charater, 1 number!',
-    })
-})
-
- 
+    }),
+});

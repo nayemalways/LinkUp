@@ -24,7 +24,8 @@ export interface ICoord {
 
 export interface IUser {
   _id?: Types.ObjectId;
-  fullName: string;
+  fullName?: string;
+  organizationName?: string;
   email: string;
   bio?: string;
   avatar?: string;

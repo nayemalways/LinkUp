@@ -5,14 +5,15 @@ import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
 import { validatePhone } from '../../utils/phoneNumberValidatior';
+import { Types } from 'mongoose';
 
 
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
   const { email, ...rest } = payload;
-  const isUser = await User.findOne({ email });
 
+  const isUser = await User.findOne({ email });
   if (isUser) {
     throw new AppError(400, 'User aleready exist. Please login!');
   }
@@ -29,8 +30,11 @@ const createUserService = async (payload: Partial<IUser>) => {
     ...rest,
   };
 
+  if (payload.role === Role.ORGANIZER) {
+    userPayload.role = Role.ORGANIZER
+  }
+
   const creatUser = await User.create(userPayload); // Create user
-  // creatUser.password = undefined; // prevent password unveiling
   return creatUser;
 };
 
@@ -52,6 +56,7 @@ const userUpdateService = async (
   decodedToken: JwtPayload
 ) => {
   const user = await User.findById(userId);
+
   if (!user) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
   }
@@ -128,8 +133,9 @@ const userUpdateService = async (
     });
   }
 
+
   // Update User
-  const updatedUser = await User.findByIdAndUpdate(userId, payload, {
+  const updatedUser = await User.findByIdAndUpdate(new Types.ObjectId(userId), payload, {
     new: true,
     runValidators: true,
   });
