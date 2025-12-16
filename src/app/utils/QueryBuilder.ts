@@ -12,7 +12,7 @@ export class QueryBuilder<T> {
     this.query = query;
   }
 
-  // Case Sensitive filtering
+  // CASE SENSITIVE FILTERING
   filter(): this {
     const filter = { ...this.query };
     for (const value of excludeField) {
@@ -40,7 +40,7 @@ export class QueryBuilder<T> {
     return this;
   }
 
-  // Text Based Searching on - title, description, venue
+  // TEXT BASED SEARCH ON - title, description, venue
   textSearch(): this {
     const searchTerm = this.query.searchTerm;
     if (!searchTerm) return this;
@@ -55,21 +55,14 @@ export class QueryBuilder<T> {
     return this;
   }
 
-  // Sorting
-  sort(): this {
-    const sort = this.query.sort || '-createdAt'; // ex: title, or -title
-    this.queryModel = this.queryModel.sort(sort);
-    return this;
-  }
-
-  // Field filtering
+  // FIELD FILTERING
   select(): this {
     const fields = this.query.fields?.split(',').join(' ') || ''; // ex: "title description price" or "title,description,price"
     this.queryModel = this.queryModel.select(fields);
     return this;
   }
 
-  // Events by Category
+  // EVENTS BY CATEGORY
   category(): this {
     const categoryId = this.query.category;
     if (!categoryId) {
@@ -81,7 +74,7 @@ export class QueryBuilder<T> {
     return this;
   }
 
-  // Geospatial Querying - nearby
+  // NEARBY EVENT QUERY
   nearby(userCurrentPosition: ICoord): this {
     if (
       !userCurrentPosition ||
@@ -115,7 +108,14 @@ export class QueryBuilder<T> {
     return this;
   }
 
-  // Pagination
+   // SORTING
+  sort(): this {
+    const sort = this.query.sort || '-createdAt'; // ex: title, or -title
+    this.queryModel = this.queryModel.sort(sort);
+    return this;
+  }
+
+  // PAGINATION
   paginate(): this {
     const page = Number(this.query.page) || 1;
     const limit = Number(this.query.limit) || 10;
@@ -125,7 +125,7 @@ export class QueryBuilder<T> {
     return this;
   }
 
-  // Join Collection Dynamically
+  // JOIN COLLECTION DYNAMICALLY
   join(): this {
     const joinQuery = this.query?.join;
 
@@ -142,7 +142,7 @@ export class QueryBuilder<T> {
     return this;
   }
 
-  // Final build instance
+  // FINALLY BUILD THE INSTANCE
   build() {
     return this.queryModel;
   }

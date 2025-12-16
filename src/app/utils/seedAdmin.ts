@@ -21,7 +21,6 @@ export const adminCreate = async () => {
       email: env?.ADMIN_GMAIL,
       password: env?.ADMIN_PASSWORD,
       role: Role.ADMIN,
-      interests: ["Hiking", "Biking", "Adventures"],
       auths: [authProvider],
     };
 
