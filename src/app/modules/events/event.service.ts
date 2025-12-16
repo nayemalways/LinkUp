@@ -136,7 +136,23 @@ const getEventsService = async (
   };
 };
 
+// GET SINGLE EVENT SERVICE
+const getSingleEventService = async (_user: JwtPayload, eventId: string) => {
+  const user = await User.findById(_user.userId);
+  if (!user) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "User not found!");
+  }
+
+  const event = await Event.findById(eventId).populate("host").populate("category").populate("co_host");
+  if (!event) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "No event found!");
+  }
+
+  return event;
+};
+
 export const eventServices = {
   createEventService,
   getEventsService,
+  getSingleEventService
 };

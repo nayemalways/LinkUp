@@ -18,6 +18,7 @@ router.post(
 );
 
 router.get('/', checkAuth(...Object.keys(Role)),  eventControllers.getEvents);
+router.get('/:eventId', checkAuth(...Object.keys(Role)),  eventControllers.getSingleEvent);
 
 
 export const eventRouter = router;

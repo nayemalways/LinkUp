@@ -39,8 +39,26 @@ const getEvents = CatchAsync(
 
     SendResponse(res, {
       success: true,
-      statusCode: StatusCodes.CREATED,
+      statusCode: StatusCodes.OK,
       message: 'Event fetched successfully!',
+      data: result,
+    });
+  }
+);
+
+
+// GET EVENT CONTROLLER
+const getSingleEvent = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { eventId } = req.params;
+
+    const result = await eventServices.getSingleEventService(user, eventId );
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Event details fetched successfully!',
       data: result,
     });
   }
@@ -49,4 +67,5 @@ const getEvents = CatchAsync(
 export const eventControllers = {
   createEvent,
   getEvents,
+  getSingleEvent
 };
