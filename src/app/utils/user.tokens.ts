@@ -2,11 +2,18 @@ import { JwtPayload } from 'jsonwebtoken';
 import env from '../config/env';
 import { generateToken } from './jwt';
 
+export interface CustomJwtPayload extends JwtPayload {
+  userId: string;
+  email: string;
+  role: string;
+}
+
 export const createUserTokens = async (user: JwtPayload) => {
   const jwtPayload = {
     userId: user?._id,
     email: user?.email,
     role: user?.role,
+    isVerified: user?.isVerified
   };
 
   // Jsonwebtoken

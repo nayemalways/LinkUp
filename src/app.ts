@@ -10,9 +10,16 @@ import env from './app/config/env';
 import expressSession from 'express-session';
 import passport from 'passport';
 import './app/config/passport.config';
+import http from "http";
+import { initSocket } from './app/socket';
 
 const app = express();
+const server =  http.createServer(app);
 
+// Init Socket connection
+initSocket(server);
+
+app.set('trust proxy', 1);
 app.use(
   expressSession({
     secret: env.EXPRESS_SESSION_SECRET,
@@ -46,6 +53,7 @@ app.get('/', (req: Request, res: Response) => {
   res.send('<h1>Congratulations! Your server is running hoohhuh😍</h1>');
 });
 
+
 // GLOBAL ROUTES
 app.use('/api/v1', router);
 
@@ -55,4 +63,4 @@ app.use(globalErrorHandler);
 // NO ROUTE MATCH
 app.use(NotFound);
 
-export default app;
+export default server;

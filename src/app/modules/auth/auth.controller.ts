@@ -1,44 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from 'express';
 import { CatchAsync } from '../../utils/CatchAsync';
 import passport from 'passport';
 import AppError from '../../errorHelpers/AppError';
-import httpStatus from 'http-status-codes';
-import { SetCookies } from '../../utils/setCookie';
+import httpStatus, { StatusCodes } from 'http-status-codes';
 import { createUserTokens } from '../../utils/user.tokens';
-import { JwtPayload } from 'jsonwebtoken';
-import env from '../../config/env';
 import { SendResponse } from '../../utils/SendResponse';
+import { authService } from './auth.service';
+import { JwtPayload } from 'jsonwebtoken';
 
-const googleRegister = CatchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const redirect = (req.query?.redirect as string) || '/';
-
-    passport.authenticate('google', {
-      scope: ['profile', 'email'],
-      state: redirect,
-      prompt: 'consent select_account',
-    })(req, res, next);
-  }
-);
-
-const googleCallback = CatchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    let redirectTo = req.query.state ? (req.query.state as string) : '';
-    if (redirectTo.startsWith('/')) {
-      redirectTo = redirectTo.slice(1);
-    }
-
-    const user = req.user as JwtPayload;
-    if (!user) throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
-
-    const token = await createUserTokens(user);
-    SetCookies(res, token);
-    res.redirect(`${env.FRONTEND_URL}/${redirectTo}`); // Redirected to frontend url (With specific Routes)
-  }
-);
-
+ // Login User
 const credentialsLogin = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate('local', async (err: any, user: any, info: any) => {
@@ -49,26 +20,79 @@ const credentialsLogin = CatchAsync(
       }
 
       const userTokens = await createUserTokens(user);
-      SetCookies(res, userTokens);
 
       SendResponse(res, {
         success: true,
         statusCode: httpStatus.OK,
         message: 'Login success',
-        data: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          isVerified: user.isVerified,
-        },
+        data: userTokens
       });
     })(req, res, next);
   }
 );
 
+// GET NEW ACCESS TOKEN
+const getNeAccessToken = CatchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  const result = await authService.getNewAccessTokenService(refreshToken);
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "New accessToken generated!",
+    data: result
+  })
+
+})
+
+// CHANGE PASSWORD
+const changePassword = CatchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user as JwtPayload;
+  const { oldPassword, newPassword } = req.body;
+  const result = await authService.changePasswordService(userId, {oldPassword, newPassword});
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Password has been changed!",
+    data: result
+  })
+
+})
+
+// FORGET PASSWORD
+const forgetPassword = CatchAsync(async (req: Request, res: Response) => {
+  const { email } = req.params;
+  const result = await authService.forgetPasswrodService( email );
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Password reset OTP send to your email!",
+    data: result
+  })
+
+})
+
+// RESET PASSWORD
+const resetPassword = CatchAsync(async (req: Request, res: Response) => {
+  const { email, otp } = req.params;
+  const { newPassword } = req.body;
+  const result = await authService.resetPasswordService( email, otp, newPassword );
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Password reset success!",
+    data: result
+  })
+
+})
+
 export const authController = {
-  googleRegister,
-  googleCallback,
   credentialsLogin,
+  getNeAccessToken,
+  changePassword,
+  forgetPassword,
+  resetPassword
 };

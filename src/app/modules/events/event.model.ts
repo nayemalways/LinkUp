@@ -4,12 +4,13 @@ import {
   EventStatus,
   Featured,
   EventVisibility,
+  LocationType,
 } from './event.interface';
 
 const eventSchema = new mongoose.Schema<IEvent>(
   {
     host: { type: Schema.Types.ObjectId, required: true, ref: 'user' },
-    co_hosts: { type: Schema.Types.ObjectId, ref: 'user' },
+    co_host: { type: Schema.Types.ObjectId, ref: 'user' },
     category: { type: Schema.Types.ObjectId, required: true, ref: 'category' },
     reviews: { type: Schema.Types.ObjectId, ref: 'review' },
     title: { type: String, required: true },
@@ -23,13 +24,13 @@ const eventSchema = new mongoose.Schema<IEvent>(
     event_status: {
       type: String,
       enum: [...Object.values(EventStatus)],
+      default: EventStatus.ACTIVE,
       required: true
-          },
+      },
     featured: {
       type: String,
-      enum: [...Object.values(Featured)],
-      required: true
-        },
+      enum: [...Object.values(Featured)]
+      },
     price: { type: Number, required: true },
     max_attendence: { type: Number },
     age_limit: { type: Number },
@@ -39,7 +40,16 @@ const eventSchema = new mongoose.Schema<IEvent>(
       enum: [...Object.values(EventVisibility)],
       required: true,
     },
-    coord: { type: { lat: { type: Number }, long: { type: Number } } },
+    location: { type: {
+      type: String,
+      enum: [...Object.values(LocationType)],
+      required: true
+    },
+    coordinates: {
+      type: [Number],
+      required: true
+    }
+  },
     address: {
       city: { type: String  },
       state: { type: String },
@@ -53,6 +63,17 @@ const eventSchema = new mongoose.Schema<IEvent>(
   }
 );
 
-const Event = mongoose.model<IEvent>('event', eventSchema);
+// Indexing through search field
+eventSchema.index({
+  title: 'text',
+  description: 'text',
+  venue: 'text',
+  'address.city': 'text'
+});
 
+// 2dsphere indexing
+eventSchema.index({ location: '2dsphere'});
+
+
+const Event = mongoose.model<IEvent>('event', eventSchema);
 export default Event;

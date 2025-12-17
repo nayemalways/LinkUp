@@ -13,9 +13,16 @@ interface EnvInterfaces {
 
   FRONTEND_URL: string;
 
+  AUTH_TOKEN: string;
+  ACCOUNT_SID: string;
+  TRIAL_PHONE_NUMBER: string;
+
   CLOUDINARY_SECRET: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_NAME: string;
+
+  ADMIN_GMAIL: string;
+  ADMIN_PASSWORD: string;
 
   REDIS_HOST: string;
   REDIS_PORT: string;
@@ -35,6 +42,19 @@ interface EnvInterfaces {
   GOOGLE_CALLBACK_URL: string;
 
   EXPRESS_SESSION_SECRET: string;
+  BACKEND_URL: string;
+
+  TYPE: string;
+  PROJECT_ID: string;
+  PRIVATE_KEY_ID: string;
+  PRIVATE_KEY: string;
+  CLIENT_EMAIL: string;
+  CLIENT_ID: string;
+  AUTH_URI: string;
+  TOKEN_URI: string;
+  AUTH_PROVIDER_X509_CERT_URL: string;
+  CLIENT_X509_CERT_URL: string;
+  UNIVERSE_DOMAIN: string;
 }
 
 const loadEnvVarbles = (): EnvInterfaces => {
@@ -51,9 +71,16 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     'FRONTEND_URL',
 
+    'ACCOUNT_SID',
+    'AUTH_TOKEN',
+    'TRIAL_PHONE_NUMBER',
+
     'CLOUDINARY_NAME',
     'CLOUDINARY_SECRET',
     'CLOUDINARY_API_KEY',
+
+    'ADMIN_PASSWORD',
+    'ADMIN_GMAIL',
 
     'REQUEST_RATE_LIMIT',
     'REQUEST_RATE_LIMIT_TIME',
@@ -72,6 +99,19 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'GOOGLE_CALLBACK_URL',
 
     'EXPRESS_SESSION_SECRET',
+    'BACKEND_URL',
+    
+    'TYPE',
+    'PROJECT_ID',
+    'PRIVATE_KEY_ID',
+    'PRIVATE_KEY',
+    'CLIENT_EMAIL',
+    'CLIENT_ID',
+    'AUTH_URI',
+    'TOKEN_URI',
+    'AUTH_PROVIDER_X509_CERT_URL',
+    'CLIENT_X509_CERT_URL',
+    'UNIVERSE_DOMAIN',
   ];
 
   requireEnvVariables.forEach((KEY) => {
@@ -93,9 +133,16 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     FRONTEND_URL: process.env.FRONTEND_URL as string,
 
+    AUTH_TOKEN: process.env.AUTH_TOKEN as string,
+    ACCOUNT_SID: process.env.ACCOUNT_SID as string,
+    TRIAL_PHONE_NUMBER: process.env.TRIAL_PHONE_NUMBER as string,
+
     CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET as string,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
     CLOUDINARY_NAME: process.env.CLOUDINARY_NAME as string,
+
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD as string,
+    ADMIN_GMAIL: process.env.ADMIN_GMAIL as string,
 
     REQUEST_RATE_LIMIT_TIME: Number(
       process.env.REQUEST_RATE_LIMIT_TIME
@@ -117,6 +164,19 @@ const loadEnvVarbles = (): EnvInterfaces => {
     GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
 
     EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET as string,
+    BACKEND_URL: process.env.BACKEND_URL as string,
+
+    TYPE: process.env.TYPE as string,
+    PROJECT_ID: process.env.PROJECT_ID as string,
+    PRIVATE_KEY_ID: process.env.PRIVATE_KEY_ID as string,
+    PRIVATE_KEY: process.env.PRIVATE_KEY as string,
+    CLIENT_EMAIL: process.env.CLIENT_EMAIL as string,
+    CLIENT_ID: process.env.CLIENT_ID as string,
+    AUTH_URI: process.env.AUTH_URI as string,
+    TOKEN_URI: process.env.TOKEN_URI as string,
+    AUTH_PROVIDER_X509_CERT_URL: process.env.AUTH_PROVIDER_X509_CERT_URL as string,
+    CLIENT_X509_CERT_URL: process.env.CLIENT_X509_CERT_URL as string,
+    UNIVERSE_DOMAIN: process.env.UNIVERSE_DOMAIN as string,
   };
 };
 

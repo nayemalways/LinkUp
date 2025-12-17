@@ -2,6 +2,10 @@ import { model, Schema } from "mongoose";
 import { IGroup } from "./group.interface";
 
 const groupSchema = new Schema<IGroup>({
+    event: {
+        type: Schema.Types.ObjectId,
+        ref: 'Event'
+    },
     group_admin: {
         type: Schema.Types.ObjectId,
         ref: 'User',
@@ -22,9 +26,6 @@ const groupSchema = new Schema<IGroup>({
     group_description: {
         type: String,
         required: true
-    },
-    media: {
-        type: [String]
     }
 }, { timestamps: true , versionKey: false});
 

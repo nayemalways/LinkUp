@@ -1,72 +1,200 @@
 import AppError from '../../errorHelpers/AppError';
-import { IAuthProvider, IUser } from './user.interface';
+import { IAuthProvider, IUser, Role } from './user.interface';
 import User from './user.model';
-import { sendEmail } from '../../utils/sendMail';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
+import { StatusCodes } from 'http-status-codes';
+import { JwtPayload } from 'jsonwebtoken';
+import { validatePhone } from '../../utils/phoneNumberValidatior';
+import { Types } from 'mongoose';
 
+// CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
   const { email, ...rest } = payload;
-  const isUser = await User.findOne({ email });
 
+  const isUser = await User.findOne({ email });
   if (isUser) {
-    throw new AppError(400, 'User aleready exist with this email!');
+    throw new AppError(400, 'User aleready exist. Please login!');
   }
 
+  // Save User Auth
   const authUser: IAuthProvider = {
     provider: 'credentials',
     providerId: payload.email as string,
   };
 
-  const generateOTP = randomOTPGenerator(1000, 9999);
-
   const userPayload = {
     email,
     auths: authUser,
-    otp: generateOTP,
-
     ...rest,
   };
 
-  const creatUser = await User.create(userPayload);
+  if (payload.organizationName) {
+    userPayload.role = Role.ORGANIZER;
+  }
 
-  // Send OTP to verify
-  // sendEmail({
-  //   to: creatUser.email,
-  //   subject: 'User verify OTP',
-  //   templateName: 'otp',
-  //   templateData: {
-  //     name: creatUser.name,
-  //     otp: creatUser.otp,
-  //   },
-  // });
-
-  // Reset user OTP after 2 min
-  setTimeout(
-    async () => {
-      creatUser.otp = '0';
-      creatUser.save();
-    },
-    1000 * 60 * 2
-  );
-
-  // Delete User if he is not verified within __ time
-  setTimeout(
-    async () => {
-      if (!creatUser.isVerified) {
-        await User.findByIdAndDelete(creatUser._id);
-      }
-    },
-    1000 * 60 * 60 * 24
-  );
-
-  return {
-    _id: creatUser._id,
-    name: creatUser.name,
-    email: creatUser.email,
-    role: creatUser.role,
-  };
+  const creatUser = await User.create(userPayload); // Create user
+  return creatUser;
 };
 
+// GET ME
+const getMeService = async (userId: string) => {
+  const user = await User.aggregate([
+    // Stage 1: Matching
+    { $match: { _id: new Types.ObjectId(userId) } },
+
+    // Stage 2: Join with interests
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'interests',
+        foreignField: '_id',
+        as: 'interest',
+      },
+    },
+
+    // Projection
+    {
+      $project: {
+        password: 0, 
+        interests: 0,  
+      },
+    },
+  ]);
+
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+
+  return user;
+};
+
+// USER UPDATE
+const userUpdateService = async (
+  userId: string,
+  payload: Partial<IUser>,
+  decodedToken: JwtPayload
+) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
+  }
+
+  // USER & ORGANIZER can ONLY update their own profile - Only admin can update others
+  if (
+    (decodedToken.role === Role.USER || decodedToken.role === Role.ORGANIZER) &&
+    decodedToken.userId !== userId
+  ) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'You can only update your own profile'
+    );
+  }
+
+  // Block password update from this route
+  if (payload.password) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "You can't update your password from this route!"
+    );
+  }
+
+  // Phone number validation by - E.164 Rules
+  if (payload.phone) {
+    validatePhone(payload.phone);
+  }
+
+  // Role update protection
+  if (payload.role) {
+    if (
+      decodedToken.role === Role.USER ||
+      decodedToken.role === Role.ORGANIZER
+    ) {
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to update roles!'
+      );
+    }
+  }
+
+  // USER & ORGANIZER cannot update isActive, isDeleted, isVerified
+  if (
+    payload?.isActive !== undefined ||
+    payload?.isDeleted !== undefined ||
+    payload?.isVerified !== undefined
+  ) {
+    if (
+      decodedToken.role === Role.USER ||
+      decodedToken.role === Role.ORGANIZER
+    ) {
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to update account status!'
+      );
+    }
+  }
+
+  // FIELD WHITELISTING for USER & ORGANIZER
+  if (decodedToken.role === Role.USER || decodedToken.role === Role.ORGANIZER) {
+    const allowedUpdates = [
+      'fullName',
+      'avatar',
+      'gender',
+      'phone',
+      'interests',
+      'coord',
+      'fcmToken',
+      'bio',
+      'instagramHandle',
+    ];
+
+    Object.keys(payload).forEach((key) => {
+      if (!allowedUpdates.includes(key)) {
+        throw new AppError(
+          StatusCodes.FORBIDDEN,
+          `You are not allowed to update: ${key}`
+        );
+      }
+    });
+  }
+
+  // Update User
+  const updatedUser = await User.findByIdAndUpdate(
+    new Types.ObjectId(userId),
+    payload,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  return updatedUser;
+};
+
+const userDeleteService = async (userId: string, decodedToken: JwtPayload) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
+  }
+
+  if (user.isDeleted) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User already deleted!');
+  }
+
+  const allowedRoles = [Role.ADMIN];
+
+  if (!allowedRoles.includes(decodedToken.role)) {
+    if (decodedToken.userId !== userId) {
+      throw new AppError(StatusCodes.FORBIDDEN, "You can't delete others!");
+    }
+  }
+
+  user.isDeleted = true;
+  await user.save();
+
+  return null;
+};
+
+// VERIFY USER
 const verifyUserService = async (email: string, otp: string) => {
   if (!email || !otp) {
     throw new AppError(400, 'OTP required!');
@@ -77,9 +205,9 @@ const verifyUserService = async (email: string, otp: string) => {
     throw new AppError(400, 'User not found by this email!');
   }
 
-  if (isUser.otp !== otp || otp.length < 4) {
-    throw new AppError(400, 'Invalid OTP!');
-  }
+  // if (isUser.otp !== otp || otp.length < 4) {
+  //   throw new AppError(400, 'Invalid OTP!');
+  // }
 
   const updateUser = await User.findOneAndUpdate(
     { email },
@@ -101,6 +229,7 @@ const verifyUserService = async (email: string, otp: string) => {
   return updateUser;
 };
 
+// RESEND OTP
 const resendOTPService = async (email: string) => {
   if (!email) {
     throw new AppError(400, 'Email required!');
@@ -136,22 +265,25 @@ const resendOTPService = async (email: string) => {
   );
 
   // Send OTP to verify
-  sendEmail({
-    to: isUser.email,
-    subject: 'User verify OTP',
-    templateName: 'otp',
-    templateData: {
-      name: isUser.name,
-      otp: generateOTP,
-    },
-  });
+  // sendEmail({
+  //   to: isUser.email,
+  //   subject: 'User verify OTP',
+  //   templatefullName: 'otp',
+  //   templateData: {
+  //     fullName: isUser.fullName,
+  //     otp: generateOTP,
+  //   },
+  // });
 
   return isUser;
 };
 
-// Export All Services
+// EXPORT ALL SERVICE
 export const userServices = {
   createUserService,
   resendOTPService,
   verifyUserService,
+  getMeService,
+  userUpdateService,
+  userDeleteService,
 };
