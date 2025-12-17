@@ -3,6 +3,7 @@ import { userRoutes } from '../modules/users/user.routes';
 import { authRouter } from '../modules/auth/auth.routes';
 import { categoryRoutes } from '../modules/event_categories/category.routes';
 import { eventRouter } from '../modules/events/event.routes';
+import { friendRouter } from '../modules/friends/friend.route';
 
 export const router = Router();
 
@@ -23,6 +24,10 @@ const moduleRoutes = [
     path: '/event',
     route: eventRouter,
   },
+  {
+    path: '/friend',
+    route: friendRouter,
+  }
 ];
 
 moduleRoutes.forEach((r) => {
