@@ -46,6 +46,22 @@ const getEvents = CatchAsync(
   }
 );
 
+// GET INTERESTED EVENTS CONTROLLER
+const getInterestEvents = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+
+    const result = await eventServices.getInterestEventsService( user, req.query as Record<string, string>);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Interested events fetched successfully!',
+      data: result,
+    });
+  }
+);
+
 
 // GET EVENT CONTROLLER
 const getSingleEvent = CatchAsync(
@@ -67,5 +83,6 @@ const getSingleEvent = CatchAsync(
 export const eventControllers = {
   createEvent,
   getEvents,
-  getSingleEvent
+  getSingleEvent,
+  getInterestEvents
 };

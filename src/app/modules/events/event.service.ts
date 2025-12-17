@@ -15,6 +15,7 @@ import { sendFriendsNotification } from '../../utils/notificationsendhelper/frie
 import { NotificationType } from '../notifications/notification.interface';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { ICoord } from '../users/user.interface';
+import { Types } from 'mongoose';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
@@ -129,28 +130,58 @@ const getEventsService = async (
 
   // Meta data
   const metaData = await qeuryBuilder.getMeta();
-
   return {
     events,
     metaData,
   };
 };
 
+// GET USER INTERESTED EVENTS
+const getInterestEventsService = async (
+  _user: JwtPayload,
+  query: Record<string, string>
+) => {
+  const user = await User.findById(_user.userId);
+
+  // Query Builder
+  const qeuryBuilder = new QueryBuilder(Event.find(), query);
+  const events = await qeuryBuilder
+    .nearby(user?.coord as ICoord)
+    .filter()
+    .category()
+    .dateFilter()
+    .sort()
+    .select()
+    .interests(user?.interests as Types.ObjectId[])
+    .paginate()
+    .join()
+    .build();
+
+  // Meta data
+  const metaData = await qeuryBuilder.getMeta();
+  return {
+    metaData,
+    events,
+  };
+};
+
 // GET SINGLE EVENT SERVICE
 const getSingleEventService = async (_user: JwtPayload, eventId: string) => {
-
   if (!eventId) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "Event id required!");
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Event id required!');
   }
 
   const user = await User.findById(_user.userId);
   if (!user) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "User not found!");
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User not found!');
   }
 
-  const event = await Event.findById(eventId).populate("host").populate("category").populate("co_host");
+  const event = await Event.findById(eventId)
+    .populate('host')
+    .populate('category')
+    .populate('co_host');
   if (!event) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "No event found!");
+    throw new AppError(StatusCodes.BAD_REQUEST, 'No event found!');
   }
 
   return event;
@@ -159,5 +190,6 @@ const getSingleEventService = async (_user: JwtPayload, eventId: string) => {
 export const eventServices = {
   createEventService,
   getEventsService,
-  getSingleEventService
+  getSingleEventService,
+  getInterestEventsService,
 };
