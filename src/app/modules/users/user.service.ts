@@ -7,8 +7,6 @@ import { JwtPayload } from 'jsonwebtoken';
 import { validatePhone } from '../../utils/phoneNumberValidatior';
 import { Types } from 'mongoose';
 
-
-
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
   const { email, ...rest } = payload;
@@ -31,7 +29,7 @@ const createUserService = async (payload: Partial<IUser>) => {
   };
 
   if (payload.organizationName) {
-    userPayload.role = Role.ORGANIZER
+    userPayload.role = Role.ORGANIZER;
   }
 
   const creatUser = await User.create(userPayload); // Create user
@@ -40,10 +38,31 @@ const createUserService = async (payload: Partial<IUser>) => {
 
 // GET ME
 const getMeService = async (userId: string) => {
-  const user = await User.findById(userId, { password: 0 }) as IUser;
+  const user = await User.aggregate([
+    // Stage 1: Matching
+    { $match: { _id: new Types.ObjectId(userId) } },
 
-  if(!user) {
-    throw new AppError(404, "User not found");
+    // Stage 2: Join with interests
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'interests',
+        foreignField: '_id',
+        as: 'interest',
+      },
+    },
+
+    // Projection
+    {
+      $project: {
+        password: 0, 
+        interests: 0,  
+      },
+    },
+  ]);
+
+  if (!user) {
+    throw new AppError(404, 'User not found');
   }
 
   return user;
@@ -115,12 +134,18 @@ const userUpdateService = async (
   }
 
   // FIELD WHITELISTING for USER & ORGANIZER
-  if (
-    decodedToken.role === Role.USER ||
-    decodedToken.role === Role.ORGANIZER
-  ) {
-
-    const allowedUpdates = [ 'fullName', 'avatar', 'gender', 'phone', 'interests', 'coord', 'fcmToken', 'bio', 'instagramHandle' ];
+  if (decodedToken.role === Role.USER || decodedToken.role === Role.ORGANIZER) {
+    const allowedUpdates = [
+      'fullName',
+      'avatar',
+      'gender',
+      'phone',
+      'interests',
+      'coord',
+      'fcmToken',
+      'bio',
+      'instagramHandle',
+    ];
 
     Object.keys(payload).forEach((key) => {
       if (!allowedUpdates.includes(key)) {
@@ -132,12 +157,15 @@ const userUpdateService = async (
     });
   }
 
-
   // Update User
-  const updatedUser = await User.findByIdAndUpdate(new Types.ObjectId(userId), payload, {
-    new: true,
-    runValidators: true,
-  });
+  const updatedUser = await User.findByIdAndUpdate(
+    new Types.ObjectId(userId),
+    payload,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
   return updatedUser;
 };
@@ -145,27 +173,26 @@ const userUpdateService = async (
 const userDeleteService = async (userId: string, decodedToken: JwtPayload) => {
   const user = await User.findById(userId);
   if (!user) {
-    throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
   }
 
   if (user.isDeleted) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "User already deleted!");
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User already deleted!');
   }
 
   const allowedRoles = [Role.ADMIN];
 
-
-if (!allowedRoles.includes(decodedToken.role)) {
-  if (decodedToken.userId !== userId) {
-    throw new AppError(StatusCodes.FORBIDDEN, "You can't delete others!");
+  if (!allowedRoles.includes(decodedToken.role)) {
+    if (decodedToken.userId !== userId) {
+      throw new AppError(StatusCodes.FORBIDDEN, "You can't delete others!");
+    }
   }
-}
 
   user.isDeleted = true;
   await user.save();
 
   return null;
-}
+};
 
 // VERIFY USER
 const verifyUserService = async (email: string, otp: string) => {
@@ -258,5 +285,5 @@ export const userServices = {
   verifyUserService,
   getMeService,
   userUpdateService,
-  userDeleteService
-}
+  userDeleteService,
+};
