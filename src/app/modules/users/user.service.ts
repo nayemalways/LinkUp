@@ -30,7 +30,7 @@ const createUserService = async (payload: Partial<IUser>) => {
     ...rest,
   };
 
-  if (payload.role === Role.ORGANIZER) {
+  if (payload.organizationName) {
     userPayload.role = Role.ORGANIZER
   }
 
