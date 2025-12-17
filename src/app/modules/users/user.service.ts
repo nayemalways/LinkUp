@@ -56,7 +56,6 @@ const userUpdateService = async (
   decodedToken: JwtPayload
 ) => {
   const user = await User.findById(userId);
-
   if (!user) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
   }
@@ -121,7 +120,7 @@ const userUpdateService = async (
     decodedToken.role === Role.ORGANIZER
   ) {
 
-    const allowedUpdates = [ 'fullName', 'avatar', 'gender', 'phone', 'interests', 'coord', 'fcmToken', 'bio' ];
+    const allowedUpdates = [ 'fullName', 'avatar', 'gender', 'phone', 'interests', 'coord', 'fcmToken', 'bio', 'instagramHandle' ];
 
     Object.keys(payload).forEach((key) => {
       if (!allowedUpdates.includes(key)) {

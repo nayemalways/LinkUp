@@ -44,6 +44,7 @@ export const userUpdateZodSchema = z.object({
     .optional(),
   phone: z.string({ message: 'Phone number must be string type!' }).optional(),
   avatar: z.string({ error: 'Image should be string' }).optional(),
+  instagramHandle: z.string({ error: 'Username mustbe string' }).optional(),
   gender: z.enum(['male', 'female', 'other']).optional(),
   fcmToken: z.string('FCM token must be in string type!').optional(),
   role: z.enum([Role.USER, Role.ADMIN, Role.ORGANIZER]).optional(),
