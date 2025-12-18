@@ -32,6 +32,16 @@ const getAllFriendsService = async (
     .skip(skip)
     .limit(limit);
 
+  const totalDocuments = friendRequests.length; // Total documents
+  const totalPage = Math.ceil(totalDocuments / limit);
+
+  const meta = {
+    page,
+    limit,
+    total: totalDocuments,
+    totalPage,
+  };
+
   // Extract friend details
   const friends = friendRequests.map((request) => {
     const friend =
@@ -41,7 +51,7 @@ const getAllFriendsService = async (
     return friend;
   });
 
-  return friends;
+  return { meta, friends };
 };
 
 // GET FRIEND REQUEST WITHOUT ACCPTED
@@ -78,14 +88,40 @@ const getFriendRequest = async (
   const skip = (page - 1) * limit;
 
   if (query?.status === RequestStatus.PENDING) {
-    const friendRequest = await FriendRequest.find(requestQuery).skip(skip).limit(limit).populate("sender");
-    return friendRequest;
-  }else {
-    const friendRequest = await FriendRequest.find(requestQuery).skip(skip).limit(limit).populate("sender receiver");
-    return friendRequest;
-  }
+    const friendRequest = await FriendRequest.find(requestQuery)
+      .skip(skip)
+      .limit(limit)
+      .populate('sender');
 
- 
+    const totalDocuments = friendRequest.length;
+    const totalPage = Math.ceil(totalDocuments / limit);
+
+    const meta = {
+      page,
+      limit,
+      total: totalDocuments,
+      totalPage,
+    };
+
+    return { meta, friendRequest };
+  } else {
+    const friendRequest = await FriendRequest.find(requestQuery)
+      .skip(skip)
+      .limit(limit)
+      .populate('sender receiver');
+
+    const totalDocuments = friendRequest.length;
+    const totalPage = Math.ceil(totalDocuments / limit);
+
+    const meta = {
+      page,
+      limit,
+      total: totalDocuments,
+      totalPage,
+    };
+
+    return { meta, friendRequest };
+  }
 };
 
 // SEND FRIEND REQUEST
@@ -301,5 +337,5 @@ export const friendServices = {
   acceptFriendRequestService,
   removeFriendService,
   blockFriendService,
-  getFriendRequest
+  getFriendRequest,
 };
