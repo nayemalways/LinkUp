@@ -1,0 +1,258 @@
+import { JwtPayload } from 'jsonwebtoken';
+import FriendRequest from './friend.model';
+import { RequestStatus } from './friend.interface';
+import AppError from '../../errorHelpers/AppError';
+import httpStatus from 'http-status-codes';
+import User from '../users/user.model';
+import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
+import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
+import { NotificationType } from '../notifications/notification.interface';
+import { Types } from 'mongoose';
+import { onlineUsers } from '../../socket';
+
+// GET ALL FRIENDS OF THE USER
+const getAllFriendsService = async (user: JwtPayload) => {
+  const userId = user.userId;
+
+  // Find all accepted friend requests where user is either sender or receiver
+  const friendRequests = await FriendRequest.find({
+    $or: [{ sender: userId }, { receiver: userId }],
+    status: RequestStatus.ACCEPTED,
+  })
+    .populate('sender', 'fullName email avatar')
+    .populate('receiver', 'fullName email avatar');
+
+  // Extract friend details
+  const friends = friendRequests.map((request) => {
+    const friend =
+      request.sender._id.toString() === userId
+        ? request.receiver
+        : request.sender;
+    return friend;
+  });
+
+  return friends;
+};
+
+// SEND FRIEND REQUEST
+const sendFriendRequestService = async (
+  user: JwtPayload,
+  receiverId: string
+) => {
+  const senderId = user.userId;
+
+  // Check if sender is verified
+  const senderUser = await User.findById(senderId);
+  if (!senderUser?.isVerified) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Only verified users can send friend requests!'
+    );
+  }
+
+  // Check if user is trying to send request to themselves
+  if (senderId === receiverId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'You cannot send friend request to yourself!'
+    );
+  }
+
+  // Check if receiver exists
+  const receiverUser = await User.findById(receiverId);
+  if (!receiverUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+  }
+
+  // Check if request already exists
+  const existingRequest = await FriendRequest.findOne({
+    $or: [
+      { sender: senderId, receiver: receiverId },
+      { sender: receiverId, receiver: senderId },
+    ],
+  });
+
+  if (existingRequest) {
+    if (existingRequest.status === RequestStatus.PENDING) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Friend request already sent!'
+      );
+    }
+    if (existingRequest.status === RequestStatus.ACCEPTED) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'You are already friends!');
+    }
+    if (existingRequest.status === RequestStatus.BLOCKED) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        'Cannot send friend request to this user!'
+      );
+    }
+  }
+
+  // Create friend request
+  const friendRequest = await FriendRequest.create({
+    sender: senderId,
+    receiver: receiverId,
+    status: RequestStatus.PENDING,
+  });
+
+  // Send notification to receiver (online or offline)
+  const notificationPayload = {
+    user: new Types.ObjectId(receiverId),
+    type: NotificationType.FRIEND,
+    title: 'New Friend Request',
+    description: `${senderUser?.fullName} sent you a friend request`,
+    data: {
+      requestId: friendRequest._id.toString(),
+      //   senderId: senderId,
+      senderName: senderUser?.fullName,
+      image: senderUser?.avatar,
+    },
+  };
+
+  // Check if receiver is online
+  if (onlineUsers[receiverId]) {
+    // Receiver is online, send real-time notification
+    await sendPersonalNotification(notificationPayload);
+  } else {
+    // Receiver is offline, send push notification
+    await sendPushAndSave(notificationPayload);
+  }
+
+  return friendRequest;
+};
+
+// ACCEPT FRIEND REQUEST
+const acceptFriendRequestService = async (
+  user: JwtPayload,
+  requestId: string
+) => {
+  const userId = user.userId;
+
+  // Find the friend request
+  const friendRequest = await FriendRequest.findById(requestId);
+
+  if (!friendRequest) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Friend request not found!');
+  }
+
+  // Check if the user is the receiver
+  if (friendRequest.receiver.toString() !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'You are not authorized to accept this request!'
+    );
+  }
+
+  // Check if already accepted
+  if (friendRequest.status === RequestStatus.ACCEPTED) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Friend request already accepted!'
+    );
+  }
+
+  // Update status to accepted
+  friendRequest.status = RequestStatus.ACCEPTED;
+  await friendRequest.save();
+
+  // Get receiver details for notification
+  const receiverUser = await User.findById(userId);
+
+  // Send notification to sender (online or offline)
+  const notificationPayload = {
+    user: friendRequest.sender as Types.ObjectId,
+    type: NotificationType.FRIEND,
+    title: 'Friend Request Accepted',
+    description: `${receiverUser?.fullName} accepted your friend request`,
+    data: {
+      requestId: friendRequest._id.toString(),
+      //   acceptorId: userId,
+      acceptorName: receiverUser?.fullName,
+      acceptorAvatar: receiverUser?.avatar,
+    },
+  };
+
+  const senderIdStr = friendRequest.sender.toString();
+  // Check if sender is online
+  if (onlineUsers[senderIdStr]) {
+    // Sender is online, send real-time notification
+    await sendPersonalNotification(notificationPayload);
+  } else {
+    // Sender is offline, send push notification
+    await sendPushAndSave(notificationPayload);
+  }
+
+  return friendRequest;
+};
+
+// REMOVE FRIEND
+const removeFriendService = async (user: JwtPayload, friendId: string) => {
+  const userId = user.userId;
+
+  // Find the friend request
+  const friendRequest = await FriendRequest.findOne({
+    $or: [
+      { sender: userId, receiver: friendId },
+      { sender: friendId, receiver: userId },
+    ],
+    status: RequestStatus.ACCEPTED,
+  });
+
+  if (!friendRequest) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Friend connection not found!');
+  }
+
+  // Delete the friend request
+  await FriendRequest.findByIdAndDelete(friendRequest._id);
+
+  return { message: 'Friend removed successfully!' };
+};
+
+// BLOCK FRIEND
+const blockFriendService = async (user: JwtPayload, friendId: string) => {
+  const userId = user.userId;
+
+  // Check if friendId user exists
+  const friendUser = await User.findById(friendId);
+  if (!friendUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+  }
+
+  // Find existing friend request
+  let friendRequest = await FriendRequest.findOne({
+    $or: [
+      { sender: userId, receiver: friendId },
+      { sender: friendId, receiver: userId },
+    ],
+  });
+
+  if (friendRequest) {
+    // Update existing request to blocked
+    friendRequest.status = RequestStatus.BLOCKED;
+    // Make sure the blocker is the sender
+    if (friendRequest.sender.toString() !== userId) {
+      friendRequest.sender = new Types.ObjectId(userId);
+      friendRequest.receiver = new Types.ObjectId(friendId);
+    }
+    await friendRequest.save();
+  } else {
+    // Create new blocked request
+    friendRequest = await FriendRequest.create({
+      sender: userId,
+      receiver: friendId,
+      status: RequestStatus.BLOCKED,
+    });
+  }
+
+  return { message: 'User blocked successfully!' };
+};
+
+export const friendServices = {
+  getAllFriendsService,
+  sendFriendRequestService,
+  acceptFriendRequestService,
+  removeFriendService,
+  blockFriendService,
+};
