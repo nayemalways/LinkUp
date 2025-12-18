@@ -25,7 +25,7 @@ export interface IChannel {
 
 
 export interface INotification {
-  id?: Types.ObjectId;
+  _id?: Types.ObjectId;
   user?: Types.ObjectId;
   eventId?: Types.ObjectId,
   chatId?: Types.ObjectId,
@@ -38,7 +38,7 @@ export interface INotification {
 }
 
 export interface INotificationPreference {
-  id?: Types.ObjectId;
+  _id?: Types.ObjectId;
   user: Types.ObjectId;
   type: NotificationType;
   channel: IChannel;

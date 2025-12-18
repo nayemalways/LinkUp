@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
 import { validatePhone } from '../../utils/phoneNumberValidatior';
 import { Types } from 'mongoose';
+import { QueryBuilder } from '../../utils/QueryBuilder';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -35,6 +36,25 @@ const createUserService = async (payload: Partial<IUser>) => {
   const creatUser = await User.create(userPayload); // Create user
   return creatUser;
 };
+
+// GET ALL USERS
+const getAllUserService = async (query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(User.find(), query);
+
+  const users = await queryBuilder
+                                  .filter()
+                                  .textSearch()
+                                  .select()
+                                  .sort()
+                                  .paginate()
+                                  .build();
+
+  const meta = await queryBuilder.getMeta();
+  return {
+    meta,
+    users
+  };
+}
 
 // GET ME
 const getMeService = async (userId: string) => {
@@ -286,4 +306,5 @@ export const userServices = {
   getMeService,
   userUpdateService,
   userDeleteService,
+  getAllUserService
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { JwtPayload } from 'jsonwebtoken';
 import FriendRequest from './friend.model';
 import { RequestStatus } from './friend.interface';
@@ -10,9 +11,16 @@ import { NotificationType } from '../notifications/notification.interface';
 import { Types } from 'mongoose';
 import { onlineUsers } from '../../socket';
 
-// GET ALL FRIENDS OF THE USER
-const getAllFriendsService = async (user: JwtPayload) => {
+// GET ALL FRIENDS OF THE USER WHERE REQUEST ACCPTED
+const getAllFriendsService = async (
+  user: JwtPayload,
+  query: Record<string, string>
+) => {
   const userId = user.userId;
+
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
 
   // Find all accepted friend requests where user is either sender or receiver
   const friendRequests = await FriendRequest.find({
@@ -20,7 +28,19 @@ const getAllFriendsService = async (user: JwtPayload) => {
     status: RequestStatus.ACCEPTED,
   })
     .populate('sender', 'fullName email avatar')
-    .populate('receiver', 'fullName email avatar');
+    .populate('receiver', 'fullName email avatar')
+    .skip(skip)
+    .limit(limit);
+
+  const totalDocuments = friendRequests.length; // Total documents
+  const totalPage = Math.ceil(totalDocuments / limit);
+
+  const meta = {
+    page,
+    limit,
+    total: totalDocuments,
+    totalPage,
+  };
 
   // Extract friend details
   const friends = friendRequests.map((request) => {
@@ -31,7 +51,77 @@ const getAllFriendsService = async (user: JwtPayload) => {
     return friend;
   });
 
-  return friends;
+  return { meta, friends };
+};
+
+// GET FRIEND REQUEST WITHOUT ACCPTED
+const getFriendRequest = async (
+  userId: Types.ObjectId,
+  query: Record<string, string>
+) => {
+  let requestQuery: any = {};
+
+  // ONLY FOR - PENDING, BLOCKED
+  switch (query.status) {
+    case RequestStatus.PENDING:
+      requestQuery = {
+        status: RequestStatus.PENDING,
+        receiver: userId,
+      };
+      break;
+    case RequestStatus.BLOCKED:
+      requestQuery = {
+        status: RequestStatus.BLOCKED,
+        blockedBy: userId,
+      };
+      break;
+    default:
+      requestQuery = {
+        status: RequestStatus.PENDING,
+        receiver: userId,
+      };
+  }
+
+  // PAGINATION
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  if (query?.status === RequestStatus.PENDING) {
+    const friendRequest = await FriendRequest.find(requestQuery)
+      .skip(skip)
+      .limit(limit)
+      .populate('sender');
+
+    const totalDocuments = friendRequest.length;
+    const totalPage = Math.ceil(totalDocuments / limit);
+
+    const meta = {
+      page,
+      limit,
+      total: totalDocuments,
+      totalPage,
+    };
+
+    return { meta, friendRequest };
+  } else {
+    const friendRequest = await FriendRequest.find(requestQuery)
+      .skip(skip)
+      .limit(limit)
+      .populate('sender receiver');
+
+    const totalDocuments = friendRequest.length;
+    const totalPage = Math.ceil(totalDocuments / limit);
+
+    const meta = {
+      page,
+      limit,
+      total: totalDocuments,
+      totalPage,
+    };
+
+    return { meta, friendRequest };
+  }
 };
 
 // SEND FRIEND REQUEST
@@ -40,15 +130,7 @@ const sendFriendRequestService = async (
   receiverId: string
 ) => {
   const senderId = user.userId;
-
-  // Check if sender is verified
   const senderUser = await User.findById(senderId);
-  if (!senderUser?.isVerified) {
-    throw new AppError(
-      httpStatus.FORBIDDEN,
-      'Only verified users can send friend requests!'
-    );
-  }
 
   // Check if user is trying to send request to themselves
   if (senderId === receiverId) {
@@ -255,4 +337,5 @@ export const friendServices = {
   acceptFriendRequestService,
   removeFriendService,
   blockFriendService,
+  getFriendRequest,
 };

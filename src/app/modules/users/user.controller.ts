@@ -7,14 +7,15 @@ import { SetCookies } from '../../utils/setCookie';
 import { JwtPayload } from 'jsonwebtoken';
 import { Role } from './user.interface';
 import { Types } from 'mongoose';
- 
+
+// REGISTER ACCOUNT
 const registerUser = CatchAsync(async (req: Request, res: Response) => {
   const result = await userServices.createUserService(req.body);
 
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'Users created successfully!',
+    message: 'Users created successful!',
     data: result,
   });
 });
@@ -28,7 +29,20 @@ const getMe = CatchAsync(async (req: Request, res: Response) => {
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "User fetched successfull!",
+    message: "User fetched successful!",
+    data: result
+  })
+})
+
+// GET ME
+const getAllUser = CatchAsync(async (req: Request, res: Response) => {
+  const query = req.query as Record<string, string> ;
+  const result = await userServices.getAllUserService(query);
+
+  SendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Users fetched successful!",
     data: result
   })
 })
@@ -49,7 +63,7 @@ const userUpdate = CatchAsync(async (req: Request, res: Response) => {
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "User updated successfull!",
+    message: "User updated successful!",
     data: result
   })
 })
@@ -64,7 +78,7 @@ const userDelete = CatchAsync(async (req: Request, res: Response) => {
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "User deleted successfull!",
+    message: "User deleted successful!",
     data: result
   })
 })
@@ -91,7 +105,7 @@ const verifyUser = CatchAsync(async (req: Request, res: Response) => {
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'User verified successfuly!',
+    message: 'User verified successful!',
     data: {
       data: result,
     },
@@ -106,7 +120,7 @@ const resendOTP = CatchAsync(async (req: Request, res: Response) => {
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'OTP Sent Successfully!',
+    message: 'OTP Sent successful!',
     data: null,
   });
 });
@@ -119,5 +133,6 @@ export const userControllers = {
   resendOTP,
   getMe,
   userUpdate,
-  userDelete
+  userDelete,
+  getAllUser
 };

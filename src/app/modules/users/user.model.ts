@@ -60,6 +60,11 @@ userSchema.pre('save', async function (next) {
   }
 });
 
+// Indexing through search field
+userSchema.index({
+   fullName: "text"
+});
+
 const User = mongoose.model<IUser>('user', userSchema);
 
 export default User;

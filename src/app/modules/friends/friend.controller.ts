@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from 'express';
 import { CatchAsync } from '../../utils/CatchAsync';
 import { SendResponse } from '../../utils/SendResponse';
@@ -10,7 +11,7 @@ const getAllFriends = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
 
-    const result = await friendServices.getAllFriendsService(user);
+    const result = await friendServices.getAllFriendsService(user, req.query as Record<string, string>);
 
     SendResponse(res, {
       success: true,
@@ -20,6 +21,23 @@ const getAllFriends = CatchAsync(
     });
   }
 );
+
+// GET FRIEND REQUEST
+const getFriendRequest = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+
+    const result = await friendServices.getFriendRequest(user?.userId, req.query as Record<string, string>);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Friends fetched successfully!',
+      data: result,
+    });
+  }
+);
+
 
 // SEND FRIEND REQUEST
 const sendFriendRequest = CatchAsync(
@@ -101,4 +119,5 @@ export const friendControllers = {
   acceptFriendRequest,
   removeFriend,
   blockFriend,
+  getFriendRequest
 };
