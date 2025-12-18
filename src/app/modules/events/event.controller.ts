@@ -63,13 +63,13 @@ const getInterestEvents = CatchAsync(
 );
 
 
-// GET EVENT CONTROLLER
-const getSingleEvent = CatchAsync(
+// GET EVENT DETAILS CONTROLLER
+const getEventDetails = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
     const eventId  = req.params?.eventId;
     
-    const result = await eventServices.getSingleEventService(user, eventId );
+    const result = await eventServices.getEventDetailsService(user, eventId );
 
     SendResponse(res, {
       success: true,
@@ -80,9 +80,34 @@ const getSingleEvent = CatchAsync(
   }
 );
 
+// UPDATE EVENT CONTROLLER
+const updateEvent = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const eventId  = req.params?.eventId;
+
+    const payload = {
+      ...req.body,
+      images: req.files
+        ? (req.files as Express.Multer.File[]).map((file) => file.path)
+        : [],
+    };
+    
+    const result = await eventServices.updateEventService(user, eventId, payload);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Event updated successfully!',
+      data: result,
+    });
+  }
+);
+
 export const eventControllers = {
   createEvent,
   getEvents,
-  getSingleEvent,
-  getInterestEvents
+  getEventDetails,
+  getInterestEvents,
+  updateEvent
 };

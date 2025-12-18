@@ -9,6 +9,7 @@ import { Role } from "../users/user.interface";
 
 const router = Router();
 
+// CREATE EVENT
 router.post(
   '/',
   checkAuth(...Object.values(Role)),
@@ -17,10 +18,14 @@ router.post(
   eventControllers.createEvent       
 );
 
+// GET EVENTS
 router.get('/', checkAuth(...Object.keys(Role)),  eventControllers.getEvents);
+// GET INTEREST BASED EVENT
 router.get('/interested_event', checkAuth(...Object.keys(Role)),  eventControllers.getInterestEvents);
+// GET SPECIFIC EVENT
 router.get('/details/:eventId', checkAuth(...Object.keys(Role)),  eventControllers.getEventDetails);
-router.patch('/:eventId', checkAuth(...Object.keys(Role)), validateRequest(eventUpdateSchema),  eventControllers.updateEvent);
+// UPDATE EVENT
+router.patch('/:eventId', checkAuth(...Object.keys(Role)), multerUpload.array('files'), validateRequest(eventUpdateSchema),  eventControllers.updateEvent);
 
 
 export const eventRouter = router;

@@ -5,8 +5,28 @@ import {
   Featured,
   EventVisibility,
   LocationType,
+  CoHostInvite,
+  CoHostStatus,
 } from './event.interface';
 
+
+
+// ==================CO-HOST INVITATION SCHEMA====================
+const CoHostInviteSchema = new Schema<CoHostInvite>({
+  event: { type: Schema.Types.ObjectId, ref: 'Event', required: true },
+  inviter: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  invitee: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  status: {
+    type: String,
+    enum: [...Object.values(CoHostStatus)],
+    default:  CoHostStatus.PENDING
+  }
+});
+export const InviteCoHost = mongoose.model('inviteCoHost', CoHostInviteSchema);
+
+
+//===================== MAIN EVENT SCHEMA ========================
+// Event Shcema
 const eventSchema = new mongoose.Schema<IEvent>(
   {
     host: { type: Schema.Types.ObjectId, required: true, ref: 'user' },
@@ -62,6 +82,9 @@ const eventSchema = new mongoose.Schema<IEvent>(
     timestamps: true,
   }
 );
+
+
+
 
 // Indexing through search field
 eventSchema.index({

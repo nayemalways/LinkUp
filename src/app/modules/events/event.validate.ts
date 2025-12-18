@@ -1,11 +1,6 @@
 import z from "zod";
 import { EventVisibility } from "./event.interface";
 
-// Coordinate schema
-const coordSchema = z.object({
-  lat: z.number(),
-  lng: z.number(),
-}).optional();
 
 // Address schema
 const addressSchema = z.object({
@@ -70,9 +65,6 @@ export const eventCreateSchema = z.object({
     .max(5),
 
   visibility: z.nativeEnum(EventVisibility),
-
-  coord: coordSchema,
-
   address: addressSchema,
 });
 
@@ -107,11 +99,11 @@ export const eventUpdateSchema = z.object({
           .string({ message: "Venue must be string!" })
           .optional(),
 
-  event_start: z.coerce.date({ message: "Event start must be a valid date!" }),
-  event_end: z.coerce.date({ message: "Event end must be a valid date!" }),
+  event_start: z.coerce.date({ message: "Event start must be a valid date!" }).optional(),
+  event_end: z.coerce.date({ message: "Event end must be a valid date!" }).optional(),
 
   time_zone: z
-              .string({ message: "Timezone must be string!" }),
+              .string({ message: "Timezone must be string!" }).optional(),
   organization: z
                 .string()
                 .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId format!")
@@ -119,25 +111,24 @@ export const eventUpdateSchema = z.object({
 
   price: z
         .number({ message: "Price must be number!" })
-        .nonnegative("Price cannot be negative!"),
+        .nonnegative("Price cannot be negative!").optional(),
 
   max_attendence: z
                   .number()
                   .int()
-                  .positive("Max attendance must be positive!"),
+                  .positive("Max attendance must be positive!").optional(),
 
   age_limit: z
               .number()
               .int()
-              .nonnegative("Age limit must be positive number!"),
+              .nonnegative("Age limit must be positive number!").optional(),
 
   avg_rating: z
               .number()
               .min(0)
-              .max(5),
+              .max(5).optional(),
 
-  visibility: z.nativeEnum(EventVisibility),
-  coord: coordSchema,
+  visibility: z.nativeEnum(EventVisibility).optional(),
   address: addressSchema,
   deletedImages: z.array(z.string('Image must be string')).optional(),
 });
