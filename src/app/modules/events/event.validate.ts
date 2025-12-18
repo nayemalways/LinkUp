@@ -76,3 +76,69 @@ export const eventCreateSchema = z.object({
   address: addressSchema,
 });
 
+export const eventUpdateSchema = z.object({
+  co_hosts: z
+    .string({ message: "co_host must be string" })
+    .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId format!")
+    .optional(),
+
+  category: z.string({ message: "Category must be ObjectId string!" })
+             .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId format!")
+             .optional(),
+
+  reviews: z
+            .string()
+             .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId format!")
+            .optional(),
+
+  title: z
+          .string({ message: "Title must be string!" })
+          .min(5, "Title must be minimum 5 characters!")
+          .optional(),
+
+  description: z
+              .string({ message: "Description must be string!" })
+              .min(5, "Description must be minimum 5 characters!")
+              .max(500, "Description must be maximum 500 characters!")
+              .optional(),
+
+  images: z.array(z.string("Image must be string!")).optional(),
+  venue: z
+          .string({ message: "Venue must be string!" })
+          .optional(),
+
+  event_start: z.coerce.date({ message: "Event start must be a valid date!" }),
+  event_end: z.coerce.date({ message: "Event end must be a valid date!" }),
+
+  time_zone: z
+              .string({ message: "Timezone must be string!" }),
+  organization: z
+                .string()
+                .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId format!")
+                .optional(),
+
+  price: z
+        .number({ message: "Price must be number!" })
+        .nonnegative("Price cannot be negative!"),
+
+  max_attendence: z
+                  .number()
+                  .int()
+                  .positive("Max attendance must be positive!"),
+
+  age_limit: z
+              .number()
+              .int()
+              .nonnegative("Age limit must be positive number!"),
+
+  avg_rating: z
+              .number()
+              .min(0)
+              .max(5),
+
+  visibility: z.nativeEnum(EventVisibility),
+  coord: coordSchema,
+  address: addressSchema,
+  deletedImages: z.array(z.string('Image must be string')).optional(),
+});
+
