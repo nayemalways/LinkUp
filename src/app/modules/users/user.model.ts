@@ -63,7 +63,11 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// register model as "User" so populate('User') works, and keep existing "users" collection
-const User = mongoose.model<IUser>('User', userSchema, 'users');
+// Indexing through search field
+userSchema.index({
+   fullName: "text"
+});
+
+const User = mongoose.model<IUser>('user', userSchema);
 
 export default User;

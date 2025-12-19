@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middlewares/validateRequest";
-import { eventCreateSchema } from "./event.validate";
+import { eventCreateSchema, eventUpdateSchema } from "./event.validate";
 import { eventControllers } from "./event.controller";
 import { multerUpload } from "../../config/multer.config";
 import { checkAuth } from "../../middlewares/auth.middleware";
@@ -9,6 +9,7 @@ import { Role } from "../users/user.interface";
 
 const router = Router();
 
+// CREATE EVENT
 router.post(
   '/',
   checkAuth(...Object.values(Role)),
@@ -17,8 +18,14 @@ router.post(
   eventControllers.createEvent       
 );
 
+// GET EVENTS
 router.get('/', checkAuth(...Object.keys(Role)),  eventControllers.getEvents);
-router.get('/details/:eventId', checkAuth(...Object.keys(Role)),  eventControllers.getSingleEvent);
+// GET INTEREST BASED EVENT
+router.get('/interested_event', checkAuth(...Object.keys(Role)),  eventControllers.getInterestEvents);
+// GET SPECIFIC EVENT
+router.get('/details/:eventId', checkAuth(...Object.keys(Role)),  eventControllers.getEventDetails);
+// UPDATE EVENT
+router.patch('/:eventId', checkAuth(...Object.keys(Role)), multerUpload.array('files'), validateRequest(eventUpdateSchema),  eventControllers.updateEvent);
 
 
 export const eventRouter = router;

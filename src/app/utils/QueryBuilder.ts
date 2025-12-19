@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
-import { Query } from 'mongoose';
+import { Query, Types } from 'mongoose';
 import { excludeField } from '../modules/events/event.constant';
 import { ICoord } from '../modules/users/user.interface';
 
@@ -105,6 +105,14 @@ export class QueryBuilder<T> {
 
     this.queryModel = this.queryModel.find(nearbyCondition);
 
+    return this;
+  }
+
+  // GET EVENTS BY USER INTERESTS
+  interests(interests: Types.ObjectId[]): this {
+    this.queryModel = this.queryModel.find({
+    category: { $in: interests }
+   })
     return this;
   }
 
