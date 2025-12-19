@@ -18,6 +18,8 @@ const transporter = nodemailer.createTransport({
 
 interface SendEmailOptions {
   to: string;
+  cc?: string[],
+  bcc?: string[],
   subject: string;
   templateName: string;
   templateData?: Record<string, any>;
@@ -30,6 +32,8 @@ interface SendEmailOptions {
 
 export const sendEmail = async ({
   to,
+  cc,
+  bcc,
   subject,
   templateName,
   templateData,
@@ -41,6 +45,8 @@ export const sendEmail = async ({
     await transporter.sendMail({
       from: env.EMAIL_USER,
       to: to,
+      cc,
+      bcc,
       subject: subject,
       html: html,
       attachments: attachements?.map((attachment) => ({
@@ -49,6 +55,8 @@ export const sendEmail = async ({
         contentType: attachment.contentType,
       })),
     });
+
+    console.log('Email sent successfully to');
   } catch (error: any) {
     console.log('Email sending error', error.message);
     throw new AppError(400, 'Email error');

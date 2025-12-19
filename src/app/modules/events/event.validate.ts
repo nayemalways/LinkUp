@@ -1,5 +1,5 @@
 import z from "zod";
-import { EventVisibility } from "./event.interface";
+import { EventStatus, EventVisibility, Featured } from "./event.interface";
 
 
 // Address schema
@@ -112,6 +112,7 @@ export const eventUpdateSchema = z.object({
   price: z
         .number({ message: "Price must be number!" })
         .nonnegative("Price cannot be negative!").optional(),
+  featured: z.nativeEnum(Featured).optional(),
 
   max_attendence: z
                   .number()
@@ -129,6 +130,7 @@ export const eventUpdateSchema = z.object({
               .max(5).optional(),
 
   visibility: z.nativeEnum(EventVisibility).optional(),
+  event_status: z.nativeEnum(EventStatus).optional(),
   address: addressSchema,
   deletedImages: z.array(z.string('Image must be string')).optional(),
 });
