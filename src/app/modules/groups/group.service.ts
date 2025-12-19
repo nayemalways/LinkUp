@@ -255,6 +255,18 @@ const leaveGroupService = async (user: JwtPayload, groupId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'Group not found!');
   }
 
+  // Check if user is a member of the group
+  const isMember = group.group_members.some(
+    (member) => member.user.toString() === userId
+  );
+
+  if (!isMember) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'You are not a member of this group!'
+    );
+  }
+
   // Check if user is superadmin
   if (group.group_admin.toString() === userId) {
     throw new AppError(
@@ -263,11 +275,12 @@ const leaveGroupService = async (user: JwtPayload, groupId: string) => {
     );
   }
 
-  // Remove user from members
-  // Use $pull to ensure the removal persists at the database level
-  await Group.findByIdAndUpdate(groupId, {
-    $pull: { group_members: { user: userId } },
-  });
+  // Remove user from members array using filter and save (same as removeMemberService)
+  group.group_members = group.group_members.filter(
+    (member) => member.user.toString() !== userId
+  );
+
+  await group.save();
 
   return { message: 'Left group successfully!' };
 };

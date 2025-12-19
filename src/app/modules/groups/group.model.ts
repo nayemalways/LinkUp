@@ -5,7 +5,7 @@ const groupMemberSchema = new Schema<IGroupMember>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'user',
       required: true,
     },
     role: {
@@ -25,11 +25,11 @@ const groupSchema = new Schema<IGroup>(
   {
     event: {
       type: Schema.Types.ObjectId,
-      ref: 'Event',
+      ref: 'event',
     },
     group_admin: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'user',
       required: true,
     },
     group_name: {
@@ -50,5 +50,5 @@ const groupSchema = new Schema<IGroup>(
   { timestamps: true, versionKey: false }
 );
 
-const Group = model<IGroup>('Group', groupSchema);
+const Group = model<IGroup>('group', groupSchema);
 export default Group;
