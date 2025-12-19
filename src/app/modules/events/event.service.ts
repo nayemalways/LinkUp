@@ -3,6 +3,7 @@
 import { StatusCodes } from 'http-status-codes';
 import {
   EventStatus,
+  Featured,
   IEvent,
   LocationType,
 } from '../../modules/events/event.interface';
@@ -15,14 +16,15 @@ import AppError from '../../errorHelpers/AppError';
 import { addressToLongLat } from '../../utils/geocodeConvert.utils';
 import FriendRequest from '../friends/friend.model';
 import { RequestStatus } from '../friends/friend.interface';
-import { sendFriendsNotification } from '../../utils/notificationsendhelper/friends.notification.utils';
+import { sendMultiNotification } from '../../utils/notificationsendhelper/friends.notification.utils';
 import { NotificationType } from '../notifications/notification.interface';
 import { QueryBuilder } from '../../utils/QueryBuilder';
-import { ICoord, Role } from '../users/user.interface';
+import { ICoord, IUser, Role } from '../users/user.interface';
 import { Types } from 'mongoose';
 import Booking from '../booking/booking.model';
 import { sendEmail } from '../../utils/sendMail';
-import { NotificationPreference } from '../notifications/notification.model';
+import env from '../../config/env';
+import dayjs from 'dayjs';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
@@ -79,7 +81,6 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
   createChatGroup.event = createEvent._id; // Important to add
   await createChatGroup.save();
 
-
   // => ========SEND NOTIFICATION ASYNCHRONUSLY (FIRE-AND-FORGET)========= <=
   setImmediate(async () => {
     try {
@@ -95,22 +96,26 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
       const friendIds = friends.map((fr) =>
         fr.sender.toString() === user.userId ? fr.receiver : fr.sender
       );
+
+      // Event host
       const host = await User.findById(user.userId).select('fullName avatar');
 
-      await sendFriendsNotification({
-        title: `Your friend - ${host?.fullName} just created an Event!`,
-        type: NotificationType.FRIEND,
-        receiverIds: friendIds,
-        description: `${createEvent.title} is created. Tap to see details.`,
-        data: {
-          eventId: createEvent._id.toString(),
-          image: host?.avatar || '',
-        },
-      });
+      if (friendIds.length > 0) {
+        await sendMultiNotification({
+          title: `Your friend - ${host?.fullName} just created an Event!`,
+          type: NotificationType.FRIEND,
+          receiverIds: friendIds,
+          description: `${createEvent.title} is created. Tap to see details.`,
+          data: {
+            eventId: createEvent._id.toString(),
+            image: host?.avatar || '',
+          },
+        });
+      }
     } catch (err) {
       console.error('Failed to send event notifications:', err);
     }
-  })
+  });
 
   // => RETUNR RESPONSE BEFORE SENDING NOTIFICATION
   return { event: createEvent, chatGroup: createChatGroup };
@@ -202,22 +207,19 @@ const updateEventService = async (
   eventId: string,
   payload: Partial<IEvent>
 ) => {
-  const event = await Event.findOne({ _id: eventId, host: user.userId })
+  const event = await Event.findOne({ _id: eventId })
     .populate('host')
     .populate('co_host');
+
   if (!event) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Event not found!');
   }
 
-  // Only Host and Co-host can update event
-  if (user.userId !== event?.host?._id.toString() && user.userId !== event?.co_host?._id.toString()) {
-    throw new AppError(
-      StatusCodes.FORBIDDEN,
-      'Only host and co_host can update event!'
-    );
-  }
+  const isHost = user.userId === event.host?._id.toString();
+  const isCoHost = event.co_host && user.userId === event.co_host?._id.toString();
+  const isHostOrCoHost = isHost || isCoHost;
 
-  // OK: Location will automatically updated when  the address and venu will change
+  // OK: lOCATION WILL UPDATE DYNAMICALLY
   if (payload.location) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
@@ -225,7 +227,7 @@ const updateEventService = async (
     );
   }
 
-  // OK : Only Admin can change featured status
+  // OK : ONLY ADMIN CAN CHANGE FEATURED STATUS
   if (user.role === Role.USER || user.role === Role.ORGANIZER) {
     if (payload.featured) {
       throw new AppError(
@@ -235,16 +237,36 @@ const updateEventService = async (
     }
   }
 
-  // OK: If user is co-host he can't change himself
-  if (user.userId === event?.co_host) {
+  // OK : ONLY HOST AND CO-HOST CAN CHANGE VENUE
+  if (payload?.venue) {
+    if (!isHostOrCoHost) {
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        'Only host and co-host can change venue!'
+      );
+    }
+  }
+
+  // OK: ONLY HOST AND CO-HOST CAN CHANGE EVENT VISIBILITY
+  if (payload?.visibility) {
+    if (!isHost && !isCoHost) {
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        'Only host and co-host can change event visibility!'
+      );
+    }
+  }
+
+  // OK: CO-HOST CAN'T CHANGE HIMSELF
+  if (user.userId === event?.co_host?._id.toString()) {
     if (payload.co_host) {
       throw new AppError(StatusCodes.FORBIDDEN, "You can't change co-host!");
     }
   }
 
-  // OK: Only update event status to complete after the event end!
+  // OK: ONLY UPDATE EVENT STATUS "COMPLETED" WHEN EVENT END DATE OVER!
   if (payload.event_status === EventStatus.COMPLETED) {
-    if (event.event_end < new Date()) {
+    if (new Date(event.event_end) > new Date()) {
       throw new AppError(
         StatusCodes.FORBIDDEN,
         `You can't update event status to "${payload.event_status}" before the event end! Check end time!`
@@ -252,6 +274,7 @@ const updateEventService = async (
     }
   }
 
+  // OK: BEFORE REFUND HE CAN'T CANCELLED EVENT
   if (payload.event_status === EventStatus.CANCELLED) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
@@ -259,26 +282,13 @@ const updateEventService = async (
     );
   }
 
-  // ========= Image Update and Deletation from cloudinary ==================
+  // ========= Image Update and Deletation from Cloudinary ==================
   if (
     payload.images &&
     payload.images.length > 0 &&
     event.images &&
     event.images.length > 0
   ) {
-    /**
-     * DB already has images:
-     *   event.images = [img1, img2, img3, img4]
-     *
-     * Frontend sends new images:
-     *   payload.images = [img5, img6]
-     *
-     * Merge existing DB images with newly uploaded images.
-     * Use Set to avoid duplicate image entries.
-     *
-     * Result:
-     *   payload.images = [img1, img2, img3, img4, img5, img6]
-     */
     payload.images = [...new Set([...payload.images, ...event.images])];
   }
 
@@ -288,59 +298,21 @@ const updateEventService = async (
     event.images &&
     event.images.length > 0
   ) {
-    /**
-     * Images user wants to delete:
-     *   payload.deletedImages = [img2, img3]
-     */
-
-    /**
-     * Step 1:
-     * Remove deleted images from existing DB images.
-     *
-     * DB images before:
-     *   event.images = [img1, img2, img3, img4]
-     *
-     * DB images after filtering:
-     *   restDBImage = [img1, img4]
-     *
-     * These images remain unchanged in the database.
-     */
     const restDBImage = event.images.filter(
       (image) => !payload.deletedImages?.includes(image)
     );
 
-    /**
-     * Step 2:
-     * Remove deleted images from the merged payload images.
-     *
-     * Merged payload images:
-     *   payload.images = [img1, img2, img3, img4, img5, img6]
-     *
-     * After filtering deleted images:
-     *   updatePayloadImages = [img1, img4, img5, img6]
-     *
-     * These are the final images that should be saved/updated.
-     */
     const updatePayloadImages = (payload.images || []).filter(
       (image) => !payload.deletedImages?.includes(image)
     );
-
-    /**
-     * Step 3:
-     * Merge remaining DB images with updated payload images.
-     * Use Set again to ensure no duplicates.
-     *
-     * Final result saved to DB:
-     *   payload.images = [img1, img4, img5, img6]
-     */
     payload.images = [...new Set([...restDBImage, ...updatePayloadImages])];
   }
 
   // =======UPDATE EVENT=======
-  const updateEvent = await Event.findByIdAndUpdate(eventId, payload, {
+  const updateEvent = (await Event.findByIdAndUpdate(eventId, payload, {
     new: true,
     runValidators: true,
-  });
+  })) as IEvent;
 
   // =======DELETE IMAGES FROM CLOUDINARY (ASYNCHRONOUSLY)===============
   (async () => {
@@ -356,41 +328,307 @@ const updateEventService = async (
         );
       }
     } catch (error) {
-      console.log(`Notification sending error`, error);
+      console.log(`Cloudinary image deleting error`, error);
     }
   })();
 
   // ===========SEND NOTIFICATION (ASYNCHRONOUSLY)===============
-  (async () => {
+  setImmediate(async () => {
     // GET BOOKED USERS
     const eventBooking = await Booking.find({
       event: eventId,
-    }).select('user').populate('user', "fullName email fcmToken").lean();
-    
+    })
+      .select('user')
+      .populate('user', 'fullName email fcmToken')
+      .lean();
+
     // FILTER ONLY BOOKED MEMBERS
     const bookedMembersInfo = eventBooking.map((booking) => booking?.user);
-    
-    try {
-      if (payload?.title) {
-         bookedMembersInfo.forEach(async (member) => {
-          const notificationPreference = await NotificationPreference.findOne({user: member._id });
+    const bookedMembersId = bookedMembersInfo.map(
+      (member: Partial<IUser>) => member?._id
+    ); // _id
+    const booked_members_email = bookedMembersInfo.map(
+      (member: Partial<IUser>) => member.email
+    ); // email
 
-          if(notificationPreference?.channel?.email) {
-            console.log("send mail process..")
-            sendEmail({
-              to: "nayemalways.sm@gmail.com",
-              subject: "Your event title has changed!",
-              templateName: "eventUpdate",
-            })
-            console.log("send mail finsihed")
-          }
-          
-         })
+    try {
+      // 1. WHEN TITLE UPDATE - NOTIFY BOOKED USER
+      if (payload?.title) {
+        await sendMultiNotification({
+          title: `Your Event's Title Updated`,
+          type: NotificationType.EVENT,
+          description: `The title "${event.title}" of your event has been updated to: "${payload.title}"`,
+          receiverIds: bookedMembersId as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+      }
+
+      // 2. WHEN DESCRIPTION UPDATE - NOTIFY BOOKED USER
+      if (payload?.description) {
+        await sendMultiNotification({
+          title: `Your Event's Description Updated`,
+          type: NotificationType.EVENT,
+          description: `${event.title} - description "${event.description.slice(0, 20)}..." of your event has been updated to: "${updateEvent?.description.slice(1, 15)}..."`,
+          receiverIds: bookedMembersId as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+      }
+      // 2. WHEN VISIBILITY UPDATE - NOTIFY BOOKED USER
+      if (payload?.visibility) {
+        await sendMultiNotification({
+          title: `Your Event's Visibility Updated`,
+          type: NotificationType.EVENT,
+          description: `'${event.title}' - visibility changed from '${event.visibility}' to ${updateEvent.visibility}`,
+          receiverIds: bookedMembersId as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+      }
+
+      // 3. WHEN VENUE UPDATE - NOTIFY BOOKED USER
+      if (payload?.venue) {
+        // GET COORDINATES
+        const addressLine = `${updateEvent?.venue}, ${updateEvent.address.city}, ${updateEvent.address.state}, ${updateEvent.address.postal}, ${updateEvent.address.country}`;
+        const coord = await addressToLongLat(addressLine);
+
+        if (!coord.lat || !coord.long) {
+          console.log('Coordinates not update!');
+        }
+
+        const location = {
+          type: LocationType.POINT,
+          coordinates: [coord.long, coord.lat],
+        };
+
+        // UPDATE LOCATION
+        await Event.findByIdAndUpdate(eventId, { location });
+
+        // SEND NOTIFICATION
+        await sendMultiNotification({
+          title: `Your Event's Venue Updated`,
+          type: NotificationType.EVENT,
+          description: `Your event "${event.title}" venue has been changed. New venue is "${updateEvent?.venue}".`,
+          receiverIds: bookedMembersId as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+        // SEND EMAIL
+        sendEmail({
+          to: env.ADMIN_GMAIL,
+          bcc: booked_members_email as string[],
+          subject: "Linkup - Your Event's venue has been changed!",
+          templateName: 'eventVenueUpdate',
+          templateData: {
+            event_title: event?.title,
+            event_venue: event?.venue,
+            support_email: env?.ADMIN_GMAIL,
+          },
+        });
+      }
+
+      // 4. WHEN EVENT START DATE AND TIME UPDATE - NOTIFY BOOKED USER
+      if (payload?.event_start) {
+        // SEND NOTIFICATION
+        await sendMultiNotification({
+          title: `Your Event Beginning Date Updated`,
+          type: NotificationType.EVENT,
+          description: `Your event "${event.title}" beginning date has been changed. New starting date is "${dayjs(updateEvent?.event_start).format('MM/DD/YYYY, hh:mm:ss A')}".`,
+          receiverIds: bookedMembersId as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+        // SEND EMAIL
+        sendEmail({
+          to: env.ADMIN_GMAIL,
+          bcc: booked_members_email as string[],
+          subject: "Linkup - Your Event's date has been changed!",
+          templateName: 'eventStartDateUpdate',
+          templateData: {
+            event_title: event?.title,
+            event_start: dayjs(event?.event_start).format(
+              'MM/DD/YYYY, hh:mm:ss A'
+            ),
+            support_email: env?.ADMIN_GMAIL,
+          },
+        });
+      }
+
+      // 5. WHEN EVENT END DATE AND TIME UPDATE - NOTIFY BOOKED USER
+      if (payload?.event_end) {
+        // SEND NOTIFICATION
+        await sendMultiNotification({
+          title: `Your Event Ending Date Updated`,
+          type: NotificationType.EVENT,
+          description: `Your event "${event.title}" ending date has been changed. New ending date is "${updateEvent?.event_end}".`,
+          receiverIds: bookedMembersId as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+        // SEND EMAIL
+        sendEmail({
+          to: env.ADMIN_GMAIL,
+          bcc: booked_members_email as string[],
+          subject: "Linkup - Your Event's date has been changed!",
+          templateName: 'eventEndDateUpdate',
+          templateData: {
+            event_title: event?.title,
+            event_end: dayjs(event?.event_end).format('MM/DD/YYYY, hh:mm:ss A'),
+            support_email: env?.ADMIN_GMAIL,
+          },
+        });
+      }
+
+      // 6. WHEN EVENT TIME ZONE UPDATE - NOTIFY BOOKED USER
+      if (payload?.time_zone) {
+        // SEND NOTIFICATION
+        await sendMultiNotification({
+          title: `Your Event Time Zone Updated`,
+          type: NotificationType.EVENT,
+          description: `Your event "${event.title}" Time Zone has been changed. New Time Zone is "${updateEvent?.time_zone}".`,
+          receiverIds: bookedMembersId as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+        // SEND EMAIL
+        sendEmail({
+          to: env.ADMIN_GMAIL,
+          bcc: booked_members_email as string[],
+          subject: "Linkup - Your Event's Time Zone has been changed!",
+          templateName: 'eventTimeZoneUpdate',
+          templateData: {
+            event_title: event?.title,
+            time_zone: updateEvent?.time_zone,
+            support_email: env?.ADMIN_GMAIL,
+          },
+        });
+      }
+
+      // 7. WHEN EVENT STARTED AND CHANGED STATUS ACTIVE TO ONGOING - NOTIFY BOOKED USER
+      if (payload?.event_status === EventStatus.ONGOING) {
+        // SEND NOTIFICATION
+        await sendMultiNotification({
+          title: `Your event's has been started!🎉`,
+          type: NotificationType.EVENT,
+          description: `Your event "${event.title}" has been started now.`,
+          receiverIds: bookedMembersId as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+        // SEND EMAIL
+        sendEmail({
+          to: env.ADMIN_GMAIL,
+          bcc: booked_members_email as string[],
+          subject: "Linkup - Your event's has been started!🎉",
+          templateName: 'eventStartedUpdate',
+          templateData: {
+            event_title: event?.title,
+            event_status: updateEvent?.event_status,
+            support_email: env?.ADMIN_GMAIL,
+          },
+        });
+      }
+
+      // ================== HOST AND CO-HOST UPDATE ONLY============
+      // 8. GET HOST AND CO-HOST ID
+      const host_and_cos_host_id = [updateEvent?.host];
+      if (updateEvent?.co_host) {
+        host_and_cos_host_id.push(updateEvent?.co_host);
+      }
+
+      // GET HOST AND CO-HOST INFO
+      const hostAndCoHostInfo = await User.find({
+        _id: {
+          $in: [...host_and_cos_host_id],
+        },
+      }).populate('fullName email');
+
+      // EXTRACT EMAIL
+      const host_CoHost_email = hostAndCoHostInfo.map((b) => b.email);
+
+      // 9. WHEN EVENT GOT SPONSORED - NOTIFY HOST AND CO-HOST
+      if (payload?.featured === Featured.SPONSORED) {
+        // SEND NOTIFICATION
+        await sendMultiNotification({
+          title: `Hurray! Your event is now Sponsored!🎉`,
+          type: NotificationType.EVENT,
+          description: `Your event "${event.title}" has been sponsored in the LinkUp app.Your event will now get more visibility and reach.`,
+          receiverIds: host_and_cos_host_id as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            Image: event?.images[0],
+          },
+        });
+        // SEND EMAIL
+        sendEmail({
+          to: env.ADMIN_GMAIL,
+          bcc: host_CoHost_email as string[],
+          subject: 'Linkup - Hurray! Your event is now Sponsored!🎉',
+          templateName: 'eventSponsoredUpdate',
+          templateData: {
+            event_title: event?.title,
+            event_venue: updateEvent?.venue,
+            event_date: dayjs(event?.event_start).format(
+              'MM/DD/YYYY, hh:mm:ss A'
+            ),
+            sponsor_name: 'LinkUp Team',
+            support_email: env?.ADMIN_GMAIL,
+          },
+        });
+      }
+
+      // 10. WHEN EVENT GOT BOOSTED - NOTIFY HOST AND CO-HOST
+      if (payload?.featured === Featured.BOOSTED) {
+        // SEND NOTIFICATION
+        await sendMultiNotification({
+          title: `Your event is now Boosted!🚀`,
+          type: NotificationType.EVENT,
+          description: `Great news! Your event "${event.title}" has been boosted on the LinkUp app. Your event will now get more visibility and reach.`,
+          receiverIds: host_and_cos_host_id as Types.ObjectId[],
+          data: {
+            eventId: event?._id,
+            image: event?.images?.[0],
+          },
+        });
+
+        // SEND EMAIL
+        await sendEmail({
+          to: env.ADMIN_GMAIL,
+          bcc: host_CoHost_email as string[],
+          subject: 'LinkUp - 🚀 Your event is now Boosted!',
+          templateName: 'eventBoostedUpdate',
+          templateData: {
+            event_title: event?.title,
+            event_venue: updateEvent?.venue,
+            event_date: dayjs(event?.event_start).format(
+              'MM/DD/YYYY, hh:mm:ss A'
+            ),
+            sponsor_name: 'LinkUp',
+            support_email: env?.ADMIN_GMAIL,
+          },
+        });
       }
     } catch (error) {
       console.log(`Notification sending error`, error);
     }
-  })();
+  });
 
   // RETURN UPDATE RESULT
   return updateEvent;

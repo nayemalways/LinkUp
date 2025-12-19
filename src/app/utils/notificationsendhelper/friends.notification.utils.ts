@@ -5,7 +5,7 @@ import { Types } from "mongoose";
 import { INotification } from "../../modules/notifications/notification.interface";
 import User from "../../modules/users/user.model";
 
-export const sendFriendsNotification = async (payload: INotification) => {
+export const sendMultiNotification = async (payload: INotification) => {
   // Save notification in DB
   const notification = await Notification.create(payload);
   
