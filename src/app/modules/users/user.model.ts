@@ -36,7 +36,10 @@ const userSchema = new mongoose.Schema<IUser>(
     isVerified: { type: Boolean, default: false },
     role: { type: String, enum: [...Object.values(Role)], default: Role.USER },
     auths: [authProviderSchema],
-    coord: { type: { lat: { type: Number }, long: { type: Number } }, _id: false },
+    coord: {
+      type: { lat: { type: Number }, long: { type: Number } },
+      _id: false,
+    },
   },
   {
     versionKey: false,
@@ -46,20 +49,21 @@ const userSchema = new mongoose.Schema<IUser>(
 
 // Hashed password
 userSchema.pre('save', async function (next) {
-  if (!this?.password) next();
-  
+  if (!this?.password) return next();
+
   try {
     const hashedPassword = await bcrypt.hash(
-    this?.password as string,
-    parseInt(env?.BCRYPT_SALT_ROUND)
-  );
-  this.password = hashedPassword;
-  next()
+      this?.password as string,
+      parseInt(env?.BCRYPT_SALT_ROUND)
+    );
+    this.password = hashedPassword;
+    next();
   } catch (error: any) {
-    next(error)
+    next(error);
   }
 });
 
-const User = mongoose.model<IUser>('user', userSchema);
+// register model as "User" so populate('User') works, and keep existing "users" collection
+const User = mongoose.model<IUser>('User', userSchema, 'users');
 
 export default User;

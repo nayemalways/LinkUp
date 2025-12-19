@@ -1,0 +1,203 @@
+import { NextFunction, Request, Response } from 'express';
+import { CatchAsync } from '../../utils/CatchAsync';
+import { SendResponse } from '../../utils/SendResponse';
+import { StatusCodes } from 'http-status-codes';
+import { groupServices } from './group.service';
+import { JwtPayload } from 'jsonwebtoken';
+
+// CREATE GROUP
+const createGroup = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+
+    const payload = req.body || {};
+    if (!payload.group_name) {
+      return SendResponse(res, {
+        success: false,
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: 'group_name is required in request body',
+        data: undefined,
+      });
+    }
+
+    const result = await groupServices.createGroupService(user, payload);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.CREATED,
+      message: 'Group created successfully!',
+      data: result,
+    });
+  }
+);
+
+// GET USER'S GROUPS
+const getUserGroups = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+
+    const result = await groupServices.getUserGroupsService(user);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Groups fetched successfully!',
+      data: result,
+    });
+  }
+);
+
+// GET SINGLE GROUP
+const getSingleGroup = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { groupId } = req.params;
+
+    const result = await groupServices.getSingleGroupService(user, groupId);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Group details fetched successfully!',
+      data: result,
+    });
+  }
+);
+
+// INVITE USERS TO GROUP
+const inviteUsersToGroup = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { groupId } = req.params;
+
+    const payload = req.body || {};
+    const { userIds } = payload;
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return SendResponse(res, {
+        success: false,
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: 'userIds (non-empty array) is required in request body',
+        data: undefined,
+      });
+    }
+
+    const result = await groupServices.inviteUsersToGroupService(
+      user,
+      groupId,
+      userIds
+    );
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Users invited successfully!',
+      data: result,
+    });
+  }
+);
+
+// SEND MESSAGE IN GROUP
+const sendGroupMessage = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { groupId } = req.params;
+
+    const result = await groupServices.sendGroupMessageService(
+      user,
+      groupId,
+      req.body
+    );
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.CREATED,
+      message: 'Message sent successfully!',
+      data: result,
+    });
+  }
+);
+
+// GET GROUP MESSAGES
+const getGroupMessages = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { groupId } = req.params;
+
+    const result = await groupServices.getGroupMessagesService(user, groupId);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Messages fetched successfully!',
+      data: result,
+    });
+  }
+);
+
+// LEAVE GROUP
+const leaveGroup = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { groupId } = req.params;
+
+    const result = await groupServices.leaveGroupService(user, groupId);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Left group successfully!',
+      data: result,
+    });
+  }
+);
+
+// REMOVE MEMBER FROM GROUP
+const removeMember = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { groupId, memberId } = req.params;
+
+    const result = await groupServices.removeMemberService(
+      user,
+      groupId,
+      memberId
+    );
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Member removed successfully!',
+      data: result,
+    });
+  }
+);
+
+// DELETE GROUP
+const deleteGroup = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { groupId } = req.params;
+
+    const result = await groupServices.deleteGroupService(user, groupId);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Group deleted successfully!',
+      data: result,
+    });
+  }
+);
+
+export const groupControllers = {
+  createGroup,
+  getUserGroups,
+  getSingleGroup,
+  inviteUsersToGroup,
+  sendGroupMessage,
+  getGroupMessages,
+  leaveGroup,
+  removeMember,
+  deleteGroup,
+};
