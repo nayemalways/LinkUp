@@ -25,6 +25,7 @@ import Booking from '../booking/booking.model';
 import { sendEmail } from '../../utils/sendMail';
 import env from '../../config/env';
 import dayjs from 'dayjs';
+import { GroupMemberRole, IGroupMember } from '../groups/group.interface';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
@@ -66,13 +67,18 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
   payload.host = user.userId;
 
   // => -------Create event & chat group in parallel--------
+  const groupMemberPayload: IGroupMember = {
+    user: user.userId,
+    role: GroupMemberRole.SUPERADMIN,
+    joinedAt: new Date()
+  };
   const [createEvent, createChatGroup] = await Promise.all([
     Event.create(payload),
     Group.create({
       group_admin: user.userId,
       group_name: `Event: ${payload.title} Chat Group`,
       group_image: payload.images?.[0] || '',
-      group_members: [user.userId],
+      group_members: [groupMemberPayload],
       group_description: `This is the chat group for the event: ${payload.title}`,
     }),
   ]);

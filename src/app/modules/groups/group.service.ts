@@ -2,7 +2,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import Group from './group.model';
 import { GroupMemberRole, IGroup } from './group.interface';
 import AppError from '../../errorHelpers/AppError';
-import httpStatus from 'http-status-codes';
+import httpStatus, { StatusCodes } from 'http-status-codes';
 import User from '../users/user.model';
 import { Types } from 'mongoose';
 import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
@@ -18,6 +18,10 @@ const createGroupService = async (
   payload: Partial<IGroup>
 ) => {
   const userId = user.userId;
+
+  if (!payload.group_name) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Group name must required!");
+  }
 
   // Check if user is verified
   const currentUser = await User.findById(userId);
