@@ -7,6 +7,7 @@ import { friendRouter } from '../modules/friends/friend.route';
 import { groupRouter } from '../modules/groups/group.route';
 import { messageRouter } from '../modules/message/message.route';
 import { notificationRouter } from '../modules/notifications/notification.route';
+import { reviewRouter } from '../modules/reviews/review.route';
 
 export const router = Router();
 
@@ -42,6 +43,10 @@ const moduleRoutes = [
   {
     path: '/notification',  
     route: notificationRouter,
+  }, 
+  {
+    path: '/review',
+    route: reviewRouter,
   }
 ];
 
