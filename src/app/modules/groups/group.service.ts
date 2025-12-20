@@ -1,6 +1,6 @@
 import { JwtPayload } from 'jsonwebtoken';
 import Group from './group.model';
-import { GroupMemberRole } from './group.interface';
+import { GroupMemberRole, IGroup } from './group.interface';
 import AppError from '../../errorHelpers/AppError';
 import httpStatus from 'http-status-codes';
 import User from '../users/user.model';
@@ -13,7 +13,10 @@ import Message from '../message/message.model';
 import { MessageStatus } from '../message/message.interface';
 
 // CREATE GROUP - Only verified users
-const createGroupService = async (user: JwtPayload, payload: any) => {
+const createGroupService = async (
+  user: JwtPayload,
+  payload: Partial<IGroup>
+) => {
   const userId = user.userId;
 
   // Check if user is verified
@@ -25,12 +28,20 @@ const createGroupService = async (user: JwtPayload, payload: any) => {
     );
   }
 
-  // Create group with creator as superadmin
+  // Check for unique group name
+  const existingGroup = await Group.findOne({ group_name: payload.group_name });
+  if (existingGroup) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      'Group name already exists! Please choose a different name.'
+    );
+  }
+
+  // Create group with creator as admin
   const group = await Group.create({
     group_name: payload.group_name,
     group_description: payload.group_description,
     group_image: payload.group_image,
-    event: payload.event,
     group_admin: userId,
     group_members: [
       {
@@ -45,16 +56,28 @@ const createGroupService = async (user: JwtPayload, payload: any) => {
 };
 
 // GET USER'S GROUPS
-const getUserGroupsService = async (user: JwtPayload) => {
+const getUserGroupsService = async (
+  user: JwtPayload,
+  query: Record<string, string>
+) => {
   const userId = user.userId;
+  const sort = query.sort || '-createdAt';
+
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const join = query.join || 'group_admin'; // Collection references to populate
+  const fields = query.fields || ''; // Fields to select
 
   const groups = await Group.find({
     'group_members.user': userId,
   })
-    .populate('group_admin', 'fullName email avatar')
-    .populate('group_members.user', 'fullName email avatar')
-    .populate('event', 'title')
-    .sort({ createdAt: -1 });
+    .select(fields.split(',').join(' '))
+    .populate(join.split(',').map((ref) => ({ path: ref })))
+    .skip(skip)
+    .limit(limit)
+    .sort(sort);
 
   return groups;
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from 'express';
 import { CatchAsync } from '../../utils/CatchAsync';
 import { SendResponse } from '../../utils/SendResponse';
@@ -35,8 +36,9 @@ const createGroup = CatchAsync(
 const getUserGroups = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
+    const query = req.query as Record<string, string>;
 
-    const result = await groupServices.getUserGroupsService(user);
+    const result = await groupServices.getUserGroupsService(user, query);
 
     SendResponse(res, {
       success: true,

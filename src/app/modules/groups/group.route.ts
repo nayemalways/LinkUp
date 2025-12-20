@@ -1,11 +1,12 @@
 import express from 'express';
 import { checkAuth } from '../../middlewares/auth.middleware';
 import { groupControllers } from './group.controller';
+import { Role } from '../users/user.interface';
 
 const router = express.Router();
 
 // CREATE GROUP - Verified users only
-router.post('/create', checkAuth(), groupControllers.createGroup);
+router.post('/create', checkAuth(...Object.keys(Role)), groupControllers.createGroup);
 
 // GET USER'S GROUPS
 router.get('/', checkAuth(), groupControllers.getUserGroups);
