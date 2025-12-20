@@ -67,14 +67,10 @@ const getUserGroupsService = async (
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const join = query.join || 'group_admin'; // Collection references to populate
-  const fields = query.fields || ''; // Fields to select
-
   const groups = await Group.find({
     'group_members.user': userId,
   })
-    .select(fields.split(',').join(' '))
-    .populate(join.split(',').map((ref) => ({ path: ref })))
+    .select('group_name group_image')
     .skip(skip)
     .limit(limit)
     .sort(sort);
@@ -111,7 +107,7 @@ const getSingleGroupService = async (user: JwtPayload, groupId: string) => {
 };
 
 // INVITE USERS TO GROUP
-const inviteUsersToGroupService = async (
+const addUsersToGroupService = async (
   user: JwtPayload,
   groupId: string,
   userIds: string[]
@@ -147,10 +143,7 @@ const inviteUsersToGroupService = async (
   const newUserIds = userIds.filter((id) => !existingMemberIds.includes(id));
 
   if (newUserIds.length === 0) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'All users are already members!'
-    );
+    throw new AppError(httpStatus.BAD_REQUEST, 'User are already members!');
   }
 
   // Verify all new users exist
@@ -191,7 +184,7 @@ const inviteUsersToGroupService = async (
     }
   }
 
-  return { message: 'Users invited successfully!', group };
+  return group;
 };
 
 // SEND MESSAGE IN GROUP
@@ -231,9 +224,6 @@ const sendGroupMessageService = async (
     replyTo: payload.replyTo,
   });
 
-  // Populate sender details
-  await message.populate('sender', 'fullName avatar');
-
   // Emit message to group room
   io.to(groupId).emit('group_message', message);
 
@@ -241,8 +231,14 @@ const sendGroupMessageService = async (
 };
 
 // GET GROUP MESSAGES
-const getGroupMessagesService = async (user: JwtPayload, groupId: string) => {
+const getGroupMessagesService = async (user: JwtPayload, groupId: string, query: Record<string, string>) => {
   const userId = user.userId;
+
+      // Pagination parameters
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const sort = query.sort || 'createdAt'; // Default: oldest first for chat
 
   const group = await Group.findById(groupId);
   if (!group) {
@@ -261,10 +257,18 @@ const getGroupMessagesService = async (user: JwtPayload, groupId: string) => {
     );
   }
 
+
   const messages = await Message.find({ group: groupId })
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
     .populate('sender', 'fullName avatar')
-    .populate('replyTo')
-    .sort({ createdAt: 1 });
+    .populate('receiver', 'fullName avatar')
+    .populate({
+      path: 'replyTo',
+      select: 'message sender',
+      populate: { path: 'sender', select: 'fullName' },
+    });
 
   return messages;
 };
@@ -376,7 +380,7 @@ export const groupServices = {
   createGroupService,
   getUserGroupsService,
   getSingleGroupService,
-  inviteUsersToGroupService,
+  addUsersToGroupService,
   sendGroupMessageService,
   getGroupMessagesService,
   leaveGroupService,

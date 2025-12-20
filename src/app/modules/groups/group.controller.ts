@@ -5,6 +5,7 @@ import { SendResponse } from '../../utils/SendResponse';
 import { StatusCodes } from 'http-status-codes';
 import { groupServices } from './group.service';
 import { JwtPayload } from 'jsonwebtoken';
+import AppError from '../../errorHelpers/AppError';
 
 // CREATE GROUP
 const createGroup = CatchAsync(
@@ -67,7 +68,7 @@ const getSingleGroup = CatchAsync(
 );
 
 // INVITE USERS TO GROUP
-const inviteUsersToGroup = CatchAsync(
+const addUsersToGroup = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
     const { groupId } = req.params;
@@ -76,15 +77,13 @@ const inviteUsersToGroup = CatchAsync(
     const { userIds } = payload;
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-      return SendResponse(res, {
-        success: false,
-        statusCode: StatusCodes.BAD_REQUEST,
-        message: 'userIds (non-empty array) is required in request body',
-        data: undefined,
-      });
+       throw new AppError(
+         StatusCodes.BAD_REQUEST,
+         'userIds (array of user IDs) is required in request body',
+      );
     }
 
-    const result = await groupServices.inviteUsersToGroupService(
+    const result = await groupServices.addUsersToGroupService(
       user,
       groupId,
       userIds
@@ -125,8 +124,9 @@ const getGroupMessages = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
     const { groupId } = req.params;
+    const query = req.query as Record<string, string>;
 
-    const result = await groupServices.getGroupMessagesService(user, groupId);
+    const result = await groupServices.getGroupMessagesService(user, groupId, query);
 
     SendResponse(res, {
       success: true,
@@ -196,7 +196,7 @@ export const groupControllers = {
   createGroup,
   getUserGroups,
   getSingleGroup,
-  inviteUsersToGroup,
+  addUsersToGroup,
   sendGroupMessage,
   getGroupMessages,
   leaveGroup,

@@ -18,7 +18,7 @@ router.get('/:groupId', checkAuth(), groupControllers.getSingleGroup);
 router.post(
   '/:groupId/invite',
   checkAuth(),
-  groupControllers.inviteUsersToGroup
+  groupControllers.addUsersToGroup
 );
 
 // SEND MESSAGE IN GROUP
