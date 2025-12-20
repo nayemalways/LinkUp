@@ -12,5 +12,4 @@ export const sendPersonalNotification = async ( payload: INotification ) => {
   const userRoom = (payload.user as Types.ObjectId).toString();
   // Send real-time
   io.to(userRoom).emit("notification", notification);
-  console.log(`Notification sent to user room: ${userRoom}`);
 };

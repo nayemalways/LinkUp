@@ -2,19 +2,10 @@
 import { Types } from 'mongoose';
 
 export enum NotificationType {
-   CHAT = "CHAT",
-   FRIEND = "FRIEND",
-   EVENT = "EVENT",
-   SYSTEM = "SYSTEM"
-}
-
-export enum NotificationCategory {
-  SYSTEM = 'system',
-  EVENT_UPDATE = 'event_update',
-  BOOKING_UPDATE = 'booking_update',
-  MESSAGE = 'message',
-  FRIEND_REQUEST = 'friend_request',
-  MARKETING = 'marketing',
+  CHAT = 'CHAT',
+  FRIEND = 'FRIEND',
+  EVENT = 'EVENT',
+  SYSTEM = 'SYSTEM',
 }
 
 export interface IChannel {
@@ -23,25 +14,31 @@ export interface IChannel {
   inApp: boolean;
 }
 
-
 export interface INotification {
   _id?: Types.ObjectId;
   user?: Types.ObjectId;
-  eventId?: Types.ObjectId,
-  chatId?: Types.ObjectId,
+  eventId?: Types.ObjectId;
+  chatId?: Types.ObjectId;
   receiverIds?: Types.ObjectId[];
-  type: NotificationType
+  type: NotificationType;
   title: string;
   description?: string;
   data?: Record<string, any>;
-  isRead?: boolean;               
+  isRead?: boolean;
 }
 
 export interface INotificationPreference {
   _id?: Types.ObjectId;
   user: Types.ObjectId;
-  type: NotificationType;
   channel: IChannel;
-  category: NotificationCategory;
+  directmsg: boolean;
+  app: {
+    product_updates: boolean;
+    special_offers: boolean;
+  };
+  event: {
+    event_invitations: boolean;
+    event_changes: boolean;
+    event_reminders: boolean;
+  };
 }
-

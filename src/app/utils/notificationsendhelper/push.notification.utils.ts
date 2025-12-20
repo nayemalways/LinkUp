@@ -24,9 +24,7 @@ export const sendPushAndSave = async (payload: INotification) => {
     };
 
 
-    await admin.messaging().send(message);
-
-    console.log("Push notification sent and saved for user:", user.fullName);
+    await admin.messaging().send(message); // Send notificaton via FCM
     return notification;
   } catch (err) {
     console.error("Error sending notification:", err);
