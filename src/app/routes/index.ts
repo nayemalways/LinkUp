@@ -4,6 +4,8 @@ import { authRouter } from '../modules/auth/auth.routes';
 import { categoryRoutes } from '../modules/event_categories/category.routes';
 import { eventRouter } from '../modules/events/event.routes';
 import { friendRouter } from '../modules/friends/friend.route';
+import { groupRouter } from '../modules/groups/group.route';
+import { messageRouter } from '../modules/message/message.route';
 
 export const router = Router();
 
@@ -27,6 +29,14 @@ const moduleRoutes = [
   {
     path: '/friend',
     route: friendRouter,
+  },
+  {
+    path: '/group',
+    route: groupRouter,
+  },
+  {
+    path: '/message',
+    route: messageRouter,
   }
 ];
 
