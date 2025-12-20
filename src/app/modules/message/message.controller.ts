@@ -8,7 +8,10 @@ import { JwtPayload } from 'jsonwebtoken';
 const sendDirectMessage = CatchAsync(async (req, res) => {
   const user = req.user as JwtPayload;
   const { receiverId } = req.params;
-  const payload = req.body;
+  const payload = {
+    ...req.body,
+    image: req.file?.path as string
+  };
 
   const result = await messageServices.sendDirectMessageService(
     user,
