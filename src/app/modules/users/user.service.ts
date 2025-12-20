@@ -37,7 +37,7 @@ const createUserService = async (payload: Partial<IUser>) => {
   const creatUser = await User.create(userPayload); // Create user
 
   // Notification preference setup can be added here in future
-  const defaultPreferences = await NotificationPreference.create({
+  await NotificationPreference.create({
     user: creatUser?._id,
     channel: {
       push: true,
