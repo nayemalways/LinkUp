@@ -2,6 +2,10 @@ import express from 'express';
 import { checkAuth } from '../../middlewares/auth.middleware';
 import { groupControllers } from './group.controller';
 import { Role } from '../users/user.interface';
+import { groupZodSchema } from './group.validate';
+import { multerUpload } from '../../config/multer.config';
+import { validateRequest } from '../../middlewares/validateRequest';
+import { sendMessageSchema } from '../message/message.validate';
 
 const router = express.Router();
 
