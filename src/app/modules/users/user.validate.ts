@@ -37,6 +37,11 @@ export const userUpdateZodSchema = z.object({
     .min(3, 'Full name must be at least 3 characters!')
     .max(100, 'Full name must be maximum 100 characters!')
     .optional(),
+  bio: z
+    .string({ error: 'Bio must be string type!' })
+    .min(3, 'Bio must be at least 3 characters!')
+    .max(150, 'Bio must be maximum 150 characters!')
+    .optional(),
   organizationName: z
     .string({ error: 'Organization name must be string type!' })
     .min(3, 'Organization name must be at least 3 characters!')

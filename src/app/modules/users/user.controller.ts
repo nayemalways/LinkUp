@@ -58,6 +58,8 @@ const userUpdate = CatchAsync(async (req: Request, res: Response) => {
     avatar: req.file?.path as string
   }
 
+  console.log(payload)
+
   const result = await userServices.userUpdateService(userId, payload, decodedToken);
 
   SendResponse(res, {
