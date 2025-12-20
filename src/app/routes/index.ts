@@ -6,6 +6,7 @@ import { eventRouter } from '../modules/events/event.routes';
 import { friendRouter } from '../modules/friends/friend.route';
 import { groupRouter } from '../modules/groups/group.route';
 import { messageRouter } from '../modules/message/message.route';
+import { notificationRouter } from '../modules/notifications/notification.route';
 
 export const router = Router();
 
@@ -37,6 +38,10 @@ const moduleRoutes = [
   {
     path: '/message',
     route: messageRouter,
+  },
+  {
+    path: '/notification',  
+    route: notificationRouter,
   }
 ];
 

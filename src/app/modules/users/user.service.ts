@@ -7,6 +7,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import { validatePhone } from '../../utils/phoneNumberValidatior';
 import { Types } from 'mongoose';
 import { QueryBuilder } from '../../utils/QueryBuilder';
+import { NotificationPreference } from '../notifications/notification.model';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -34,6 +35,27 @@ const createUserService = async (payload: Partial<IUser>) => {
   }
 
   const creatUser = await User.create(userPayload); // Create user
+
+  // Notification preference setup can be added here in future
+  const defaultPreferences = await NotificationPreference.create({
+    user: creatUser?._id,
+    channel: {
+      push: true,
+      email: true,
+      inApp: true,
+    },
+    directmsg: true,
+    app: {
+      product_updates: true,
+      special_offers: true,
+    },
+    event: {
+      event_invitations: true,
+      event_changes: true,
+      event_reminders: true,
+    },
+  });
+
   return creatUser;
 };
 
@@ -42,19 +64,19 @@ const getAllUserService = async (query: Record<string, string>) => {
   const queryBuilder = new QueryBuilder(User.find(), query);
 
   const users = await queryBuilder
-                                  .filter()
-                                  .textSearch()
-                                  .select()
-                                  .sort()
-                                  .paginate()
-                                  .build();
+    .filter()
+    .textSearch()
+    .select()
+    .sort()
+    .paginate()
+    .build();
 
   const meta = await queryBuilder.getMeta();
   return {
     meta,
-    users
+    users,
   };
-}
+};
 
 // GET ME
 const getMeService = async (userId: string) => {
@@ -75,8 +97,8 @@ const getMeService = async (userId: string) => {
     // Projection
     {
       $project: {
-        password: 0, 
-        interests: 0,  
+        password: 0,
+        interests: 0,
       },
     },
   ]);
@@ -306,5 +328,5 @@ export const userServices = {
   getMeService,
   userUpdateService,
   userDeleteService,
-  getAllUserService
+  getAllUserService,
 };
