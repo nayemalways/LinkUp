@@ -1,7 +1,6 @@
 import httpStatus from 'http-status-codes';
 import { CatchAsync } from '../../utils/CatchAsync';
 import { SendResponse } from '../../utils/SendResponse';
-import AppError from '../../errorHelpers/AppError';
 import { NotificationService } from './notification.service';
 import { JwtPayload } from 'jsonwebtoken';
 
@@ -9,7 +8,6 @@ import { JwtPayload } from 'jsonwebtoken';
 const getUserNotificationPreferences = CatchAsync(async (req, res) => {
   const user = req.user as JwtPayload;
   const userId = user?.userId;
-  if (!userId) throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized');
 
   const result =
     await NotificationService.getUserNotificationPreferences(userId);
@@ -26,7 +24,6 @@ const getUserNotificationPreferences = CatchAsync(async (req, res) => {
 const updateNotificationPreferences = CatchAsync(async (req, res) => {
   const user = req.user as JwtPayload;
   const userId = user?.userId;
-  if (!userId) throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized');
   const payload = req.body;
 
   const result = await NotificationService.updateNotificationPreferences(
@@ -42,7 +39,24 @@ const updateNotificationPreferences = CatchAsync(async (req, res) => {
   });
 });
 
+// Get user's notification preferences (using)
+const getUserNotifications = CatchAsync(async (req, res) => {
+  const { userId } = req.user as JwtPayload;
+  const query = req.query as Record<string, string>;
+  const result =
+    await NotificationService.getusersNotificationService(userId, query);
+
+  SendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Notification retrieved successfully',
+    data: result,
+  });
+});
+
+
 export const NotificationController = {
   getUserNotificationPreferences,
   updateNotificationPreferences,
+  getUserNotifications
 };

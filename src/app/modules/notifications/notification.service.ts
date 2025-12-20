@@ -1,7 +1,7 @@
 import httpStatus from 'http-status-codes';
 import AppError from '../../errorHelpers/AppError';
 import { INotificationPreference } from './notification.interface';
-import { NotificationPreference } from './notification.model';
+import { Notification, NotificationPreference } from './notification.model';
 
 // Get user's notification preferences (using)
 const getUserNotificationPreferences = async (userId: string) => {
@@ -40,7 +40,25 @@ const updateNotificationPreferences = async (
   return updatedPreferences;
 };
 
+// Get user's notification 
+const getusersNotificationService = async (userId: string, query: Record<string, string>) => {
+
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const sort = query.sort || "-createdAt";
+
+  const notifications = await Notification.find({
+    $or: [{ user: userId}, {receiverIds: [ userId ]}]
+  }).skip(skip).limit(limit).sort(sort)
+
+
+  return notifications;
+}
+
 export const NotificationService = {
   getUserNotificationPreferences,
   updateNotificationPreferences,
+  getusersNotificationService
 };
