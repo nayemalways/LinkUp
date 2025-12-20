@@ -1,5 +1,5 @@
 import admin from "firebase-admin";
-import { Notification } from "../../modules/notifications/notification.model";
+import { Notification, NotificationPreference } from "../../modules/notifications/notification.model";
 import { io, onlineUsers } from "../../socket";
 import { Types } from "mongoose";
 import { INotification } from "../../modules/notifications/notification.interface";
@@ -15,10 +15,14 @@ export const sendMultiNotification = async (payload: INotification) => {
 
 
   // FILTER ONLIN/OFFLINE FRIENDS
-  (payload.receiverIds as Types.ObjectId[]).forEach(friendId => {
+  (payload.receiverIds as Types.ObjectId[]).forEach(async (friendId) => {
     const friendIdStr = friendId.toString();
     if (onlineUsers[friendIdStr]) {
-      io.to(friendIdStr).emit("notification", notification); // Online
+      const notificationPreference = await NotificationPreference.findOne({user: friendId});
+
+      if (notificationPreference?.channel.inApp) {
+        io.to(friendIdStr).emit("notification", notification); // Online
+      }
       onlineFriends.push(friendIdStr);
     } else {
       offlineFriendIds.push(friendId);
@@ -27,7 +31,18 @@ export const sendMultiNotification = async (payload: INotification) => {
 
   // FETCH FCM TOKENS FOR OFFLINE FRIENDS
   if (offlineFriendIds.length > 0) {
-    const users = await User.find({ _id: { $in: offlineFriendIds } }).select("fcmToken");
+    // FILTER ONLY PUSH NOTIFICATION ALLOWED USER
+    const notificationPreference = await NotificationPreference.find({user: {$in: offlineFriendIds}});
+
+    const usersAllowedPush: string[] = [];
+    notificationPreference.forEach((userNotificationPref) => {
+      if (userNotificationPref.channel.push) {
+        usersAllowedPush.push(userNotificationPref?.user.toString());
+      }
+    })
+    
+    
+    const users = await User.find({ _id: { $in: usersAllowedPush } }).select("fcmToken");
     const allTokens = users.flatMap(u => u.fcmToken); // flatten for multi-device
 
     // SEND PUSH NOTIFICATIONS IN PARALLEL BATCHES
@@ -48,6 +63,8 @@ export const sendMultiNotification = async (payload: INotification) => {
         })
       )
     );
+
+    // console.log("Push multi notification sent", usersAllowedPush);
   }
 
   return notification;
