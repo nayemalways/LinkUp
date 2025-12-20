@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const SocketEvents = (socket: any) => {
   // User joins event room

@@ -9,7 +9,7 @@ import { sendPersonalNotification } from '../../utils/notificationsendhelper/use
 import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
 import { NotificationType } from '../notifications/notification.interface';
 import { onlineUsers, io } from '../../socket';
-import { QueryBuilder } from '../../utils/QueryBuilder';
+
 
 // SEND DIRECT MESSAGE (1-to-1)
 const sendDirectMessageService = async (
@@ -72,14 +72,13 @@ const sendDirectMessageService = async (
     // Send in-app notification
     const notificationPayload = {
       user: new Types.ObjectId(receiverId),
-      type: NotificationType.SYSTEM,
+      type: NotificationType.CHAT,
       title: 'New Message',
       description: `${sender.fullName} sent you a message`,
       data: {
-        senderId: senderId,
-        senderName: sender.fullName,
-        messageId: message._id.toString(),
-        message: payload.text || 'Sent an image',
+        senderId: sender?._id,
+        message: message.message.text ||  message.message.image,
+        image: sender?.avatar
       },
     };
 
@@ -88,7 +87,7 @@ const sendDirectMessageService = async (
     // Send push notification if user is offline
     const notificationPayload = {
       user: new Types.ObjectId(receiverId),
-      type: NotificationType.SYSTEM,
+      type: NotificationType.CHAT,
       title: 'New Message',
       description: `${sender.fullName} sent you a message`,
       data: {
