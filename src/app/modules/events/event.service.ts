@@ -26,6 +26,7 @@ import { sendEmail } from '../../utils/sendMail';
 import env from '../../config/env';
 import dayjs from 'dayjs';
 import { GroupMemberRole, IGroupMember } from '../groups/group.interface';
+import { BookingStatus } from '../booking/booking.interface';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
@@ -666,6 +667,57 @@ const getMyEventsService  = async (user: JwtPayload, query: Record<string, strin
   };
 }
 
+// GET EVENT ANALYTICS SERVICE
+const geteventAnalyticsService = async (userId: string, eventId: string) => {
+  const eventPromise = Event.findOne({
+    _id: eventId,
+    $or: [{ host: new Types.ObjectId(userId) }, { co_host: new Types.ObjectId(userId) }]
+  }).populate('host').populate('co_host').populate('category');
+
+
+  const getBookingDetailsPromise = Booking.aggregate([
+    // Stage 1: Match Stage
+     {
+        $match: {
+          event: new Types.ObjectId(eventId),
+          booking_status: BookingStatus.CONFIRMED
+        }
+    },
+
+     // Stage 2: Total Revenue Calculation
+     {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$price' },
+        totalBookings: { $sum: 1 }
+      }
+     },
+     // Stage 3: Projection 
+     {
+      $project: {
+        _id: 0
+      }
+     }
+  ]);
+
+  //  RESOLVE ALL PROMISES IN PARALLEL
+  const [event, bookingDetails] = await Promise.all([eventPromise, getBookingDetailsPromise]);
+
+  if (!event) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Event not found or you are not authorized to manage this event!');
+  }
+  
+
+  const totalRevenue = bookingDetails[0]?.totalRevenue || 0;
+  const totalBookings = bookingDetails[0]?.totalBookings || 0;
+
+  return  {
+    totalRevenue,
+    totalBookings,
+    event
+  };
+}
+
 // EXPORT ALL SERVICES FUNCTION
 export const eventServices = {
   createEventService,
@@ -673,5 +725,6 @@ export const eventServices = {
   getEventDetailsService,
   getInterestEventsService,
   updateEventService,
-  getMyEventsService
+  getMyEventsService,
+  geteventAnalyticsService
 };

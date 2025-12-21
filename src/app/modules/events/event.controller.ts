@@ -121,6 +121,22 @@ const getMyEvents = CatchAsync(
     });
   }
 );
+// UPDATE EVENT CONTROLLER
+const geteventAnalytics = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { eventId } = req.params
+    
+    const result = await eventServices.geteventAnalyticsService(user.userId, eventId);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'My event details fetched successfully!',
+      data: result,
+    });
+  }
+);
 
 
 
@@ -130,5 +146,6 @@ export const eventControllers = {
   getEventDetails,
   getInterestEvents,
   updateEvent,
-  getMyEvents
+  getMyEvents,
+  geteventAnalytics
 };

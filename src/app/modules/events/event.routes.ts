@@ -28,6 +28,7 @@ router.get('/details/:eventId', checkAuth(...Object.keys(Role)),  eventControlle
 router.patch('/:eventId', checkAuth(...Object.keys(Role)), multerUpload.array('files'), validateRequest(eventUpdateSchema),  eventControllers.updateEvent);
 // GET MY EVENT
 router.get('/my_events', checkAuth(...Object.keys(Role)), eventControllers.getMyEvents);
+router.get('/event_analytics/:eventId', checkAuth(...Object.keys(Role)), eventControllers.geteventAnalytics);
 
 
 export const eventRouter = router;
