@@ -192,20 +192,31 @@ const getEventDetailsService = async (_user: JwtPayload, eventId: string) => {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Event id required!');
   }
 
-  const user = await User.findById(_user.userId);
-  if (!user) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'User not found!');
-  }
-
-  const event = await Event.findById(eventId)
+  const eventPromise = Event.findById(eventId)
     .populate('host')
     .populate('category')
     .populate('co_host');
-  if (!event) {
+
+  // GET TOTAL JOINED MEMBERS 
+  const totalJoinedPromise = Booking.countDocuments({
+    event: eventId,
+    booking_status: BookingStatus.CONFIRMED
+  });
+
+  // GET TOTAL JOINED MEMBERS DETAILS
+  const totalJoinedMembersPromise = Booking.find({
+    event: eventId,
+    booking_status: BookingStatus.CONFIRMED
+  }).populate('user', "fullName avatar").select('user').limit(4);
+
+  const [event, totalJoined, totalJoinedMembers] = await Promise.all([eventPromise, totalJoinedPromise, totalJoinedMembersPromise ]);
+
+    if (!event) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'No event found!');
   }
 
-  return event;
+
+  return {totalJoined, totalJoinedMembers, ...event.toObject()};
 };
 
 // UPDATE EVENT SERVICE

@@ -62,7 +62,6 @@ const getInterestEvents = CatchAsync(
   }
 );
 
-
 // GET EVENT DETAILS CONTROLLER
 const getEventDetails = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -104,7 +103,6 @@ const updateEvent = CatchAsync(
   }
 );
 
-
 // UPDATE EVENT CONTROLLER
 const getMyEvents = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -132,7 +130,7 @@ const geteventAnalytics = CatchAsync(
     SendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'My event details fetched successfully!',
+      message: 'Event analytics fetched successfully!',
       data: result,
     });
   }
