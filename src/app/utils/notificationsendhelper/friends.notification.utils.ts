@@ -63,8 +63,6 @@ export const sendMultiNotification = async (payload: INotification) => {
         })
       )
     );
-
-    // console.log("Push multi notification sent", usersAllowedPush);
   }
 
   return notification;
