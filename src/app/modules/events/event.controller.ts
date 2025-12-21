@@ -119,6 +119,7 @@ const getMyEvents = CatchAsync(
     });
   }
 );
+
 // UPDATE EVENT CONTROLLER
 const geteventAnalytics = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -136,6 +137,23 @@ const geteventAnalytics = CatchAsync(
   }
 );
 
+// INVITE CO-HOST CONTROLLER
+const inviteCoHost = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { eventId, inviteeId } = req.params;
+    
+    const result = await eventServices.inviteCoHostService(eventId, user.userId, inviteeId );
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Invite sent!',
+      data: result,
+    });
+  }
+);
+
+
 
 
 export const eventControllers = {
@@ -145,5 +163,6 @@ export const eventControllers = {
   getInterestEvents,
   updateEvent,
   getMyEvents,
-  geteventAnalytics
+  geteventAnalytics,
+  inviteCoHost
 };

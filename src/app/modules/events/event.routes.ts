@@ -29,6 +29,8 @@ router.patch('/:eventId', checkAuth(...Object.keys(Role)), multerUpload.array('f
 // GET MY EVENT
 router.get('/my_events', checkAuth(...Object.keys(Role)), eventControllers.getMyEvents);
 router.get('/event_analytics/:eventId', checkAuth(...Object.keys(Role)), eventControllers.geteventAnalytics);
+// INVITE CO-HOST
+router.post('/invite_cohost/:eventId/:inviteeId', checkAuth(...Object.values(Role)), eventControllers.inviteCoHost);
 
 
 export const eventRouter = router;
