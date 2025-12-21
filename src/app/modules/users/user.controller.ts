@@ -47,6 +47,19 @@ const getAllUser = CatchAsync(async (req: Request, res: Response) => {
   })
 })
 
+// Get Profile
+const getProfile = CatchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params ;
+  const result = await userServices.getProfileService(userId as string);
+
+  SendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Profile fetched successful!",
+    data: result
+  })
+})
+
 // USER UPDATE
 const userUpdate = CatchAsync(async (req: Request, res: Response) => {
   const userId = req.params.userId;
@@ -134,5 +147,6 @@ export const userControllers = {
   getMe,
   userUpdate,
   userDelete,
-  getAllUser
+  getAllUser,
+  getProfile
 };

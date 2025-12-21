@@ -8,6 +8,8 @@ import { validatePhone } from '../../utils/phoneNumberValidatior';
 import { Types } from 'mongoose';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { NotificationPreference } from '../notifications/notification.model';
+import Booking from '../booking/booking.model';
+import Event from '../events/event.model';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -108,6 +110,32 @@ const getMeService = async (userId: string) => {
   }
 
   return user;
+};
+
+// GET PROFILD 
+const getProfileService = async (userId: string) => {
+
+  if(!userId){
+    throw new AppError(400, 'User ID is required');
+  }
+
+  const user = await User.findById(userId).select('-password -auths');
+  
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+  
+  const totalEventsJoinedPromise =  Booking.countDocuments({ user: user._id });
+  const totalEventsOrganizedPromise =  Event.find({ host : user._id }).countDocuments(); 
+
+  const [totalEventsJoined, totalEventsOrganized] = await Promise.all([ totalEventsJoinedPromise, totalEventsOrganizedPromise]);
+
+  
+  return {
+    totalEventsJoined,
+    totalEventsOrganized,
+    ...user.toObject()
+  };
 };
 
 // USER UPDATE
@@ -212,6 +240,7 @@ const userUpdateService = async (
   return updatedUser;
 };
 
+// DELTE USER
 const userDeleteService = async (userId: string, decodedToken: JwtPayload) => {
   const user = await User.findById(userId);
   if (!user) {
@@ -329,4 +358,5 @@ export const userServices = {
   userUpdateService,
   userDeleteService,
   getAllUserService,
+  getProfileService
 };
