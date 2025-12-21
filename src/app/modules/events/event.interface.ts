@@ -63,7 +63,7 @@ export interface IEvent {
 
 export enum CoHostStatus {
   PENDING = 'PENDING',
-  ACCEPTED = 'ACCEPETED',
+  ACCEPTED = 'ACCEPTED',
   DECLINE = 'DECLINE'
 }
 
