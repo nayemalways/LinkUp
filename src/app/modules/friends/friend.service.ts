@@ -11,7 +11,6 @@ import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notific
 import { NotificationType } from '../notifications/notification.interface';
 import { Types } from 'mongoose';
 import { onlineUsers } from '../../socket';
-import { NotificationPreference } from '../notifications/notification.model';
 
 // GET ALL FRIENDS OF THE USER WHERE REQUEST ACCPTED
 const getAllFriendsService = async (
@@ -198,20 +197,13 @@ const sendFriendRequestService = async (
       };
 
       const onlineUser = onlineUsers[receiverId];
-      const notificationPreference = await NotificationPreference.findOne({
-        user: receiverId,
-      });
 
       // Check if receiver is online
       if (onlineUser) {
-        if (notificationPreference?.channel.inApp) {
-          await sendPersonalNotification(notificationPayload);
-        }
+        await sendPersonalNotification(notificationPayload);
       } else {
         // Receiver is offline, send push notification
-        if (notificationPreference?.channel.push) {
-          await sendPushAndSave(notificationPayload);
-        }
+        await sendPushAndSave(notificationPayload);
       }
     } catch (error) {
       console.log('Notification sending error from friend.service.ts', error);
