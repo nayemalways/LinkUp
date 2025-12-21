@@ -104,10 +104,31 @@ const updateEvent = CatchAsync(
   }
 );
 
+
+// UPDATE EVENT CONTROLLER
+const getMyEvents = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const query = req.query as Record<string, string>
+    
+    const result = await eventServices.getMyEventsService(user, query);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'My events fetched successfully!',
+      data: result,
+    });
+  }
+);
+
+
+
 export const eventControllers = {
   createEvent,
   getEvents,
   getEventDetails,
   getInterestEvents,
-  updateEvent
+  updateEvent,
+  getMyEvents
 };

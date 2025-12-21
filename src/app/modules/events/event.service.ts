@@ -640,6 +640,32 @@ const updateEventService = async (
   return updateEvent;
 };
 
+// GET MY EVENTS
+const getMyEventsService  = async (user: JwtPayload, query: Record<string, string>) => {
+  const baseQuery = {
+    $or: [{host: user.userId}, {co_host: user.userId }]
+  }
+
+  const queryBuilder = new QueryBuilder(Event.find(baseQuery), query);
+
+  const events = await queryBuilder
+    .filter()
+    .textSearch()
+    .select()
+    .join() 
+    .sort()
+    .paginate()
+    .build();
+
+  const meta = await queryBuilder.getMeta();
+
+ 
+  return  {
+    meta,
+    events
+  };
+}
+
 // EXPORT ALL SERVICES FUNCTION
 export const eventServices = {
   createEventService,
@@ -647,4 +673,5 @@ export const eventServices = {
   getEventDetailsService,
   getInterestEventsService,
   updateEventService,
+  getMyEventsService
 };
