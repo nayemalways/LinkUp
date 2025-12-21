@@ -6,7 +6,7 @@
 
 ### Base Information
 
-- **Base URL**: `http://localhost:5002/api/v1`
+- **Base URL**: `http://localhost:3002/api/v1`
 - **Version**: 1.0.0
 - **Protocol**: HTTP/HTTPS
 - **Authentication**: JWT (JSON Web Tokens)
@@ -2094,9 +2094,9 @@ Create a `.env` file with the following variables:
 
 ```env
 # Server
-PORT=5002
+PORT=3002
 NODE_ENV=development
-BACKEND_URL=http://localhost:5002
+BACKEND_URL=http://localhost:3002
 
 # Database
 MONGO_URI=mongodb://localhost:27017/linkup
@@ -2157,7 +2157,7 @@ npm run format
 npm run lint
 ```
 
-The server will start on `http://localhost:5002` (or your configured PORT).
+The server will start on `http://localhost:3002` (or your configured PORT).
 
 ---
 
