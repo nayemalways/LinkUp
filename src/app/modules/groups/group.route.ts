@@ -10,7 +10,7 @@ import { sendMessageSchema } from '../message/message.validate';
 const router = express.Router();
 
 // CREATE GROUP 
-router.post('/create', checkAuth(...Object.keys(Role)), groupControllers.createGroup);
+router.post('/create', checkAuth(...Object.keys(Role)), multerUpload.single("file"), validateRequest(groupZodSchema), groupControllers.createGroup);
 
 // GET USER'S GROUPS
 router.get('/', checkAuth(...Object.keys(Role)), groupControllers.getUserGroups);
@@ -29,6 +29,8 @@ router.post(
 router.post(
   '/:groupId/message',
   checkAuth(...Object.keys(Role)),
+  multerUpload.single('file'),
+  validateRequest(sendMessageSchema),
   groupControllers.sendGroupMessage
 );
 
