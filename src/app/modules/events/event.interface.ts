@@ -29,6 +29,7 @@ export interface ILocation {
 }
 
 export interface IEvent {
+  _id?: Types.ObjectId;
   host: Types.ObjectId;
   co_host?: Types.ObjectId;
   category: Types.ObjectId;

@@ -2,6 +2,7 @@
 // -------------Chat GPT Code-----------------------
 import { StatusCodes } from 'http-status-codes';
 import {
+  CoHostStatus,
   EventStatus,
   Featured,
   IEvent,
@@ -762,6 +763,7 @@ const geteventAnalyticsService = async (userId: string, eventId: string) => {
   };
 };
 
+// INVITE CO-HOST SERVICE
 const inviteCoHostService = async (
   eventId: string,
   userId: string,
@@ -834,8 +836,101 @@ const inviteCoHostService = async (
     }
   });
 
-  return null;
+  return inviteCoHost;
 };
+
+// ACCEPT CO-HOST INVITATION
+const acceptCoHostInvitationService = async (
+  userId: string,
+  inviteId: string
+) => {
+
+  if (!inviteId) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invitation id required!');
+  }
+
+  const invitation = await InviteCoHost.findOne({
+    _id: inviteId,
+    invitee: new Types.ObjectId(userId),
+    status: CoHostStatus.PENDING,
+  });
+
+  if (!invitation) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'Invitation not found or already responded!'
+    );
+  }
+
+  if (invitation.status === CoHostStatus.ACCEPTED) {
+    throw new AppError(StatusCodes.FORBIDDEN, "You are already Co Host!");
+  }
+
+  invitation.status = CoHostStatus.ACCEPTED;
+  await invitation.save();
+
+  // ADD CO HOST TO EVENT
+  const addCoHost = await Event.findByIdAndUpdate(invitation.event, {
+    co_host: new Types.ObjectId(userId),
+  }, {new: true, runValidators: true}) as IEvent;
+
+
+
+  // // Send notification to the inviter asynchronously
+  setImmediate(async () => {
+    try {
+      const notificationPayload = {
+        title: `Co-Host Invitation Accepted!`,
+        type: NotificationType.EVENT,
+        user: invitation.inviter,
+        description: `Your invitation to be a co-host for the event "${addCoHost.title}" has been accepted.`,
+        data: {
+          eventId: addCoHost._id,
+          image: addCoHost.images[0] || '',
+        },
+      };
+
+      const inviterId = invitation.inviter.toString();
+      const inviter = await User.findById(invitation.inviter).select("fullName, email");
+
+      const notificationPreference = await NotificationPreference.findOne({
+        user: new Types.ObjectId(inviterId),
+      });
+
+      if (
+        notificationPreference &&
+        !notificationPreference.event.event_invitations
+      ) {
+        // Inviter has disabled event invitation notifications
+        await Notification.create(notificationPayload); // Just save to DB
+        return;
+      }
+
+      // SEND EMAIL TO INVITER
+       await sendEmail({
+          to: inviter?.email as string,
+          subject: `Co-Host Invitation Accepted!`,
+          templateName: "invitationAccpted",
+          templateData: {
+            event_title: addCoHost.title,
+          }
+        });
+
+        console.log("email", inviter?.email)
+
+      if (onlineUsers[inviterId]) {
+        await sendPersonalNotification(notificationPayload);
+      }else {
+        console.log("sending push notification")
+        sendPushAndSave(notificationPayload);
+      }
+    } catch (err) {
+      console.error('Failed to send co-host acceptance notification:', err);
+    }
+
+  });
+  return invitation;
+}
 
 // EXPORT ALL SERVICES FUNCTION
 export const eventServices = {
@@ -847,4 +942,5 @@ export const eventServices = {
   getMyEventsService,
   geteventAnalyticsService,
   inviteCoHostService,
+  acceptCoHostInvitationService
 };
