@@ -43,8 +43,7 @@ const getDirectMessages = CatchAsync(async (req, res) => {
     success: true,
     statusCode: httpStatus.OK,
     message: 'Messages retrieved successfully!',
-    data: { messages: result.messages },
-    meta: result.metaData,
+    data: result,
   });
 });
 
