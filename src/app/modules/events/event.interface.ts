@@ -9,6 +9,7 @@ export enum EventStatus {
 }
 
 export enum Featured {
+  FEATURED = 'FEATURED',
   SPONSORED= 'SPONSORED',
   BOOSTED = 'BOOSTED',
   NORMAL = 'NORMAL'
