@@ -32,6 +32,7 @@ import { Notification, NotificationPreference } from '../notifications/notificat
 import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
 import { onlineUsers } from '../../socket';
 import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
+import BlockedUser from '../BlockedUser/blocked.model';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
@@ -140,8 +141,15 @@ const getEventsService = async (
 ) => {
   const user = await User.findById(_user.userId);
 
+  // GET BLOCKED USERS
+  const getBlockList = await BlockedUser.find({ user: _user.userId }).select('blockedUser');
+  const blockedUsersIds = getBlockList.map(block => block.blockedUser);
+
+  // FILTER BLOCKED USERS EVENTS
+  const filter = { host : { $nin: blockedUsersIds } };
+
   // Query Builder
-  const qeuryBuilder = new QueryBuilder(Event.find(), query);
+  const qeuryBuilder = new QueryBuilder(Event.find(filter), query);
   const events = await qeuryBuilder
     .nearby(user?.coord as ICoord)
     .filter()

@@ -11,8 +11,57 @@ import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notific
 import { NotificationType } from '../notifications/notification.interface';
 import { Types } from 'mongoose';
 import { onlineUsers } from '../../socket';
+import BlockedUser from '../BlockedUser/blocked.model';
 
 // GET ALL FRIENDS OF THE USER WHERE REQUEST ACCPTED
+// const getAllFriendsService = async (
+//   user: JwtPayload,
+//   query: Record<string, string>
+// ) => {
+//   const userId = user.userId;
+
+//   const page = Number(query.page) || 1;
+//   const limit = Number(query.limit) || 10;
+//   const skip = (page - 1) * limit;
+
+
+//   // GET BLOCK LIST
+//    // GET BLOCKED USERS
+//     const getBlockList = await BlockedUser.find({ user: userId }).select('blockedUser');
+//     const blockedUsersIds = getBlockList.map(block => block.blockedUser);
+  
+//   // Find all accepted friend requests where user is either sender or receiver
+//   const friendRequests = await FriendRequest.find({
+//     $or: [{ sender: userId }, { receiver: userId }],
+//     status: RequestStatus.ACCEPTED,
+//   })
+//     .populate('sender', 'fullName email avatar')
+//     .populate('receiver', 'fullName email avatar')
+//     .skip(skip)
+//     .limit(limit);
+
+//   const totalDocuments = friendRequests.length; // Total documents
+//   const totalPage = Math.ceil(totalDocuments / limit);
+
+//   const meta = {
+//     page,
+//     limit,
+//     total: totalDocuments,
+//     totalPage,
+//   };
+
+//   // Extract friend details
+//   const friends = friendRequests.map((request) => {
+//     const friend =
+//       request.sender._id.toString() === userId
+//         ? request.receiver
+//         : request.sender;
+//     return friend;
+//   });
+
+//   return { meta, friends };
+// };
+
 const getAllFriendsService = async (
   user: JwtPayload,
   query: Record<string, string>
@@ -23,15 +72,24 @@ const getAllFriendsService = async (
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  // Find all accepted friend requests where user is either sender or receiver
+  // GET BLOCKED USERS
+  const getBlockList = await BlockedUser.find({ user: userId }).select('blockedUser');
+  const blockedUsersIds = getBlockList.map(block => block.blockedUser.toString());  // Ensure IDs are strings
+
+  // Find all accepted friend requests where user is either sender or receiver, and exclude blocked users
   const friendRequests = await FriendRequest.find({
     $or: [{ sender: userId }, { receiver: userId }],
     status: RequestStatus.ACCEPTED,
+    $nor: [
+      { sender: { $in: blockedUsersIds } },
+      { receiver: { $in: blockedUsersIds } }
+    ]
   })
     .populate('sender', 'fullName email avatar')
     .populate('receiver', 'fullName email avatar')
     .skip(skip)
     .limit(limit);
+
 
   const totalDocuments = friendRequests.length; // Total documents
   const totalPage = Math.ceil(totalDocuments / limit);
