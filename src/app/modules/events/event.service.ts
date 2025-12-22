@@ -870,9 +870,18 @@ const acceptCoHostInvitationService = async (
   await invitation.save();
 
   // ADD CO HOST TO EVENT
-  const addCoHost = await Event.findByIdAndUpdate(invitation.event, {
-    co_host: new Types.ObjectId(userId),
-  }, {new: true, runValidators: true}) as IEvent;
+  const event = await Event.findById(invitation.event);
+
+  if (!event) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Event not found!');
+  }
+
+  if (event.co_host) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Co-host already assigned!');
+  }
+
+  event.co_host = new Types.ObjectId(userId);
+  await event.save();
 
 
 
