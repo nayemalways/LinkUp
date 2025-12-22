@@ -10,6 +10,9 @@ import { QueryBuilder } from '../../utils/QueryBuilder';
 import { NotificationPreference } from '../notifications/notification.model';
 import Booking from '../booking/booking.model';
 import Event from '../events/event.model';
+import BlockedUser from '../BlockedUser/blocked.model';
+import FriendRequest from '../friends/friend.model';
+import { RequestStatus } from '../friends/friend.interface';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -62,8 +65,14 @@ const createUserService = async (payload: Partial<IUser>) => {
 };
 
 // GET ALL USERS
-const getAllUserService = async (query: Record<string, string>) => {
-  const queryBuilder = new QueryBuilder(User.find(), query);
+const getAllUserService = async (query: Record<string, string>, userId: string) => {
+
+  const getBlockList = await BlockedUser.find({ user: userId }).select('blockedUser');
+  const blockedUsersIds = getBlockList.map(block => block.blockedUser);
+  const filter = { _id: { $nin: blockedUsersIds } };
+
+ 
+  const queryBuilder = new QueryBuilder(User.find(filter), query);
 
   const users = await queryBuilder
     .filter()
@@ -126,14 +135,21 @@ const getProfileService = async (userId: string) => {
   }
   
   const totalEventsJoinedPromise =  Booking.countDocuments({ user: user._id });
-  const totalEventsOrganizedPromise =  Event.find({ host : user._id }).countDocuments(); 
+  const totalEventsOrganizedPromise =  Event.countDocuments({ host : user._id });
+  const totalFriendsPormise = FriendRequest.countDocuments({ 
+    $or: [
+      { sender: user._id, status: RequestStatus.ACCEPTED },
+      { receiver: user._id, status: RequestStatus.ACCEPTED }
+    ]
+  });
 
-  const [totalEventsJoined, totalEventsOrganized] = await Promise.all([ totalEventsJoinedPromise, totalEventsOrganizedPromise]);
-
+  
+  const [totalEventsJoined, totalEventsOrganized, totalFriends] = await Promise.all([ totalEventsJoinedPromise, totalEventsOrganizedPromise, totalFriendsPormise]);
   
   return {
     totalEventsJoined,
     totalEventsOrganized,
+    totalFriends,
     ...user.toObject()
   };
 };

@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/registration', validateRequest(userZodSchema), userControllers.registerUser);
 router.get('/get_me', checkAuth(...Object.keys(Role)), userControllers.getMe);
 router.get('/profile/:userId', checkAuth(...Object.keys(Role)), userControllers.getProfile);
-router.get('/',  userControllers.getAllUser);
+router.get('/', checkAuth(...Object.values(Role)),  userControllers.getAllUser);
 router.patch('/:userId', checkAuth(...Object.keys(Role)), multerUpload.single('file'), validateRequest(userUpdateZodSchema),  userControllers.userUpdate);
 router.delete('/:userId', checkAuth(...Object.keys(Role)), userControllers.userDelete);
 

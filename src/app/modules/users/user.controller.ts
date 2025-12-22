@@ -37,7 +37,8 @@ const getMe = CatchAsync(async (req: Request, res: Response) => {
 // GET ME
 const getAllUser = CatchAsync(async (req: Request, res: Response) => {
   const query = req.query as Record<string, string> ;
-  const result = await userServices.getAllUserService(query);
+  const {userId} = req.user as JwtPayload;
+  const result = await userServices.getAllUserService(query, userId);
 
   SendResponse(res, {
     success: true,
