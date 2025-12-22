@@ -921,7 +921,7 @@ const acceptCoHostInvitationService = async (
           subject: `Co-Host Invitation Accepted!`,
           templateName: "invitationAccpted",
           templateData: {
-            event_title: addCoHost.title,
+            event_title: event.title,
           }
         });
 
@@ -941,6 +941,34 @@ const acceptCoHostInvitationService = async (
   return invitation;
 }
 
+//  REMOVE CO HOST
+const removeCoHostService = async (
+  eventId: string,
+  userId: string,
+  coHostId: string
+) => {
+  const event = await Event.findOneAndUpdate(
+    {
+      _id: eventId,
+      host: new Types.ObjectId(userId),
+      co_host: new Types.ObjectId(coHostId),
+    },
+    {
+      $unset: { co_host: "" },
+    },
+    { new: true }
+  );
+
+  if (!event) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'Event not found or you are not authorized to remove co-host!'
+    );
+  }
+
+  return event;
+};
+
 // EXPORT ALL SERVICES FUNCTION
 export const eventServices = {
   createEventService,
@@ -951,5 +979,6 @@ export const eventServices = {
   getMyEventsService,
   geteventAnalyticsService,
   inviteCoHostService,
-  acceptCoHostInvitationService
+  acceptCoHostInvitationService,
+  removeCoHostService
 };

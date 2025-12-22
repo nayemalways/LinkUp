@@ -169,6 +169,22 @@ const acceptCoHostInvitation = CatchAsync(
 );
 
 
+// ACCEPT CO-HOST INVITATION CONTROLLER
+const removeCoHost = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { eventId, coHostId } = req.params;
+    const result = await eventServices.removeCoHostService(eventId, user.userId, coHostId);
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Co-Host removed!',
+      data: result,
+    });
+  }
+);
+
+
 
 export const eventControllers = {
   createEvent,
@@ -179,5 +195,6 @@ export const eventControllers = {
   getMyEvents,
   geteventAnalytics,
   inviteCoHost,
-  acceptCoHostInvitation
+  acceptCoHostInvitation,
+  removeCoHost
 };
