@@ -892,10 +892,10 @@ const acceptCoHostInvitationService = async (
         title: `Co-Host Invitation Accepted!`,
         type: NotificationType.EVENT,
         user: invitation.inviter,
-        description: `Your invitation to be a co-host for the event "${addCoHost.title}" has been accepted.`,
+        description: `Your invitation to be a co-host for the event "${event.title}" has been accepted.`,
         data: {
-          eventId: addCoHost._id,
-          image: addCoHost.images[0] || '',
+          eventId: event._id,
+          image: event.images[0] || '',
         },
       };
 
