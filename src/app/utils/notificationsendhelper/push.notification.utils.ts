@@ -9,11 +9,13 @@ import User from '../../modules/users/user.model';
 
 export const sendPushAndSave = async (payload: INotification) => {
   try {
+    
+    // Save in MongoDB
+    const notification = await Notification.create({ ...payload });
+
     const user = await User.findById(payload.user);
     if (!user || !user.fcmToken) return;
 
-    // Save in MongoDB
-    const notification = await Notification.create({ ...payload });
 
     const receiverNotificationPreferences =
       await NotificationPreference.findById(payload.user);
