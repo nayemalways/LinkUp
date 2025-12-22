@@ -13,6 +13,8 @@ import Event from '../events/event.model';
 import BlockedUser from '../BlockedUser/blocked.model';
 import FriendRequest from '../friends/friend.model';
 import { RequestStatus } from '../friends/friend.interface';
+import env from '../../config/env';
+import axios from 'axios';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -219,6 +221,17 @@ const userUpdateService = async (
     }
   }
 
+  // Update Location by coordinates
+  if (payload.coord) {
+    const { lat, long } = payload.coord;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&key=${env.GOOGLE_MAP_API_KEY}`;
+    const response = await axios.get(url);
+    const address = response.data.results[0].formatted_address.split(', ').slice(-2).join(', ' );
+
+    // update location field
+    payload.location = address;
+  }
+
   // FIELD WHITELISTING for USER & ORGANIZER
   if (decodedToken.role === Role.USER || decodedToken.role === Role.ORGANIZER) {
     const allowedUpdates = [
@@ -231,6 +244,7 @@ const userUpdateService = async (
       'fcmToken',
       'bio',
       'instagramHandle',
+      'location',
     ];
 
     Object.keys(payload).forEach((key) => {

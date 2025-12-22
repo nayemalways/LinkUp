@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema<IUser>(
     isVerified: { type: Boolean, default: false },
     role: { type: String, enum: [...Object.values(Role)], default: Role.USER },
     auths: [authProviderSchema],
+    location: { type: String },
     coord: {
       type: { lat: { type: Number }, long: { type: Number } },
       _id: false,

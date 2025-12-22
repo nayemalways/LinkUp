@@ -40,5 +40,6 @@ export interface IUser {
   isDeleted?: boolean;
   isVerified?: boolean;
   auths?: IAuthProvider[];
+  location?: string;
   coord?: ICoord;
 }
