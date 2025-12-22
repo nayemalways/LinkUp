@@ -1,3 +1,5 @@
+import { StatusCodes } from "http-status-codes";
+import AppError from "../../errorHelpers/AppError";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import BlockedUser from "./blocked.model";
 
@@ -12,7 +14,7 @@ const createBlockedUserService = async (userId: string, blockedUserId: string) =
     return blockedUser;
 };
 
-
+// GET USER BLOCK LIST
 const getBlockedUsersService = async (userId: string, query: Record<string, string>) => {
 
     const queryBuilder = new QueryBuilder(BlockedUser.find({ user: userId }), query);
@@ -28,10 +30,22 @@ const getBlockedUsersService = async (userId: string, query: Record<string, stri
     return {meta, blockList};
 }
 
+// UNBLOCK USER
+const unblockUserService = async (userId: string, blockedUserId: string) => {
+    const isUserBlocked = await BlockedUser.findOne({user: userId, blockedUser: blockedUserId})
+    if(!isUserBlocked) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "User not found. Maybe user is not in block list!");
+    };
+
+    const unblock = await BlockedUser.findByIdAndDelete(isUserBlocked._id);
+    return unblock;
+}
+
 
 
 
 export const blockedUserService = {
     createBlockedUserService,
-    getBlockedUsersService
+    getBlockedUsersService,
+    unblockUserService
 }
