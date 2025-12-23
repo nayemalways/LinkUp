@@ -8,6 +8,7 @@ import { groupRouter } from '../modules/groups/group.route';
 import { messageRouter } from '../modules/message/message.route';
 import { notificationRouter } from '../modules/notifications/notification.route';
 import { favouriteRoutes } from '../modules/favourite/favourite.route';
+import { reviewRouter } from '../modules/reviews/review.route';
 
 export const router = Router();
 
@@ -47,6 +48,10 @@ const moduleRoutes = [
   {
     path: '/favourite',  
     route: favouriteRoutes,
+  },
+  {
+    path: '/review',
+    route: reviewRouter,
   }
 ];
 
