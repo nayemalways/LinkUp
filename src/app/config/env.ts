@@ -57,6 +57,8 @@ interface EnvInterfaces {
   AUTH_PROVIDER_X509_CERT_URL: string;
   CLIENT_X509_CERT_URL: string;
   UNIVERSE_DOMAIN: string;
+
+  STRIPE_SECRET: string;
 }
 
 const loadEnvVarbles = (): EnvInterfaces => {
@@ -115,6 +117,8 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'AUTH_PROVIDER_X509_CERT_URL',
     'CLIENT_X509_CERT_URL',
     'UNIVERSE_DOMAIN',
+
+    'STRIPE_SECRET'
   ];
 
   requireEnvVariables.forEach((KEY) => {
@@ -181,6 +185,8 @@ const loadEnvVarbles = (): EnvInterfaces => {
     AUTH_PROVIDER_X509_CERT_URL: process.env.AUTH_PROVIDER_X509_CERT_URL as string,
     CLIENT_X509_CERT_URL: process.env.CLIENT_X509_CERT_URL as string,
     UNIVERSE_DOMAIN: process.env.UNIVERSE_DOMAIN as string,
+
+    STRIPE_SECRET: process.env.STRIPE_SECRET as string,
   };
 };
 
