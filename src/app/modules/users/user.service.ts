@@ -120,7 +120,7 @@ const getMeService = async (userId: string) => {
     throw new AppError(404, 'User not found');
   }
 
-  return user;
+  return user[0];
 };
 
 // GET PROFILD 
@@ -130,18 +130,43 @@ const getProfileService = async (userId: string) => {
     throw new AppError(400, 'User ID is required');
   }
 
-  const user = await User.findById(userId).select('-password -auths');
+  // const user = await User.findById(userId).select('-password -auths');
+    const _user = await User.aggregate([
+    // Stage 1: Matching
+    { $match: { _id: new Types.ObjectId(userId) } },
+
+    // Stage 2: Join with interests
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'interests',
+        foreignField: '_id',
+        as: 'interest',
+      },
+    },
+
+    // Projection
+    {
+      $project: {
+        password: 0,
+        interests: 0,
+      },
+    },
+  ]);
+
+  const user = _user[0];
+
   
   if (!user) {
     throw new AppError(404, 'User not found');
   }
   
-  const totalEventsJoinedPromise =  Booking.countDocuments({ user: user._id });
-  const totalEventsOrganizedPromise =  Event.countDocuments({ host : user._id });
+  const totalEventsJoinedPromise =  Booking.countDocuments({ user: user?._id });
+  const totalEventsOrganizedPromise =  Event.countDocuments({ host : user?._id });
   const totalFriendsPormise = FriendRequest.countDocuments({ 
     $or: [
-      { sender: user._id, status: RequestStatus.ACCEPTED },
-      { receiver: user._id, status: RequestStatus.ACCEPTED }
+      { sender: user?._id, status: RequestStatus.ACCEPTED },
+      { receiver: user?._id, status: RequestStatus.ACCEPTED }
     ]
   });
 
@@ -152,7 +177,7 @@ const getProfileService = async (userId: string) => {
     totalEventsJoined,
     totalEventsOrganized,
     totalFriends,
-    ...user.toObject()
+    ...user
   };
 };
 
