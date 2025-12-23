@@ -4,6 +4,8 @@ export interface IReview {
   id?: Types.ObjectId;
   user: Types.ObjectId;
   event: Types.ObjectId;
-  rating: number;
   comment: string;
+  vote: 'UP' | 'DOWN';
+  host: Types.ObjectId;
+  isDeleted?: boolean;
 }
