@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema<IUser>(
     phone: { type: String },
     interests: [{ type: Types.ObjectId }],
     instagramHandle: { type: String },
+    stripeAccountId: { type: String },
     isActive: {
       type: String,
       enum: [...Object.values(IsActive)],
