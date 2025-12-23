@@ -1,16 +1,16 @@
+/* eslint-disable no-console */
 import { JwtPayload } from 'jsonwebtoken';
 import Group from './group.model';
 import { GroupMemberRole, IGroup } from './group.interface';
 import AppError from '../../errorHelpers/AppError';
-import httpStatus from 'http-status-codes';
+import httpStatus, { StatusCodes } from 'http-status-codes';
 import User from '../users/user.model';
 import { Types } from 'mongoose';
-import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
-import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
 import { NotificationType } from '../notifications/notification.interface';
-import { onlineUsers, io } from '../../socket';
+import { io } from '../../socket';
 import Message from '../message/message.model';
 import { MessageStatus } from '../message/message.interface';
+import { sendMultiNotification } from '../../utils/notificationsendhelper/friends.notification.utils';
 
 // CREATE GROUP - Only verified users
 const createGroupService = async (
@@ -18,6 +18,10 @@ const createGroupService = async (
   payload: Partial<IGroup>
 ) => {
   const userId = user.userId;
+
+  if (!payload.group_name) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Group name must required!');
+  }
 
   // Check if user is verified
   const currentUser = await User.findById(userId);
@@ -162,28 +166,27 @@ const addUsersToGroupService = async (
   group.group_members.push(...newMembers);
   await group.save();
 
-  // Send notifications to invited users
-  for (const newUserId of newUserIds) {
-    const notificationPayload = {
-      user: new Types.ObjectId(newUserId),
-      type: NotificationType.SYSTEM,
-      title: 'Group Invitation',
-      description: `${inviter?.fullName} added you to ${group.group_name}`,
-      data: {
-        groupId: group._id.toString(),
-        groupName: group.group_name,
-        inviterId: userId,
-        inviterName: inviter?.fullName,
-      },
-    };
 
-    if (onlineUsers[newUserId]) {
-      await sendPersonalNotification(notificationPayload);
-    } else {
-      await sendPushAndSave(notificationPayload);
+  // SEND NOTIFICATION ASYNCHROOUSLY
+  setImmediate(async () => {
+    try {
+      // Send notifications to invited users
+      sendMultiNotification({
+        receiverIds: newUserIds.map((id) => new Types.ObjectId(id)),
+        type: NotificationType.CHAT,
+        title: 'Someone added you to a group!',
+        description: `${inviter?.fullName} added you to ${group.group_name}`,
+        data: {
+          groupId: group._id.toString(),
+          groupName: group.group_name,
+          inviterId: userId,
+          inviterName: inviter?.fullName,
+        },
+      });
+    } catch (error) {
+      console.log('Notification sending error: ', error);
     }
-  }
-
+  });
   return group;
 };
 
@@ -231,10 +234,14 @@ const sendGroupMessageService = async (
 };
 
 // GET GROUP MESSAGES
-const getGroupMessagesService = async (user: JwtPayload, groupId: string, query: Record<string, string>) => {
+const getGroupMessagesService = async (
+  user: JwtPayload,
+  groupId: string,
+  query: Record<string, string>
+) => {
   const userId = user.userId;
 
-      // Pagination parameters
+  // Pagination parameters
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
@@ -256,7 +263,6 @@ const getGroupMessagesService = async (user: JwtPayload, groupId: string, query:
       'You are not a member of this group!'
     );
   }
-
 
   const messages = await Message.find({ group: groupId })
     .sort(sort)

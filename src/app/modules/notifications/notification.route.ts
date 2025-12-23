@@ -3,6 +3,7 @@ import { NotificationController } from './notification.controller';
 import { checkAuth } from '../../middlewares/auth.middleware';
 import { validateRequest } from '../../middlewares/validateRequest';
 import { NotificationValidation } from './notification.validate';
+import { Role } from '../users/user.interface';
 
 const router = express.Router();
 
@@ -20,5 +21,7 @@ router.patch(
   validateRequest(NotificationValidation.updateNotificationPreferencesSchema),
   NotificationController.updateNotificationPreferences
 );
+
+router.get('/my_notifications', checkAuth(...Object.keys(Role)), NotificationController.getUserNotifications);
 
 export const notificationRouter = router;

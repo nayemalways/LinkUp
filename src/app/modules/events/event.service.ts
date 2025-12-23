@@ -7,7 +7,7 @@ import {
   IEvent,
   LocationType,
 } from '../../modules/events/event.interface';
-import Event from '../../modules/events/event.model';
+import Event, { InviteCoHost } from '../../modules/events/event.model';
 import Group from '../../modules/groups/group.model';
 import User from '../../modules/users/user.model';
 import { JwtPayload } from 'jsonwebtoken';
@@ -25,6 +25,12 @@ import Booking from '../booking/booking.model';
 import { sendEmail } from '../../utils/sendMail';
 import env from '../../config/env';
 import dayjs from 'dayjs';
+import { GroupMemberRole, IGroupMember } from '../groups/group.interface';
+import { BookingStatus } from '../booking/booking.interface';
+import { Notification, NotificationPreference } from '../notifications/notification.model';
+import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
+import { onlineUsers } from '../../socket';
+import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
@@ -66,13 +72,18 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
   payload.host = user.userId;
 
   // => -------Create event & chat group in parallel--------
+  const groupMemberPayload: IGroupMember = {
+    user: user.userId,
+    role: GroupMemberRole.SUPERADMIN,
+    joinedAt: new Date(),
+  };
   const [createEvent, createChatGroup] = await Promise.all([
     Event.create(payload),
     Group.create({
       group_admin: user.userId,
       group_name: `Event: ${payload.title} Chat Group`,
       group_image: payload.images?.[0] || '',
-      group_members: [user.userId],
+      group_members: [groupMemberPayload],
       group_description: `This is the chat group for the event: ${payload.title}`,
     }),
   ]);
@@ -185,20 +196,37 @@ const getEventDetailsService = async (_user: JwtPayload, eventId: string) => {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Event id required!');
   }
 
-  const user = await User.findById(_user.userId);
-  if (!user) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'User not found!');
-  }
-
-  const event = await Event.findById(eventId)
+  const eventPromise = Event.findById(eventId)
     .populate('host')
     .populate('category')
     .populate('co_host');
+
+  // GET TOTAL JOINED MEMBERS
+  const totalJoinedPromise = Booking.countDocuments({
+    event: eventId,
+    booking_status: BookingStatus.CONFIRMED,
+  });
+
+  // GET TOTAL JOINED MEMBERS DETAILS
+  const totalJoinedMembersPromise = Booking.find({
+    event: eventId,
+    booking_status: BookingStatus.CONFIRMED,
+  })
+    .populate('user', 'fullName avatar')
+    .select('user')
+    .limit(4);
+
+  const [event, totalJoined, totalJoinedMembers] = await Promise.all([
+    eventPromise,
+    totalJoinedPromise,
+    totalJoinedMembersPromise,
+  ]);
+
   if (!event) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'No event found!');
   }
 
-  return event;
+  return { totalJoined, totalJoinedMembers, ...event.toObject() };
 };
 
 // UPDATE EVENT SERVICE
@@ -216,7 +244,8 @@ const updateEventService = async (
   }
 
   const isHost = user.userId === event.host?._id.toString();
-  const isCoHost = event.co_host && user.userId === event.co_host?._id.toString();
+  const isCoHost =
+    event.co_host && user.userId === event.co_host?._id.toString();
   const isHostOrCoHost = isHost || isCoHost;
 
   // OK: lOCATION WILL UPDATE DYNAMICALLY
@@ -347,9 +376,19 @@ const updateEventService = async (
     const bookedMembersId = bookedMembersInfo.map(
       (member: Partial<IUser>) => member?._id
     ); // _id
-    const booked_members_email = bookedMembersInfo.map(
-      (member: Partial<IUser>) => member.email
-    ); // email
+ 
+
+    // GET EMAIL PREFERENCES OF BOOKED MEMBERS
+    const emailAllowedPreferences = await NotificationPreference.find({
+      user: { $in: bookedMembersId },
+      'channel.email': true,
+    }).populate<{ user: Pick<IUser, 'email'> }>('user', 'email');
+
+    // EXTRACT EMAIL LIST OF ALLOWED MEMBERS
+    const finalEmailList = emailAllowedPreferences.flatMap((pref) =>
+      pref.user?.email ? [pref.user.email] : []
+    );
+
 
     try {
       // 1. WHEN TITLE UPDATE - NOTIFY BOOKED USER
@@ -361,7 +400,7 @@ const updateEventService = async (
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: event?.images[0],
           },
         });
       }
@@ -375,7 +414,7 @@ const updateEventService = async (
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: event?.images[0],
           },
         });
       }
@@ -388,7 +427,7 @@ const updateEventService = async (
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: event?.images[0],
           },
         });
       }
@@ -419,18 +458,18 @@ const updateEventService = async (
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: updateEvent?.images[0],
           },
         });
         // SEND EMAIL
         sendEmail({
           to: env.ADMIN_GMAIL,
-          bcc: booked_members_email as string[],
+          bcc: finalEmailList as string[],
           subject: "Linkup - Your Event's venue has been changed!",
           templateName: 'eventVenueUpdate',
           templateData: {
-            event_title: event?.title,
-            event_venue: event?.venue,
+            event_title: updateEvent?.title,
+            event_venue: updateEvent?.venue,
             support_email: env?.ADMIN_GMAIL,
           },
         });
@@ -446,13 +485,13 @@ const updateEventService = async (
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: event?.images[0],
           },
         });
         // SEND EMAIL
         sendEmail({
           to: env.ADMIN_GMAIL,
-          bcc: booked_members_email as string[],
+          bcc: finalEmailList as string[],
           subject: "Linkup - Your Event's date has been changed!",
           templateName: 'eventStartDateUpdate',
           templateData: {
@@ -475,13 +514,13 @@ const updateEventService = async (
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: event?.images[0],
           },
         });
         // SEND EMAIL
         sendEmail({
           to: env.ADMIN_GMAIL,
-          bcc: booked_members_email as string[],
+          bcc: finalEmailList as string[],
           subject: "Linkup - Your Event's date has been changed!",
           templateName: 'eventEndDateUpdate',
           templateData: {
@@ -502,13 +541,13 @@ const updateEventService = async (
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: event?.images[0],
           },
         });
         // SEND EMAIL
         sendEmail({
           to: env.ADMIN_GMAIL,
-          bcc: booked_members_email as string[],
+          bcc: finalEmailList as string[],
           subject: "Linkup - Your Event's Time Zone has been changed!",
           templateName: 'eventTimeZoneUpdate',
           templateData: {
@@ -529,13 +568,13 @@ const updateEventService = async (
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: event?.images[0],
           },
         });
         // SEND EMAIL
         sendEmail({
           to: env.ADMIN_GMAIL,
-          bcc: booked_members_email as string[],
+          bcc: finalEmailList as string[],
           subject: "Linkup - Your event's has been started!🎉",
           templateName: 'eventStartedUpdate',
           templateData: {
@@ -573,7 +612,7 @@ const updateEventService = async (
           receiverIds: host_and_cos_host_id as Types.ObjectId[],
           data: {
             eventId: event?._id,
-            Image: event?.images[0],
+            image: event?.images[0],
           },
         });
         // SEND EMAIL
@@ -634,6 +673,170 @@ const updateEventService = async (
   return updateEvent;
 };
 
+// GET MY EVENTS
+const getMyEventsService = async (
+  user: JwtPayload,
+  query: Record<string, string>
+) => {
+  const baseQuery = {
+    $or: [{ host: user.userId }, { co_host: user.userId }],
+  };
+
+  const queryBuilder = new QueryBuilder(Event.find(baseQuery), query);
+
+  const events = await queryBuilder
+    .filter()
+    .textSearch()
+    .select()
+    .join()
+    .sort()
+    .paginate()
+    .build();
+
+  const meta = await queryBuilder.getMeta();
+
+  return {
+    meta,
+    events,
+  };
+};
+
+// GET EVENT ANALYTICS SERVICE
+const geteventAnalyticsService = async (userId: string, eventId: string) => {
+  const eventPromise = Event.findOne({
+    _id: eventId,
+    $or: [
+      { host: new Types.ObjectId(userId) },
+      { co_host: new Types.ObjectId(userId) },
+    ],
+  })
+    .populate('host')
+    .populate('co_host')
+    .populate('category');
+
+  const getBookingDetailsPromise = Booking.aggregate([
+    // Stage 1: Match Stage
+    {
+      $match: {
+        event: new Types.ObjectId(eventId),
+        booking_status: BookingStatus.CONFIRMED,
+      },
+    },
+
+    // Stage 2: Total Revenue Calculation
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$price' },
+        totalBookings: { $sum: 1 },
+      },
+    },
+    // Stage 3: Projection
+    {
+      $project: {
+        _id: 0,
+      },
+    },
+  ]);
+
+  //  RESOLVE ALL PROMISES IN PARALLEL
+  const [event, bookingDetails] = await Promise.all([
+    eventPromise,
+    getBookingDetailsPromise,
+  ]);
+
+  if (!event) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'Event not found or you are not authorized to manage this event!'
+    );
+  }
+
+  const totalRevenue = bookingDetails[0]?.totalRevenue || 0;
+  const totalBookings = bookingDetails[0]?.totalBookings || 0;
+
+  return {
+    totalRevenue,
+    totalBookings,
+    event,
+  };
+};
+
+const inviteCoHostService = async (
+  eventId: string,
+  userId: string,
+  inviteeId: string
+) => {
+  const event = await Event.findOne({
+    _id: eventId,
+    host: new Types.ObjectId(userId),
+  });
+
+  if (!event) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'Event not found or you are not authorized to invite co-host!'
+    );
+  }
+
+  if (userId !== event.host.toString()) {
+    throw new AppError(StatusCodes.FORBIDDEN, 'Only host can invite co-host!');
+  }
+
+  if (event.co_host) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Co-host already assigned!');
+  }
+
+  const inviteCoHost = await InviteCoHost.create({
+    event: new Types.ObjectId(eventId),
+    inviter: new Types.ObjectId(userId),
+    invitee: new Types.ObjectId(inviteeId),
+    status: 'PENDING',
+  });
+
+  // Send invitation notification asynchronously
+  setImmediate(async () => {
+    try {
+      const notificationPreference = await NotificationPreference.findOne({
+        user: new Types.ObjectId(inviteeId),
+      });
+
+      const notificationPayload = {
+        title: `You have a new Co-Host Invitation!`,
+        type: NotificationType.EVENT,
+        user: new Types.ObjectId(inviteeId),
+        description: `You have been invited to be a co-host for the event "${event.title}". Tap to respond to the invitation.`,
+        data: {
+          eventId: event._id.toString(),
+          inviteId: inviteCoHost._id,
+          image: event.images[0] || '',
+        },
+      }
+
+
+      if (
+        notificationPreference &&
+        !notificationPreference.event.event_invitations
+      ) {
+        // User has disabled event invitation notifications
+        await Notification.create(notificationPayload); // Just save to DB
+        return;
+      }
+
+      if (onlineUsers[inviteeId]) {
+        await sendPersonalNotification(notificationPayload);
+      }else {
+        sendPushAndSave(notificationPayload);
+      }
+
+    } catch (err) {
+      console.error('Failed to send co-host invitation notification:', err);
+    }
+  });
+
+  return null;
+};
+
 // EXPORT ALL SERVICES FUNCTION
 export const eventServices = {
   createEventService,
@@ -641,4 +844,7 @@ export const eventServices = {
   getEventDetailsService,
   getInterestEventsService,
   updateEventService,
+  getMyEventsService,
+  geteventAnalyticsService,
+  inviteCoHostService,
 };

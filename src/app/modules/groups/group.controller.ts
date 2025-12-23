@@ -12,14 +12,9 @@ const createGroup = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
 
-    const payload = req.body || {};
-    if (!payload.group_name) {
-      return SendResponse(res, {
-        success: false,
-        statusCode: StatusCodes.BAD_REQUEST,
-        message: 'group_name is required in request body',
-        data: undefined,
-      });
+    const payload = {
+      ...req.body,
+      group_image: req.file?.path as string
     }
 
     const result = await groupServices.createGroupService(user, payload);
@@ -104,10 +99,15 @@ const sendGroupMessage = CatchAsync(
     const user = req.user as JwtPayload;
     const { groupId } = req.params;
 
+    const payload = {
+      ...req.body,
+      image: req.file?.path as string
+    }
+
     const result = await groupServices.sendGroupMessageService(
       user,
       groupId,
-      req.body
+      payload
     );
 
     SendResponse(res, {

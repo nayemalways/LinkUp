@@ -59,18 +59,16 @@ const sendDirectMessageService = async (
     replyTo: payload.replyTo,
   });
 
+
+  io.to(onlineUsers[receiverId]).emit('direct_message', message);
+
   // Populate sender and replyTo details
   await message.populate([
     { path: 'sender', select: 'fullName avatar' },
     { path: 'replyTo', select: 'message sender' },
   ]);
 
-  // Send real-time notification via socket if receiver is online
-  if (onlineUsers[receiverId]) {
-    io.to(onlineUsers[receiverId]).emit('direct_message', message);
-
-    // Send in-app notification
-    const notificationPayload = {
+   const notificationPayload = {
       user: new Types.ObjectId(receiverId),
       type: NotificationType.CHAT,
       title: 'New Message',
@@ -82,22 +80,10 @@ const sendDirectMessageService = async (
       },
     };
 
+  // Send real-time notification via socket if receiver is online
+  if (onlineUsers[receiverId]) {
     await sendPersonalNotification(notificationPayload);
   } else {
-    // Send push notification if user is offline
-    const notificationPayload = {
-      user: new Types.ObjectId(receiverId),
-      type: NotificationType.CHAT,
-      title: 'New Message',
-      description: `${sender.fullName} sent you a message`,
-      data: {
-        senderId: senderId,
-        senderName: sender.fullName,
-        messageId: message._id.toString(),
-        message: payload.text || 'Sent an image',
-      },
-    };
-
     await sendPushAndSave(notificationPayload);
   }
 

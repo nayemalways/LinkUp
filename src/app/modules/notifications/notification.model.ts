@@ -29,7 +29,7 @@ const notificationSchema = new Schema<INotification>(
 
 const notificationPreferenceSchema = new Schema<INotificationPreference>(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    user: { type: Schema.Types.ObjectId, ref: 'user', required: true },
     channel: {
       push: { type: Boolean, default: false },
       email: { type: Boolean, default: true },

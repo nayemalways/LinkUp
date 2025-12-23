@@ -1,9 +1,11 @@
 /* eslint-disable no-console */
-import admin from "../../config/firebase.config";
-import { INotification } from "../../modules/notifications/notification.interface";
-import { Notification } from "../../modules/notifications/notification.model";
-import User from "../../modules/users/user.model";
-
+import admin from '../../config/firebase.config';
+import { INotification } from '../../modules/notifications/notification.interface';
+import {
+  Notification,
+  NotificationPreference,
+} from '../../modules/notifications/notification.model';
+import User from '../../modules/users/user.model';
 
 export const sendPushAndSave = async (payload: INotification) => {
   try {
@@ -13,22 +15,25 @@ export const sendPushAndSave = async (payload: INotification) => {
     // Save in MongoDB
     const notification = await Notification.create({ ...payload });
 
-    // Send push notification
+    const receiverNotificationPreferences =
+      await NotificationPreference.findById(payload.user);
+
+    // IF USER ALLOWED PUSH NOTIFICATION
+    if (receiverNotificationPreferences?.channel.push) {
       const message = {
-      token: user.fcmToken,
-      notification: {
-        title: payload.title,
-        body: payload.description,
-      },
-      data: payload.data || {}, // optional key-value pairs
-    };
+        token: user.fcmToken,
+        notification: {
+          title: payload.title,
+          body: payload.description,
+        },
+        data: payload.data || {}, // optional key-value pairs
+      };
 
+      await admin.messaging().send(message); // Send notificaton via FCM
+    }
 
-    await admin.messaging().send(message);
-
-    console.log("Push notification sent and saved for user:", user.fullName);
     return notification;
   } catch (err) {
-    console.error("Error sending notification:", err);
+    console.error('Error sending notification:', err);
   }
 };

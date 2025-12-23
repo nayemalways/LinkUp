@@ -62,7 +62,6 @@ const getInterestEvents = CatchAsync(
   }
 );
 
-
 // GET EVENT DETAILS CONTROLLER
 const getEventDetails = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -104,10 +103,66 @@ const updateEvent = CatchAsync(
   }
 );
 
+// UPDATE EVENT CONTROLLER
+const getMyEvents = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const query = req.query as Record<string, string>
+    
+    const result = await eventServices.getMyEventsService(user, query);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'My events fetched successfully!',
+      data: result,
+    });
+  }
+);
+
+// UPDATE EVENT CONTROLLER
+const geteventAnalytics = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { eventId } = req.params
+    
+    const result = await eventServices.geteventAnalyticsService(user.userId, eventId);
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Event analytics fetched successfully!',
+      data: result,
+    });
+  }
+);
+
+// INVITE CO-HOST CONTROLLER
+const inviteCoHost = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const { eventId, inviteeId } = req.params;
+    
+    const result = await eventServices.inviteCoHostService(eventId, user.userId, inviteeId );
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Invite sent!',
+      data: result,
+    });
+  }
+);
+
+
+
+
 export const eventControllers = {
   createEvent,
   getEvents,
   getEventDetails,
   getInterestEvents,
-  updateEvent
+  updateEvent,
+  getMyEvents,
+  geteventAnalytics,
+  inviteCoHost
 };

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { JwtPayload } from 'jsonwebtoken';
 import FriendRequest from './friend.model';
@@ -172,36 +173,44 @@ const sendFriendRequestService = async (
     }
   }
 
-  // Create friend request
+  // Send friend request
   const friendRequest = await FriendRequest.create({
     sender: senderId,
     receiver: receiverId,
     status: RequestStatus.PENDING,
   });
 
-  // Send notification to receiver (online or offline)
-  const notificationPayload = {
-    user: new Types.ObjectId(receiverId),
-    type: NotificationType.FRIEND,
-    title: 'New Friend Request',
-    description: `${senderUser?.fullName} sent you a friend request`,
-    data: {
-      requestId: friendRequest._id.toString(),
-      //   senderId: senderId,
-      senderName: senderUser?.fullName,
-      image: senderUser?.avatar,
-    },
-  };
+  // Send Notification asynchronously
+  setImmediate(async () => {
+    try {
+      // Send notification to receiver (online or offline)
+      const notificationPayload = {
+        user: new Types.ObjectId(receiverId),
+        type: NotificationType.FRIEND,
+        title: 'New Friend Request',
+        description: `${senderUser?.fullName} sent you a friend request`,
+        data: {
+          requestId: friendRequest._id.toString(),
+          senderName: senderUser?.fullName,
+          image: senderUser?.avatar,
+        },
+      };
 
-  // Check if receiver is online
-  if (onlineUsers[receiverId]) {
-    // Receiver is online, send real-time notification
-    await sendPersonalNotification(notificationPayload);
-  } else {
-    // Receiver is offline, send push notification
-    await sendPushAndSave(notificationPayload);
-  }
+      const onlineUser = onlineUsers[receiverId];
 
+      // Check if receiver is online
+      if (onlineUser) {
+        await sendPersonalNotification(notificationPayload);
+      } else {
+        // Receiver is offline, send push notification
+        await sendPushAndSave(notificationPayload);
+      }
+    } catch (error) {
+      console.log('Notification sending error from friend.service.ts', error);
+    }
+  });
+
+  // Return API response
   return friendRequest;
 };
 
@@ -239,32 +248,40 @@ const acceptFriendRequestService = async (
   friendRequest.status = RequestStatus.ACCEPTED;
   await friendRequest.save();
 
-  // Get receiver details for notification
-  const receiverUser = await User.findById(userId);
+  // Send Notification Asynchronously
+  setImmediate(async () => {
+    try {
+      // Get receiver details for notification
+      const receiverUser = await User.findById(userId);
 
-  // Send notification to sender (online or offline)
-  const notificationPayload = {
-    user: friendRequest.sender as Types.ObjectId,
-    type: NotificationType.FRIEND,
-    title: 'Friend Request Accepted',
-    description: `${receiverUser?.fullName} accepted your friend request`,
-    data: {
-      requestId: friendRequest._id.toString(),
-      //   acceptorId: userId,
-      acceptorName: receiverUser?.fullName,
-      acceptorAvatar: receiverUser?.avatar,
-    },
-  };
+      // Send notification to sender (online or offline)
+      const notificationPayload = {
+        user: friendRequest.sender as Types.ObjectId,
+        type: NotificationType.FRIEND,
+        title: 'Friend Request Accepted',
+        description: `${receiverUser?.fullName} accepted your friend request`,
+        data: {
+          requestId: friendRequest._id.toString(),
+          image: receiverUser?.avatar,
+        },
+      };
 
-  const senderIdStr = friendRequest.sender.toString();
-  // Check if sender is online
-  if (onlineUsers[senderIdStr]) {
-    // Sender is online, send real-time notification
-    await sendPersonalNotification(notificationPayload);
-  } else {
-    // Sender is offline, send push notification
-    await sendPushAndSave(notificationPayload);
-  }
+      const senderIdStr = friendRequest.sender.toString();
+      // Check if sender is online
+      if (onlineUsers[senderIdStr]) {
+        // Sender is online, send real-time notification
+        await sendPersonalNotification(notificationPayload);
+      } else {
+        // Sender is offline, send push notification
+        await sendPushAndSave(notificationPayload);
+      }
+    } catch (error) {
+      console.log(
+        'Notification sending error in friend.service.ts file',
+        error
+      );
+    }
+  });
 
   return friendRequest;
 };
