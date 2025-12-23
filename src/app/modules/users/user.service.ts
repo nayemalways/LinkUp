@@ -1,5 +1,5 @@
 import AppError from '../../errorHelpers/AppError';
-import { IAuthProvider, IUser, Role } from './user.interface';
+import { IAuthProvider, IsActive, IUser, Role } from './user.interface';
 import User from './user.model';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { StatusCodes } from 'http-status-codes';
@@ -243,6 +243,13 @@ const userUpdateService = async (
         StatusCodes.FORBIDDEN,
         'You are not allowed to update account status!'
       );
+    }
+  }
+
+  // PREVENT BLOCKED - INACTIVE, IF USER IS ADMIN
+  if (payload.isActive === IsActive.INACTIVE || payload.isActive === IsActive.BLOCKED || payload.isDeleted === true) {
+    if (user.role === Role.ADMIN) {
+      throw new AppError(StatusCodes.FORBIDDEN, "Admin can't disabled himself!")
     }
   }
 
