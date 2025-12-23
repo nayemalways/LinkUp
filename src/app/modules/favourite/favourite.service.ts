@@ -37,7 +37,23 @@ const getEventFavouriteService = async (
   return addFavourite;
 };
 
+//REMOVE FAVOURITE EVENT SERVICE
+
+const removeEventFavouriteService = async (
+  userId: string,
+  favouriteId: string
+) => {
+  const favourite = await FavouriteEvent.findOne({ _id: favouriteId, user: userId });
+  if (!favourite) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Favourite event not found');
+  }
+
+  await FavouriteEvent.deleteOne({ _id: favouriteId });
+  return favourite;
+};
+
 export const favouriteService = {
   addEventFavouriteService,
   getEventFavouriteService,
+  removeEventFavouriteService,
 };

@@ -3,12 +3,13 @@ import { checkAuth } from '../../middlewares/auth.middleware';
 import { createReviewController } from './review.controller';
 import { validateRequest } from '../../middlewares/validateRequest';
 import { reviewValidations } from './review.validate';
+import { Role } from '../users/user.interface';
 
 const router = express.Router();
 
 router.post(
   '/:eventId',
-  checkAuth(),
+  checkAuth(...Object.keys(Role)),
   validateRequest(reviewValidations.createReviewValidationSchema),
   createReviewController
 );
