@@ -264,7 +264,7 @@ const getGroupMessagesService = async (
     );
   }
 
-  const messages = await Message.find({ group: groupId })
+  const messagesPromise = Message.find({ group: groupId })
     .sort(sort)
     .skip(skip)
     .limit(limit)
@@ -276,7 +276,21 @@ const getGroupMessagesService = async (
       populate: { path: 'sender', select: 'fullName' },
     });
 
-  return messages;
+  const totalDocumentsPromise = Message.countDocuments({ group: groupId });
+
+  const [messages, totalDocuments] = await Promise.all([
+    messagesPromise,
+    totalDocumentsPromise,
+  ]);
+
+  const meta = {
+    page,
+    limit,
+    totalDocuments,
+    totalPages: Math.ceil(totalDocuments / limit),
+  };
+
+  return {meta, messages};
 };
 
 // LEAVE GROUP

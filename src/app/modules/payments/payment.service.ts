@@ -1,0 +1,88 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { StatusCodes } from 'http-status-codes';
+import { stripe } from '../../config/stripe.config';
+import AppError from '../../errorHelpers/AppError';
+import User from '../users/user.model';
+import env from '../../config/env';
+
+// CREATE STRIPE CONNECT ACCOUNT
+const createStripeConnectAccountService = async (
+  userId: string,
+  countryCode: string
+) => {
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
+  }
+
+  const account = await stripe.accounts.create({
+    type: 'express',
+    country: countryCode,
+    email: user.email,
+  });
+
+  user.stripeAccountId = account.id;
+  await user.save();
+
+  // GENERATE ACCOUNT LINK
+  const accountLink = await stripe.accountLinks.create({
+    account: account.id,
+    refresh_url: `${env.FRONTEND_URL}/reauth`, // Custom deep link for reauthentication (if needed)
+    return_url: `${env.FRONTEND_URL}/return`, // Custom deep link to return after onboarding
+    type: 'account_onboarding',
+  });
+
+  return { accountLink: accountLink.url };
+};
+
+//  CHECK STRIPE CONNECT ACCOUNT EXIST
+const checkAccountStatusService = async (userId: string) => {
+    const user = await User.findOne({ _id: userId });
+
+    if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND, "No stripe account id found");
+    }
+    const account = await stripe.accounts.retrieve(user?.stripeAccountId as string);
+
+    if (account.payouts_enabled) {
+        return true;
+    } else {
+      return false;
+   
+    }
+ 
+};
+
+// LIST OF CONNECTED BANK ACCOUNT
+const getConnectedBankAccountService = async (userId: string) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+    }
+
+    if (!user.stripeAccountId) {
+         return []
+    }
+
+     const externalAccounts = await stripe.accounts.listExternalAccounts(user?.stripeAccountId as string, {
+      object: "bank_account",
+    });
+
+    // Filter out sensitive data and only send safe information
+  const bankAccountData = externalAccounts.data.map(account => ({
+    bankName: 'bank_name' in account ? (account as any).bank_name : 'Unknown',
+    last4: account.last4,  
+    status: account.status,
+    availablePayoutMethods: (account as any).available_payout_methods,
+  }));
+
+    return bankAccountData;
+}
+
+
+
+export const paymentServices = {
+  createStripeConnectAccountService,
+  checkAccountStatusService,
+  getConnectedBankAccountService
+};

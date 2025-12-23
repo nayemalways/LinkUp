@@ -8,8 +8,7 @@ export enum EventStatus {
   CANCELLED = 'CANCELLED',
 }
 
-export enum Featured {
-  FEATURED = 'FEATURED',
+export enum ISponsored {
   SPONSORED= 'SPONSORED',
   BOOSTED = 'BOOSTED',
   NORMAL = 'NORMAL'
@@ -45,7 +44,8 @@ export interface IEvent {
   time_zone: string;
   organization?: Types.ObjectId;
   event_status?: EventStatus;
-  featured?: Featured;
+  featured?: boolean;
+  sponsored?: ISponsored
   price: number;
   max_attendence: number;
   age_limit: number; 

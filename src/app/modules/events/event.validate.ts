@@ -1,5 +1,5 @@
 import z from "zod";
-import { EventStatus, EventVisibility, Featured } from "./event.interface";
+import { EventStatus, EventVisibility, ISponsored } from "./event.interface";
 
 
 // Address schema
@@ -112,7 +112,8 @@ export const eventUpdateSchema = z.object({
   price: z
         .number({ message: "Price must be number!" })
         .nonnegative("Price cannot be negative!").optional(),
-  featured: z.nativeEnum(Featured).optional(),
+  featured: z.boolean().optional(),
+  sponsored: z.nativeEnum(ISponsored).optional(),
 
   max_attendence: z
                   .number()

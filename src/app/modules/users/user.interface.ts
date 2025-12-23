@@ -34,6 +34,7 @@ export interface IUser {
   fcmToken?: string;
   instagramHandle?: string;
   role: Role;
+  stripeAccountId?: string;
   phone?: string;
   interests?: Types.ObjectId[];
   isActive?: IsActive;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { CatchAsync } from '../../utils/CatchAsync';
