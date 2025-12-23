@@ -9,6 +9,7 @@ export enum EventStatus {
 }
 
 export enum Featured {
+  FEATURED = 'FEATURED',
   SPONSORED= 'SPONSORED',
   BOOSTED = 'BOOSTED',
   NORMAL = 'NORMAL'
@@ -29,6 +30,7 @@ export interface ILocation {
 }
 
 export interface IEvent {
+  _id?: Types.ObjectId;
   host: Types.ObjectId;
   co_host?: Types.ObjectId;
   category: Types.ObjectId;

@@ -2,6 +2,7 @@
 // -------------Chat GPT Code-----------------------
 import { StatusCodes } from 'http-status-codes';
 import {
+  CoHostStatus,
   EventStatus,
   Featured,
   IEvent,
@@ -31,6 +32,7 @@ import { Notification, NotificationPreference } from '../notifications/notificat
 import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
 import { onlineUsers } from '../../socket';
 import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
+import BlockedUser from '../BlockedUser/blocked.model';
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, user: JwtPayload) => {
@@ -139,8 +141,15 @@ const getEventsService = async (
 ) => {
   const user = await User.findById(_user.userId);
 
+  // GET BLOCKED USERS
+  const getBlockList = await BlockedUser.find({ user: _user.userId }).select('blockedUser');
+  const blockedUsersIds = getBlockList.map(block => block.blockedUser);
+
+  // FILTER BLOCKED USERS EVENTS
+  const filter = { host : { $nin: blockedUsersIds } };
+
   // Query Builder
-  const qeuryBuilder = new QueryBuilder(Event.find(), query);
+  const qeuryBuilder = new QueryBuilder(Event.find(filter), query);
   const events = await qeuryBuilder
     .nearby(user?.coord as ICoord)
     .filter()
@@ -762,6 +771,7 @@ const geteventAnalyticsService = async (userId: string, eventId: string) => {
   };
 };
 
+// INVITE CO-HOST SERVICE
 const inviteCoHostService = async (
   eventId: string,
   userId: string,
@@ -834,7 +844,137 @@ const inviteCoHostService = async (
     }
   });
 
-  return null;
+  return inviteCoHost;
+};
+
+// ACCEPT CO-HOST INVITATION
+const acceptCoHostInvitationService = async (
+  userId: string,
+  inviteId: string
+) => {
+
+  if (!inviteId) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invitation id required!');
+  }
+
+  const invitation = await InviteCoHost.findOne({
+    _id: inviteId,
+    invitee: new Types.ObjectId(userId),
+    status: CoHostStatus.PENDING,
+  });
+
+  if (!invitation) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'Invitation not found or already responded!'
+    );
+  }
+
+  if (invitation.status === CoHostStatus.ACCEPTED) {
+    throw new AppError(StatusCodes.FORBIDDEN, "You are already Co Host!");
+  }
+
+  invitation.status = CoHostStatus.ACCEPTED;
+  await invitation.save();
+
+  // ADD CO HOST TO EVENT
+  const event = await Event.findById(invitation.event);
+
+  if (!event) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Event not found!');
+  }
+
+  if (event.co_host) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Co-host already assigned!');
+  }
+
+  event.co_host = new Types.ObjectId(userId);
+  await event.save();
+
+
+
+  // // Send notification to the inviter asynchronously
+  setImmediate(async () => {
+    try {
+      const notificationPayload = {
+        title: `Co-Host Invitation Accepted!`,
+        type: NotificationType.EVENT,
+        user: invitation.inviter,
+        description: `Your invitation to be a co-host for the event "${event.title}" has been accepted.`,
+        data: {
+          eventId: event._id,
+          image: event.images[0] || '',
+        },
+      };
+
+      const inviterId = invitation.inviter.toString();
+      const inviter = await User.findById(invitation.inviter).select("fullName, email");
+
+      const notificationPreference = await NotificationPreference.findOne({
+        user: new Types.ObjectId(inviterId),
+      });
+
+      if (
+        notificationPreference &&
+        !notificationPreference.event.event_invitations
+      ) {
+        // Inviter has disabled event invitation notifications
+        await Notification.create(notificationPayload); // Just save to DB
+        return;
+      }
+
+      // SEND EMAIL TO INVITER
+       await sendEmail({
+          to: inviter?.email as string,
+          subject: `Co-Host Invitation Accepted!`,
+          templateName: "invitationAccpted",
+          templateData: {
+            event_title: event.title,
+          }
+        });
+
+        console.log("email", inviter?.email)
+
+      if (onlineUsers[inviterId]) {
+        await sendPersonalNotification(notificationPayload);
+      }else {
+        console.log("sending push notification")
+        sendPushAndSave(notificationPayload);
+      }
+    } catch (err) {
+      console.error('Failed to send co-host acceptance notification:', err);
+    }
+
+  });
+  return invitation;
+}
+
+//  REMOVE CO HOST
+const removeCoHostService = async (
+  eventId: string,
+  userId: string,
+  coHostId: string
+) => {
+  const event = await Event.findOneAndUpdate(
+    {
+      _id: eventId,
+      host: new Types.ObjectId(userId),
+      co_host: new Types.ObjectId(coHostId),
+    },
+    {
+      $unset: { co_host: "" },
+    },
+    { new: true }
+  );
+
+  if (!event) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'Event not found or you are not authorized to remove co-host!'
+    );
+  }
+
+  return event;
 };
 
 // EXPORT ALL SERVICES FUNCTION
@@ -847,4 +987,6 @@ export const eventServices = {
   getMyEventsService,
   geteventAnalyticsService,
   inviteCoHostService,
+  acceptCoHostInvitationService,
+  removeCoHostService
 };

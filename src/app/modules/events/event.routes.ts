@@ -31,6 +31,10 @@ router.get('/my_events', checkAuth(...Object.keys(Role)), eventControllers.getMy
 router.get('/event_analytics/:eventId', checkAuth(...Object.keys(Role)), eventControllers.geteventAnalytics);
 // INVITE CO-HOST
 router.post('/invite_cohost/:eventId/:inviteeId', checkAuth(...Object.values(Role)), eventControllers.inviteCoHost);
+// ACCEPT CO-HOST INVITATION
+router.get('/accept_cohost_invitation/:inviteId', checkAuth(...Object.values(Role)), eventControllers.acceptCoHostInvitation);
+// REMOVE CO-HOST
+router.delete('/remove_cohost/:eventId/:coHostId', checkAuth(...Object.values(Role)), eventControllers.removeCoHost);
 
 
 export const eventRouter = router;

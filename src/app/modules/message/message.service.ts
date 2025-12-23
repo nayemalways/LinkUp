@@ -9,6 +9,8 @@ import { sendPersonalNotification } from '../../utils/notificationsendhelper/use
 import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
 import { NotificationType } from '../notifications/notification.interface';
 import { onlineUsers, io } from '../../socket';
+import BlockedUser from '../BlockedUser/blocked.model';
+import { deleteImageFromCLoudinary } from '../../config/cloudinary.config';
 
 
 // SEND DIRECT MESSAGE (1-to-1)
@@ -22,8 +24,18 @@ const sendDirectMessageService = async (
   // Check if receiver exists
   const receiver = await User.findById(receiverId);
   if (!receiver) {
+    deleteImageFromCLoudinary(payload.image || "");
     throw new AppError(httpStatus.NOT_FOUND, 'Receiver not found!');
   }
+
+  // Check receiver is in blocked list
+  const isBlocked = await BlockedUser.findOne({user: senderId, blockedUser: receiverId});
+  
+  if(isBlocked){
+    deleteImageFromCLoudinary(payload.image || "");
+    throw new AppError(httpStatus.FORBIDDEN, 'You cannot send message to this user!');
+  }
+ 
 
   // Check if sender exists
   const sender = await User.findById(senderId);

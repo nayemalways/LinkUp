@@ -10,6 +10,11 @@ import { QueryBuilder } from '../../utils/QueryBuilder';
 import { NotificationPreference } from '../notifications/notification.model';
 import Booking from '../booking/booking.model';
 import Event from '../events/event.model';
+import BlockedUser from '../BlockedUser/blocked.model';
+import FriendRequest from '../friends/friend.model';
+import { RequestStatus } from '../friends/friend.interface';
+import env from '../../config/env';
+import axios from 'axios';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -62,8 +67,14 @@ const createUserService = async (payload: Partial<IUser>) => {
 };
 
 // GET ALL USERS
-const getAllUserService = async (query: Record<string, string>) => {
-  const queryBuilder = new QueryBuilder(User.find(), query);
+const getAllUserService = async (query: Record<string, string>, userId: string) => {
+
+  const getBlockList = await BlockedUser.find({ user: userId }).select('blockedUser');
+  const blockedUsersIds = getBlockList.map(block => block.blockedUser);
+  const filter = { _id: { $nin: blockedUsersIds } };
+
+ 
+  const queryBuilder = new QueryBuilder(User.find(filter), query);
 
   const users = await queryBuilder
     .filter()
@@ -109,7 +120,7 @@ const getMeService = async (userId: string) => {
     throw new AppError(404, 'User not found');
   }
 
-  return user;
+  return user[0];
 };
 
 // GET PROFILD 
@@ -119,22 +130,54 @@ const getProfileService = async (userId: string) => {
     throw new AppError(400, 'User ID is required');
   }
 
-  const user = await User.findById(userId).select('-password -auths');
+  // const user = await User.findById(userId).select('-password -auths');
+    const _user = await User.aggregate([
+    // Stage 1: Matching
+    { $match: { _id: new Types.ObjectId(userId) } },
+
+    // Stage 2: Join with interests
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'interests',
+        foreignField: '_id',
+        as: 'interest',
+      },
+    },
+
+    // Projection
+    {
+      $project: {
+        password: 0,
+        interests: 0,
+      },
+    },
+  ]);
+
+  const user = _user[0];
+
   
   if (!user) {
     throw new AppError(404, 'User not found');
   }
   
-  const totalEventsJoinedPromise =  Booking.countDocuments({ user: user._id });
-  const totalEventsOrganizedPromise =  Event.find({ host : user._id }).countDocuments(); 
+  const totalEventsJoinedPromise =  Booking.countDocuments({ user: user?._id });
+  const totalEventsOrganizedPromise =  Event.countDocuments({ host : user?._id });
+  const totalFriendsPormise = FriendRequest.countDocuments({ 
+    $or: [
+      { sender: user?._id, status: RequestStatus.ACCEPTED },
+      { receiver: user?._id, status: RequestStatus.ACCEPTED }
+    ]
+  });
 
-  const [totalEventsJoined, totalEventsOrganized] = await Promise.all([ totalEventsJoinedPromise, totalEventsOrganizedPromise]);
-
+  
+  const [totalEventsJoined, totalEventsOrganized, totalFriends] = await Promise.all([ totalEventsJoinedPromise, totalEventsOrganizedPromise, totalFriendsPormise]);
   
   return {
     totalEventsJoined,
     totalEventsOrganized,
-    ...user.toObject()
+    totalFriends,
+    ...user
   };
 };
 
@@ -203,6 +246,17 @@ const userUpdateService = async (
     }
   }
 
+  // Update Location by coordinates
+  if (payload.coord) {
+    const { lat, long } = payload.coord;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&key=${env.GOOGLE_MAP_API_KEY}`;
+    const response = await axios.get(url);
+    const address = response.data.results[0].formatted_address.split(', ').slice(-2).join(', ' );
+
+    // update location field
+    payload.location = address;
+  }
+
   // FIELD WHITELISTING for USER & ORGANIZER
   if (decodedToken.role === Role.USER || decodedToken.role === Role.ORGANIZER) {
     const allowedUpdates = [
@@ -215,6 +269,7 @@ const userUpdateService = async (
       'fcmToken',
       'bio',
       'instagramHandle',
+      'location',
     ];
 
     Object.keys(payload).forEach((key) => {
