@@ -4,8 +4,8 @@ import { StatusCodes } from 'http-status-codes';
 import {
   CoHostStatus,
   EventStatus,
-  Featured,
   IEvent,
+  ISponsored,
   LocationType,
 } from '../../modules/events/event.interface';
 import Event, { InviteCoHost } from '../../modules/events/event.model';
@@ -265,15 +265,17 @@ const updateEventService = async (
     );
   }
 
-  // OK : ONLY ADMIN CAN CHANGE FEATURED STATUS
-  if (user.role === Role.USER || user.role === Role.ORGANIZER) {
-    if (payload.featured) {
-      throw new AppError(
-        StatusCodes.FORBIDDEN,
-        'Only Admin can change featured status!'
-      );
-    }
-  }
+  // OK : ONLY ADMIN CAN CHANGE SPONSORED STATUS
+  if (
+  (user.role === Role.USER || user.role === Role.ORGANIZER) &&
+  payload.featured !== undefined
+) {
+  throw new AppError(
+    StatusCodes.FORBIDDEN,
+    'Only Admin can change featured!'
+  );
+}
+
 
   // OK : ONLY HOST AND CO-HOST CAN CHANGE VENUE
   if (payload?.venue) {
@@ -612,7 +614,7 @@ const updateEventService = async (
       const host_CoHost_email = hostAndCoHostInfo.map((b) => b.email);
 
       // 9. WHEN EVENT GOT SPONSORED - NOTIFY HOST AND CO-HOST
-      if (payload?.featured === Featured.SPONSORED) {
+      if (payload?.sponsored === ISponsored.SPONSORED) {
         // SEND NOTIFICATION
         await sendMultiNotification({
           title: `Hurray! Your event is now Sponsored!🎉`,
@@ -643,7 +645,7 @@ const updateEventService = async (
       }
 
       // 10. WHEN EVENT GOT BOOSTED - NOTIFY HOST AND CO-HOST
-      if (payload?.featured === Featured.BOOSTED) {
+      if (payload?.sponsored === ISponsored.BOOSTED) {
         // SEND NOTIFICATION
         await sendMultiNotification({
           title: `Your event is now Boosted!🚀`,
