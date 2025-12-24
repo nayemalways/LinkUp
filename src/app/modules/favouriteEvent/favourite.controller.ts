@@ -38,10 +38,24 @@ const getEventFavourite = CatchAsync(async (req: Request, res: Response, next: N
     })
 });
 
+const removeEventFavourite = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.user as JwtPayload;
+    const { favouriteId } = req.params;
+    const result = await favouriteService.removeEventFavouriteService(userId as string, favouriteId);
+
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "Event removed from favourite successfully!",
+        data: result
+    })
+})
+
 
 export const favouriteController = {
     addEventFavourite,
-    getEventFavourite
+    getEventFavourite,
+    removeEventFavourite
 }
 
 
