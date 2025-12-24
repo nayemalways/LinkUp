@@ -41,7 +41,6 @@ const eventSchema = new mongoose.Schema<IEvent>(
     event_end: { type: Date, required: true },
     time_zone: { type: String, required: true },
     organization: { type: Schema.Types.ObjectId, ref: 'organization' },
-    isFavourite: { type: Boolean, default: false },
     event_status: {
       type: String,
       enum: [...Object.values(EventStatus)],
