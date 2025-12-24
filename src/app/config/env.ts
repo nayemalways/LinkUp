@@ -59,6 +59,7 @@ interface EnvInterfaces {
   UNIVERSE_DOMAIN: string;
 
   STRIPE_SECRET: string;
+  STRIPE_WEBHOOK_SECRET: string;
 }
 
 const loadEnvVarbles = (): EnvInterfaces => {
@@ -118,7 +119,8 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'CLIENT_X509_CERT_URL',
     'UNIVERSE_DOMAIN',
 
-    'STRIPE_SECRET'
+    'STRIPE_SECRET',
+    'STRIPE_WEBHOOK_SECRET'
   ];
 
   requireEnvVariables.forEach((KEY) => {
@@ -187,6 +189,7 @@ const loadEnvVarbles = (): EnvInterfaces => {
     UNIVERSE_DOMAIN: process.env.UNIVERSE_DOMAIN as string,
 
     STRIPE_SECRET: process.env.STRIPE_SECRET as string,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET as string,
   };
 };
 
