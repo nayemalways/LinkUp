@@ -46,6 +46,7 @@ export interface IEvent {
   event_status?: EventStatus;
   featured?: boolean;
   sponsored?: ISponsored
+  isFavourite?: boolean;
   price: number;
   max_attendence: number;
   age_limit: number; 
