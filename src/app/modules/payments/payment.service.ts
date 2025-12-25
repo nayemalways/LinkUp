@@ -93,14 +93,12 @@ const handleWebHookService = async (req: Request) => {
   switch (event.type) {
     case 'payment_intent.succeeded': {
       const paymentIntent = event.data.object;
-      // console.log("Payment success: ", paymentIntent.metadata);
       await payemntSuccessHandler(paymentIntent);
       break;
     }
 
     case 'payment_intent.payment_failed': {
       const paymentFailed = event.data.object;
-      console.log('Payment intent failed:', paymentFailed);
       await paymetFailedHandler(paymentFailed);
       break;
     }
@@ -148,8 +146,6 @@ const handleWebHookService = async (req: Request) => {
   }
   return [];
 };
-
-// payment_intent.created
 
 
 export const paymentServices = {
