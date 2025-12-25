@@ -11,6 +11,9 @@ interface EnvInterfaces {
   JWT_REFRESH_EXPIRATION: string;
   BCRYPT_SALT_ROUND: string;
 
+  OTP_JWT_ACCESS_EXPIRATION: string;
+  OTP_JWT_ACCESS_SECRET: string;
+
   FRONTEND_URL: string;
 
   TWILIO_AUTH_TOKEN: string;
@@ -73,6 +76,9 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'JWT_REFRESH_SECRET',
     'JWT_REFRESH_EXPIRATION',
     'BCRYPT_SALT_ROUND',
+
+    'OTP_JWT_ACCESS_SECRET',
+    'OTP_JWT_ACCESS_EXPIRATION',
 
     'FRONTEND_URL',
 
@@ -139,6 +145,9 @@ const loadEnvVarbles = (): EnvInterfaces => {
     JWT_ACCESS_EXPIRATION: process.env.JWT_ACCESS_EXPIRATION as string,
     JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
     JWT_REFRESH_EXPIRATION: process.env.JWT_REFRESH_EXPIRATION as string,
+
+    OTP_JWT_ACCESS_EXPIRATION: process.env.OTP_JWT_ACCESS_EXPIRATION as string,
+    OTP_JWT_ACCESS_SECRET: process.env.OTP_JWT_ACCESS_SECRET as string,
 
     FRONTEND_URL: process.env.FRONTEND_URL as string,
 
