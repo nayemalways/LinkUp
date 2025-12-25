@@ -20,7 +20,7 @@ const createStripeConnectAccount = CatchAsync(async (req: Request, res: Response
     })
 });
 
-// CHECK IF USER HAS STRPE CONNECT ACCOUNT
+// CHECK IF USER HAS STRIPE CONNECT ACCOUNT
 const checkAccountStatus = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { userId } = req.user as JwtPayload;
     const result = await paymentServices.checkAccountStatusService(userId);
@@ -33,6 +33,7 @@ const checkAccountStatus = CatchAsync(async (req: Request, res: Response, next: 
     })
 });
 
+// GET USERS CONNECTED PAYOUT BANK ACCOUNT LIST
 const getConnectedBankAccount = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { userId } = req.user as JwtPayload;
     const result = await paymentServices.getConnectedBankAccountService(userId);
@@ -45,10 +46,22 @@ const getConnectedBankAccount = CatchAsync(async (req: Request, res: Response, n
     })
 })
 
+// HANDLE STRIPE WEBHOOK TO LISTEN EVENT
+const handleWebHook = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    await paymentServices.handleWebHookService(req as Request);
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "Webhook listened",
+        data: null
+    })
+})
+
 
 
 export const paymentControllers = {
     createStripeConnectAccount,
     checkAccountStatus,
-    getConnectedBankAccount
+    getConnectedBankAccount,
+    handleWebHook
 }

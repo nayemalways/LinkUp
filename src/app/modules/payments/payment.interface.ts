@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Types } from 'mongoose';
 
-export enum TransactionStatus {
+export enum PaymentStatus {
     PAID = 'PAID',
     PENDING = 'PENDING',
     FAILED = 'FAILED',
@@ -13,6 +13,16 @@ export interface IPayment {
   booking: Types.ObjectId;
   transaction_id: string;
   transaction_amount: number;
-  transaction_status: string;
+  currency: string;
+  invoiceURL?: string;
+  transfer_data?:  {
+    amount: number,
+    destination: string;
+  };
+  payment_intent: string;
+  payment_method_id: string;
+  payment_method_type: string;
+  payment_status: string;
+  receipt_email: string;
   paymentGetwayData?: any;
 }
