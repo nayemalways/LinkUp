@@ -11,5 +11,6 @@ router.post('/login', authController.credentialsLogin);
 router.post('/refresh', authController.getNeAccessToken);
 router.post('/chnage-password', checkAuth(...Object.keys(Role)), authController.changePassword);
 router.get('/forget-password/:email', authController.forgetPassword);
-router.post('/reset-password/:email/:otp', validateRequest(passwordZodSchema), authController.resetPassword);
+router.get('/verify_reset_password_otp/:email/:otp', authController.verifyOTP);
+router.post('/reset-password', validateRequest(passwordZodSchema), authController.resetPassword);
 export const authRouter = router;

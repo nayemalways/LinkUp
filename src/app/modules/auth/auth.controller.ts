@@ -75,10 +75,24 @@ const forgetPassword = CatchAsync(async (req: Request, res: Response) => {
 })
 
 // RESET PASSWORD
-const resetPassword = CatchAsync(async (req: Request, res: Response) => {
+const verifyOTP = CatchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.params;
+  const result = await authService.verifyOTPService( email, otp );
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "OTP verified success!",
+    data: result
+  })
+
+})
+
+// RESET PASSWORD
+const resetPassword = CatchAsync(async (req: Request, res: Response) => {
+  const token = req.headers.authorization as string;
   const { newPassword } = req.body;
-  const result = await authService.resetPasswordService( email, otp, newPassword );
+  const result = await authService.resetPasswordService( token, newPassword );
 
   SendResponse(res, {
     success: true,
@@ -94,5 +108,6 @@ export const authController = {
   getNeAccessToken,
   changePassword,
   forgetPassword,
+  verifyOTP,
   resetPassword
 };
