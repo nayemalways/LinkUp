@@ -7,8 +7,10 @@ import User from '../users/user.model';
 import env from '../../config/env';
 import { Request } from 'express';
 import { payemntSuccessHandler, paymetFailedHandler } from '../../utils/stripe.payment';
+import Booking from '../booking/booking.model';
+import { QueryBuilder } from '../../utils/QueryBuilder';
 
-
+// ======================  STRIPE PAYMENT QUERY ====================
 // CREATE STRIPE CONNECT ACCOUNT
 const createStripeConnectAccountService = async (
   userId: string,
@@ -148,9 +150,33 @@ const handleWebHookService = async (req: Request) => {
 };
 
 
+
+// ======================  PAYMENT QUERY ====================
+// GET TRANSACTION HISTORY
+const getTransactionHistory = async (userId: string, query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(Booking.find({ user: userId }), query);
+
+  const transactions = await queryBuilder.filter().select().sort().join().paginate().build();
+
+  const meta = await queryBuilder.getMeta();
+  return {meta, transactions};
+}
+
+// GET ALL TRANSACTION HISTORY (ADMIN)
+const getAllTransactionHistory = async (query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(Booking.find(), query);
+
+  const transactions = await queryBuilder.filter().select().sort().join().paginate().build();
+
+  const meta = await queryBuilder.getMeta();
+  return {meta, transactions};
+}
+
 export const paymentServices = {
   createStripeConnectAccountService,
   checkAccountStatusService,
   getConnectedBankAccountService,
-  handleWebHookService
+  handleWebHookService,
+  getTransactionHistory,
+  getAllTransactionHistory
 };

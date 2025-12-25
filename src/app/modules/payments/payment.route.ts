@@ -2,7 +2,7 @@ import { Router } from "express";
 import { checkAuth } from "../../middlewares/auth.middleware";
 import { Role } from "../users/user.interface";
 import { paymentControllers } from "./payment.controller";
-import bodyParser from "body-parser";
+
 
 const router = Router();
 
@@ -14,7 +14,12 @@ router.get('/check_stripe_connect', checkAuth(...Object.keys(Role)), paymentCont
 router.get('/connected_payout_bank_account', checkAuth(...Object.keys(Role)), paymentControllers.getConnectedBankAccount); 
 
 // GET WEBHOOK RESPONSE
-router.post('/webhook', bodyParser.raw({ type: "application/json" }), paymentControllers.handleWebHook);
+// router.post('/webhook', bodyParser.raw({ type: "application/json" }), paymentControllers.handleWebHook);
+
+// GET TRANSACTION HISTORY
+router.get('/transaction_history', checkAuth(...Object.keys(Role)), paymentControllers.transactionHistory)
+// GET ALL TRANSACTION HISTORY
+router.get('/all_transaction_history', checkAuth(Role.ADMIN), paymentControllers.allTransactionHistory)
 
 
 export const paymentRouter = router;

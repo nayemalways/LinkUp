@@ -58,10 +58,38 @@ const handleWebHook = CatchAsync(async (req: Request, res: Response, next: NextF
 })
 
 
+// GET USER'S TRANSACTION HISTORY
+const transactionHistory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query;
+    const { userId } = req.user as JwtPayload;
+    const result = await paymentServices.getTransactionHistory(userId, query as Record<string, string>);
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "Fetched transaction history!",
+        data: result
+    })
+})
+
+// GET USER'S TRANSACTION HISTORY
+const  allTransactionHistory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query;
+    const result = await paymentServices.getAllTransactionHistory(query as Record<string, string>);
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "Fetched all transaction history!",
+        data: result
+    })
+})
+
+
 
 export const paymentControllers = {
     createStripeConnectAccount,
     checkAccountStatus,
     getConnectedBankAccount,
-    handleWebHook
+    handleWebHook,
+    transactionHistory,
+    allTransactionHistory
 }

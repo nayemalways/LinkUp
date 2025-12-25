@@ -5,6 +5,7 @@ import { bookingControllers } from "./booking.controller";
 
 const router = Router();
 
+// BOOKING EVENT
 router.post('/', checkAuth(...Object.values(Role)), bookingControllers.bookEvent);
 
 
