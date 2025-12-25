@@ -7,10 +7,9 @@ export enum BookingStatus {
 }
 
 export interface IBooking {
-  id?: Types.ObjectId;
+  _id?: Types.ObjectId;
   user: Types.ObjectId;
   event: Types.ObjectId;
-  payment: Types.ObjectId;
-  price: number;
+  payment?: Types.ObjectId;
   booking_status: string;
 }
