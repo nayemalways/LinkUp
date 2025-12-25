@@ -4,7 +4,7 @@ import { CatchAsync } from "../../utils/CatchAsync";
 import { SendResponse } from "../../utils/SendResponse";
 import { StatusCodes } from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
-import { favouriteService } from "./favourite.services";
+import { favouriteService } from "./favourite.service";
 
 
 const addEventFavourite = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -40,8 +40,8 @@ const getEventFavourite = CatchAsync(async (req: Request, res: Response, next: N
 
 const removeEventFavourite = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { userId } = req.user as JwtPayload;
-    const { favouriteId } = req.params;
-    const result = await favouriteService.removeEventFavouriteService(userId as string, favouriteId);
+    const { eventId } = req.params;
+    const result = await favouriteService.removeEventFavouriteService(userId as string, eventId);
 
     SendResponse(res, {
         success: true,
