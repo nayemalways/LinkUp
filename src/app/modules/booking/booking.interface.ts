@@ -3,14 +3,14 @@ import { Types } from 'mongoose';
 export enum BookingStatus {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
+  FAILED = 'FAILED',
   CANCELLED = 'CANCELLED',
 }
 
 export interface IBooking {
-  id?: Types.ObjectId;
+  _id?: Types.ObjectId;
   user: Types.ObjectId;
   event: Types.ObjectId;
-  payment: Types.ObjectId;
-  price: number;
+  payment?: Types.ObjectId;
   booking_status: string;
 }

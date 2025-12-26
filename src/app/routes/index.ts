@@ -7,8 +7,11 @@ import { friendRouter } from '../modules/friends/friend.route';
 import { groupRouter } from '../modules/groups/group.route';
 import { messageRouter } from '../modules/message/message.route';
 import { notificationRouter } from '../modules/notifications/notification.route';
-import { favouriteRoutes } from '../modules/favourite/favourite.route';
 import { blockedUserRoutes } from '../modules/BlockedUser/blocked.route';
+import { paymentRouter } from '../modules/payments/payment.route';
+import { favouriteRoutes } from '../modules/favouriteEvent/favourite.route';
+import { bookingRouter } from '../modules/booking/booking.route';
+import { sponsoredRouter } from '../modules/sponsored/sponsored.route';
 
 export const router = Router();
 
@@ -52,6 +55,18 @@ const moduleRoutes = [
   {
     path: '/blocked_user',  
     route: blockedUserRoutes,
+  },
+  {
+    path: '/booking',  
+    route: bookingRouter,
+  },
+  {
+    path: '/payment',  
+    route: paymentRouter,
+  },
+  {
+    path: '/sponsored',  
+    route: sponsoredRouter,
   }
 ];
 

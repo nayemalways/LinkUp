@@ -45,7 +45,7 @@ export interface IEvent {
   organization?: Types.ObjectId;
   event_status?: EventStatus;
   featured?: boolean;
-  sponsored?: ISponsored
+  sponsored?: ISponsored;
   price: number;
   max_attendence: number;
   age_limit: number; 

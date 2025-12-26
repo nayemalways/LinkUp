@@ -7,5 +7,6 @@ const router = Router();
 
 router.post('/add', checkAuth(...Object.keys(Role)), favouriteController.addEventFavourite );
 router.get('/', checkAuth(...Object.keys(Role)), favouriteController.getEventFavourite );
+router.delete('/:eventId', checkAuth(...Object.keys(Role)), favouriteController.removeEventFavourite );
 
 export const favouriteRoutes = router;

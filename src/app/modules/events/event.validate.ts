@@ -102,6 +102,8 @@ export const eventUpdateSchema = z.object({
   event_start: z.coerce.date({ message: "Event start must be a valid date!" }).optional(),
   event_end: z.coerce.date({ message: "Event end must be a valid date!" }).optional(),
 
+  isFavourite: z.boolean("Value must be true/false").optional(),
+
   time_zone: z
               .string({ message: "Timezone must be string!" }).optional(),
   organization: z

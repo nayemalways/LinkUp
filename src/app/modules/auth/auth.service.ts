@@ -9,6 +9,7 @@ import bcrypt from 'bcrypt';
 import { sendEmail } from '../../utils/sendMail';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { redisClient } from '../../config/redis.config';
+import jwt, { JwtPayload, SignOptions } from 'jsonwebtoken';
 
 
 
@@ -112,9 +113,9 @@ const forgetPasswrodService = async (email: string) => {
     return null;
 }
 
-// RESET PASSWORD
-const resetPasswordService = async (email: string, otp: string, newPassword: string) => {
-    if (!email) {
+// VERIFY RESET PASSWORD OTP
+const verifyOTPService = async (email: string, otp: string) => {
+ if (!email) {
         throw new AppError(StatusCodes.BAD_REQUEST, "Email required!");
     }
 
@@ -141,13 +142,41 @@ const resetPasswordService = async (email: string, otp: string, newPassword: str
         throw new AppError(StatusCodes.BAD_REQUEST, "OTP is not matched!");
     }
 
+  const jwtPayload = {email, verified: true}
+  const jwtToken = jwt.sign(jwtPayload, env.OTP_JWT_ACCESS_SECRET, {
+    expiresIn: env.OTP_JWT_ACCESS_EXPIRATION
+  } as SignOptions )
+
+  // DELETED OTP AFTER USED
+  await redisClient.del(`otp:${email}`);
+  return jwtToken;
+}
+
+// RESET PASSWORD
+const resetPasswordService = async (token: string, newPassword: string) => {
+    if (!token) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Token must required!");
+    }
+
+    const verifyToken = jwt.verify(token, env.OTP_JWT_ACCESS_SECRET) as JwtPayload;
+
+    if (!verifyToken) {
+      throw new AppError(StatusCodes.BAD_REQUEST, "Invalid token or expired!");
+    }
+
+    if (!verifyToken?.verified) {
+      throw new AppError(StatusCodes.BAD_REQUEST, "OTP wasn't verfied yet");
+    }
+
+    // CHECK USER
+    const user = await User.findOne({ email: verifyToken?.email });
+    if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND,  "No user found!");
+    }
+
     // SET NEW PASSWORD
     user.password = newPassword;
     await user.save();
-
-    // DELETED OTP AFTER USED
-    await redisClient.del(`otp:${email}`);
-
 
     return null;
 }
@@ -156,5 +185,6 @@ export const authService = {
   getNewAccessTokenService,
   changePasswordService,
   forgetPasswrodService,
+  verifyOTPService,
   resetPasswordService
 };

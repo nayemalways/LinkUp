@@ -1,10 +1,16 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from 'http-status-codes';
 import { stripe } from '../../config/stripe.config';
 import AppError from '../../errorHelpers/AppError';
 import User from '../users/user.model';
 import env from '../../config/env';
+import { Request } from 'express';
+import { payemntSuccessHandler, paymetFailedHandler } from '../../utils/stripe.payment';
+import Booking from '../booking/booking.model';
+import { QueryBuilder } from '../../utils/QueryBuilder';
 
+// ======================  STRIPE PAYMENT QUERY ====================
 // CREATE STRIPE CONNECT ACCOUNT
 const createStripeConnectAccountService = async (
   userId: string,
@@ -27,8 +33,8 @@ const createStripeConnectAccountService = async (
   // GENERATE ACCOUNT LINK
   const accountLink = await stripe.accountLinks.create({
     account: account.id,
-    refresh_url: `${env.FRONTEND_URL}/reauth`, // Custom deep link for reauthentication (if needed)
-    return_url: `${env.FRONTEND_URL}/return`, // Custom deep link to return after onboarding
+    refresh_url: `https://nayemalways.vercel.app`, // Custom deep link for reauthentication (if needed)
+    return_url: `https://nayemalways.vercel.app`, // Custom deep link to return after onboarding
     type: 'account_onboarding',
   });
 
@@ -80,9 +86,97 @@ const getConnectedBankAccountService = async (userId: string) => {
 }
 
 
+// STRIPE WEBHOOK
+const handleWebHookService = async (req: Request) => {
+  const sig = req.headers['stripe-signature'] as string;
+  const event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_WEBHOOK_SECRET);
+
+  // Handle the event
+  switch (event.type) {
+    case 'payment_intent.succeeded': {
+      const paymentIntent = event.data.object;
+      await payemntSuccessHandler(paymentIntent);
+      break;
+    }
+
+    case 'payment_intent.payment_failed': {
+      const paymentFailed = event.data.object;
+      await paymetFailedHandler(paymentFailed);
+      break;
+    }
+
+
+    case 'payment_intent.canceled': {
+      const paymentIntent = event.data.object;
+      console.log('Payment canceled:', paymentIntent);
+      // Update order status in DB to 'canceled'
+      break;
+    }
+
+    case 'charge.succeeded': {
+      const charge = event.data.object;
+      console.log('Charge succeeded:', charge);
+      // Handle successful charge, like updating user balance or sending notification
+      break;
+    }
+
+    case 'charge.failed': {
+      const charge = event.data.object;
+      console.log('Charge failed:', charge);
+      // Handle failed charge, update order status, alert user
+      break;
+    }
+
+    case 'invoice.payment_succeeded': {
+      const invoice = event.data.object;
+      console.log('Invoice payment succeeded:', invoice);
+      // Mark invoice as paid in your DB
+      break;
+    }
+
+
+    case 'checkout.session.completed': {
+      const session = event.data.object;
+      console.log('Checkout session completed:', session);
+      // Update order status to 'completed' and trigger fulfillment
+      break;
+    }
+
+    default: {
+      console.log(`Unhandled event type: ${event.type}`);
+    }
+  }
+  return [];
+};
+
+
+
+// ======================  PAYMENT QUERY ====================
+// GET TRANSACTION HISTORY
+const getTransactionHistory = async (userId: string, query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(Booking.find({ user: userId }), query);
+
+  const transactions = await queryBuilder.filter().select().sort().join().paginate().build();
+
+  const meta = await queryBuilder.getMeta();
+  return {meta, transactions};
+}
+
+// GET ALL TRANSACTION HISTORY (ADMIN)
+const getAllTransactionHistory = async (query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(Booking.find(), query);
+
+  const transactions = await queryBuilder.filter().select().sort().join().paginate().build();
+
+  const meta = await queryBuilder.getMeta();
+  return {meta, transactions};
+}
 
 export const paymentServices = {
   createStripeConnectAccountService,
   checkAccountStatusService,
-  getConnectedBankAccountService
+  getConnectedBankAccountService,
+  handleWebHookService,
+  getTransactionHistory,
+  getAllTransactionHistory
 };

@@ -12,6 +12,7 @@ import passport from 'passport';
 import './app/config/passport.config';
 import http from "http";
 import { initSocket } from './app/socket';
+import { paymentControllers } from './app/modules/payments/payment.controller';
 
 const app = express();
 const server =  http.createServer(app);
@@ -27,6 +28,10 @@ app.use(
     saveUninitialized: false,
   })
 );
+
+app.post('/webhook', express.raw({ type: 'application/json' }), paymentControllers.handleWebHook);
+
+
 
 app.use(passport.initialize()); // Initilazed Passport
 app.use(passport.session()); // Create a session
