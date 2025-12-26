@@ -29,6 +29,10 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
     throw new AppError(StatusCodes.NOT_FOUND, 'No user found!');
   }
 
+  if (!isUser.isVerified) {
+    throw new AppError(StatusCodes.FORBIDDEN, "Please verify your profile!");
+  }
+
   // CHECK USER IS ALREADY IN EVENT
   const isAlreadyBooked = await Booking.findOne({ user: userId, event: payload.event, booking_status: BookingStatus.CONFIRMED});
 
