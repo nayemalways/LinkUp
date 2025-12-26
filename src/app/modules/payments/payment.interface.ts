@@ -5,7 +5,7 @@ export enum PaymentStatus {
     PAID = 'PAID',
     PENDING = 'PENDING',
     FAILED = 'FAILED',
-    CANCELLED = 'CANCELLED'
+    CANCELED = 'CANCELED'
 }
 
 export interface IPayment {

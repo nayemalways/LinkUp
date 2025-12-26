@@ -16,6 +16,8 @@ import { GroupMemberRole } from '../modules/groups/group.interface';
 import { Types } from 'mongoose';
 import { io } from '../socket';
 
+
+// PYAMENT SUCCESS HANDLE
 export const payemntSuccessHandler = async (object: any) => {
   const paymentPayload: Partial<IPayment> = {
     payment_intent: object?.id,
@@ -65,17 +67,19 @@ export const payemntSuccessHandler = async (object: any) => {
 
   if (joinUserToEventChatGroup) {
     const memberPayload: {
-      user: Types.ObjectId,
-      role: GroupMemberRole,
-      joinedAt: Date
+      user: Types.ObjectId;
+      role: GroupMemberRole;
+      joinedAt: Date;
     } = {
       user: bookingConfirm?.user as Types.ObjectId,
       role: GroupMemberRole.MEMBER,
       joinedAt: new Date(),
     };
 
-    const addMember = await Group.updateOne({ event: bookingConfirm?.event }, { $push: {group_members: memberPayload }});
-    console.log("Add member: ",  addMember);
+    await Group.updateOne(
+      { event: bookingConfirm?.event },
+      { $push: { group_members: memberPayload } }
+    );
 
     io.to(memberPayload.user.toString() as string).emit('notification', {
       user: memberPayload.user,
@@ -173,8 +177,6 @@ export const paymetFailedHandler = async (object: any) => {
     bookingConfirmPromise,
   ]);
 
-  console.log('ok');
-
   // NOTIFY USER HE IS JOINED THE EVENT
   if (
     payment?.payment_status === PaymentStatus.FAILED &&
@@ -187,11 +189,10 @@ export const paymetFailedHandler = async (object: any) => {
 
     // NOTIFICATION
     setImmediate(async () => {
-      console.log('Notification sent!');
       await sendPersonalNotification({
         user: bookingConfirm.user,
         title: `Payment failed ❌`,
-        description: `Hey ${user?.fullName} your payment for ${event?.title} - failed!`,
+        description: `Hey ${user?.fullName} your payment for "${event?.title}"  failed!`,
         type: NotificationType.EVENT,
         data: {
           eventId: event?._id,
@@ -201,3 +202,66 @@ export const paymetFailedHandler = async (object: any) => {
     });
   }
 };
+
+// PAYMENT CANCELED HANDLE
+export const paymentCanceledHandler = async (paymentIntent: any) => {
+
+
+  const metadata = paymentIntent.metadata;
+
+  // UPDATE DATABASE
+  const paymentPromise = Payment.findByIdAndUpdate(
+    metadata.payment,
+    {
+      payment_intent: paymentIntent.id,
+      payment_status: PaymentStatus.CANCELED,  // Set the status to CANCELED
+    },
+    { new: true, runValidators: true }
+  );
+
+  const bookingCancelPromise = Booking.findByIdAndUpdate(
+    metadata.booking,
+    { booking_status: BookingStatus.CANCELED },  // Mark the booking as canceled
+    { new: true, runValidators: true }
+  );
+
+  // RESOLVE ALL PROMISES
+  const [payment, bookingCancel] = await Promise.all([paymentPromise, bookingCancelPromise]);
+
+  // Optionally, send a notification to the user
+  if (
+    payment?.payment_status === PaymentStatus.CANCELED &&
+    bookingCancel?.booking_status === BookingStatus.CANCELED
+  ) {
+    const eventDetails = await Event.findById(bookingCancel.event);
+    const userDetails = await User.findById(bookingCancel.user).select('fullName email');
+
+    // NOTIFICATION: Payment has been canceled
+    setImmediate(async () => {
+      console.log('Sending notification about canceled payment');
+
+      await sendPersonalNotification({
+        user: bookingCancel.user,
+        title: `Your payment has been canceled ❌`,
+        description: `Hi ${userDetails?.fullName}, your payment for the event "${eventDetails?.title}" was canceled.`,
+        type: NotificationType.EVENT,
+        data: {
+          eventId: eventDetails?._id,
+          image: eventDetails?.images[0],
+        },
+      });
+    });
+  }
+};
+
+
+// CHARGE SUCCEEDED HANDLE
+export const chargeSucceededHandler = async (object: any) => {
+
+ try {
+   await Payment.findByIdAndUpdate(object.metadata.payment, { invoiceURL: object.receipt_url });
+ } catch (error) {
+  console.log("Charge succeeded handler: ", error)
+ }
+ 
+}

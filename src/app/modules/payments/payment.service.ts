@@ -6,7 +6,7 @@ import AppError from '../../errorHelpers/AppError';
 import User from '../users/user.model';
 import env from '../../config/env';
 import { Request } from 'express';
-import { payemntSuccessHandler, paymetFailedHandler } from '../../utils/stripe.payment';
+import { chargeSucceededHandler, payemntSuccessHandler, paymentCanceledHandler, paymetFailedHandler } from '../../utils/stripe.payment';
 import Booking from '../booking/booking.model';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 
@@ -108,37 +108,13 @@ const handleWebHookService = async (req: Request) => {
 
     case 'payment_intent.canceled': {
       const paymentIntent = event.data.object;
-      console.log('Payment canceled:', paymentIntent);
-      // Update order status in DB to 'canceled'
+      paymentCanceledHandler(paymentIntent)
       break;
     }
 
     case 'charge.succeeded': {
       const charge = event.data.object;
-      console.log('Charge succeeded:', charge);
-      // Handle successful charge, like updating user balance or sending notification
-      break;
-    }
-
-    case 'charge.failed': {
-      const charge = event.data.object;
-      console.log('Charge failed:', charge);
-      // Handle failed charge, update order status, alert user
-      break;
-    }
-
-    case 'invoice.payment_succeeded': {
-      const invoice = event.data.object;
-      console.log('Invoice payment succeeded:', invoice);
-      // Mark invoice as paid in your DB
-      break;
-    }
-
-
-    case 'checkout.session.completed': {
-      const session = event.data.object;
-      console.log('Checkout session completed:', session);
-      // Update order status to 'completed' and trigger fulfillment
+       chargeSucceededHandler(charge);
       break;
     }
 

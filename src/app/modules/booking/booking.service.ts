@@ -32,14 +32,14 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
   if (!isUser.isVerified) {
     throw new AppError(StatusCodes.FORBIDDEN, "Please verify your profile!");
   }
-
+  
   // CHECK USER IS ALREADY IN EVENT
   const isAlreadyBooked = await Booking.findOne({ user: userId, event: payload.event, booking_status: BookingStatus.CONFIRMED});
-
+  
   if (isAlreadyBooked) {
     throw new AppError(StatusCodes.CONFLICT, "You already joined this event! Go to my booking.")
   }
-
+  
   // CHECK HOST HAS STRPE PAYOUTS REGISTERED
   const hostPayoutAccount = await User.findOne({ _id: isEventExist.host });
   if (!hostPayoutAccount?.stripeAccountId) {

@@ -13,9 +13,6 @@ router.get('/check_stripe_connect', checkAuth(...Object.keys(Role)), paymentCont
 // GET CONNECTED PAYOUTS BANK ACCOUNT FROM STRIPE
 router.get('/connected_payout_bank_account', checkAuth(...Object.keys(Role)), paymentControllers.getConnectedBankAccount); 
 
-// GET WEBHOOK RESPONSE
-// router.post('/webhook', bodyParser.raw({ type: "application/json" }), paymentControllers.handleWebHook);
-
 // GET TRANSACTION HISTORY
 router.get('/transaction_history', checkAuth(...Object.keys(Role)), paymentControllers.transactionHistory)
 // GET ALL TRANSACTION HISTORY
