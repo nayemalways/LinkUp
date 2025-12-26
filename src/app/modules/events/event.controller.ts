@@ -184,6 +184,33 @@ const removeCoHost = CatchAsync(
   }
 );
 
+// PRIVATE EVENT JOIN REQUEST
+const eventJoinRequest = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { userId } = req.user as JwtPayload;
+  const { eventId } = req.params;
+  const result = await eventServices.eventJoinRequestService(userId, eventId);
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Join request sent!",
+    data: result
+  })
+})
+
+// PRIVATE EVENT JOIN REQUEST APPROVAL
+const eventJoinRequestApproval = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { userId } = req.user as JwtPayload;
+  const { eventId, requestId } = req.params;
+  const payload = req.body;
+  const result = await eventServices.eventJoinRequestApprovalService(userId, eventId, requestId, payload);
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: `Request ${ payload?.approval }`,
+    data: result
+  })
+})
+
 
 
 export const eventControllers = {
@@ -196,5 +223,7 @@ export const eventControllers = {
   geteventAnalytics,
   inviteCoHost,
   acceptCoHostInvitation,
-  removeCoHost
+  removeCoHost,
+  eventJoinRequest,
+  eventJoinRequestApproval
 };

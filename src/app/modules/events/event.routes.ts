@@ -37,4 +37,10 @@ router.get('/accept_cohost_invitation/:inviteId', checkAuth(...Object.values(Rol
 router.delete('/remove_cohost/:eventId/:coHostId', checkAuth(...Object.values(Role)), eventControllers.removeCoHost);
 
 
+// EVENT JOIN REQUEST
+router.get('/join_request/:eventId', checkAuth(...Object.keys(Role)), eventControllers.eventJoinRequest);
+// EVENT JOIN REQUEST APPROVAL
+router.patch('/:eventId/join_request/approval/:requestId', checkAuth(...Object.keys(Role)), eventControllers.eventJoinRequestApproval);
+
+
 export const eventRouter = router;

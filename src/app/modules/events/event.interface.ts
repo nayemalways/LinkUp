@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 
-
+// =================EVENT INTERFACE==============
 export enum EventStatus {
   ACTIVE = 'ACTIVE',
   ONGOING = 'ONGOING',
@@ -61,7 +61,7 @@ export interface IEvent {
 }
 
 
-// Co Host Invite Interface
+// ============= CO-HOST INVITE INTERFACE =============
 
 export enum CoHostStatus {
   PENDING = 'PENDING',
@@ -74,4 +74,19 @@ export interface CoHostInvite {
   inviter: Types.ObjectId,
   invitee: Types.ObjectId,
   status: CoHostStatus
+}
+
+
+// ========== PRIVATE EVENT JOINING REQUEST INTERFACE ================
+export enum EventJoinRequestType  {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  DECLINED = 'DECLINED'
+};
+
+export interface IEventJoinRequest {
+  _id?: Types.ObjectId;
+  user: Types.ObjectId;
+  event: Types.ObjectId;
+  approval: string;
 }

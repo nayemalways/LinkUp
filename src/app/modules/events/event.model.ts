@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { model, Schema } from 'mongoose';
 import {
   IEvent,
   EventStatus,
@@ -7,11 +7,13 @@ import {
   CoHostInvite,
   CoHostStatus,
   ISponsored,
+  EventJoinRequestType,
+  IEventJoinRequest,
 } from './event.interface';
 
 
 
-// ==================CO-HOST INVITATION SCHEMA====================
+// ================== CO-HOST INVITATION SCHEMA ====================
 const CoHostInviteSchema = new Schema<CoHostInvite>({
   event: { type: Schema.Types.ObjectId, ref: 'Event', required: true },
   inviter: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -23,6 +25,21 @@ const CoHostInviteSchema = new Schema<CoHostInvite>({
   }
 });
 export const InviteCoHost = mongoose.model('inviteCoHost', CoHostInviteSchema);
+
+
+// ================== PRIVATE EVENT JOIN REQUEST SCHEMA ====================
+const eventJoinRequestSchema = new Schema<IEventJoinRequest>({
+  user: { type: Schema.Types.ObjectId, ref: 'user', required: true},
+  event: { type: Schema.Types.ObjectId, ref: 'user', required: true},
+  approval: { type: String,  enum: [...Object.keys(EventJoinRequestType)], default: EventJoinRequestType.PENDING}
+}, {
+  versionKey: false,
+  timestamps: true
+});
+
+export const EventJoinRequest = model<IEventJoinRequest>("event_join_request", eventJoinRequestSchema);
+
+
 
 
 //===================== MAIN EVENT SCHEMA ========================

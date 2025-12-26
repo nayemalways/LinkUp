@@ -3,12 +3,17 @@
 import { StatusCodes } from 'http-status-codes';
 import {
   CoHostStatus,
+  EventJoinRequestType,
   EventStatus,
   IEvent,
+  IEventJoinRequest,
   ISponsored,
   LocationType,
 } from '../../modules/events/event.interface';
-import Event, { InviteCoHost } from '../../modules/events/event.model';
+import Event, {
+  EventJoinRequest,
+  InviteCoHost,
+} from '../../modules/events/event.model';
 import Group from '../../modules/groups/group.model';
 import User from '../../modules/users/user.model';
 import { JwtPayload } from 'jsonwebtoken';
@@ -28,7 +33,10 @@ import env from '../../config/env';
 import dayjs from 'dayjs';
 import { GroupMemberRole, IGroupMember } from '../groups/group.interface';
 import { BookingStatus } from '../booking/booking.interface';
-import { Notification, NotificationPreference } from '../notifications/notification.model';
+import {
+  Notification,
+  NotificationPreference,
+} from '../notifications/notification.model';
 import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
 import { onlineUsers } from '../../socket';
 import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
@@ -142,11 +150,13 @@ const getEventsService = async (
   const user = await User.findById(_user.userId);
 
   // GET BLOCKED USERS
-  const getBlockList = await BlockedUser.find({ user: _user.userId }).select('blockedUser');
-  const blockedUsersIds = getBlockList.map(block => block.blockedUser);
+  const getBlockList = await BlockedUser.find({ user: _user.userId }).select(
+    'blockedUser'
+  );
+  const blockedUsersIds = getBlockList.map((block) => block.blockedUser);
 
   // FILTER BLOCKED USERS EVENTS
-  const filter = { host : { $nin: blockedUsersIds } };
+  const filter = { host: { $nin: blockedUsersIds } };
 
   // Query Builder
   const qeuryBuilder = new QueryBuilder(Event.find(filter), query);
@@ -267,15 +277,14 @@ const updateEventService = async (
 
   // OK : ONLY ADMIN CAN CHANGE SPONSORED STATUS
   if (
-  (user.role === Role.USER || user.role === Role.ORGANIZER) &&
-  payload.featured !== undefined
-) {
-  throw new AppError(
-    StatusCodes.FORBIDDEN,
-    'Only Admin can change featured!'
-  );
-}
-
+    (user.role === Role.USER || user.role === Role.ORGANIZER) &&
+    payload.featured !== undefined
+  ) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'Only Admin can change featured!'
+    );
+  }
 
   // OK : ONLY HOST AND CO-HOST CAN CHANGE VENUE
   if (payload?.venue) {
@@ -387,7 +396,6 @@ const updateEventService = async (
     const bookedMembersId = bookedMembersInfo.map(
       (member: Partial<IUser>) => member?._id
     ); // _id
- 
 
     // GET EMAIL PREFERENCES OF BOOKED MEMBERS
     const emailAllowedPreferences = await NotificationPreference.find({
@@ -399,7 +407,6 @@ const updateEventService = async (
     const finalEmailList = emailAllowedPreferences.flatMap((pref) =>
       pref.user?.email ? [pref.user.email] : []
     );
-
 
     try {
       // 1. WHEN TITLE UPDATE - NOTIFY BOOKED USER
@@ -823,8 +830,7 @@ const inviteCoHostService = async (
           inviteId: inviteCoHost._id,
           image: event.images[0] || '',
         },
-      }
-
+      };
 
       if (
         notificationPreference &&
@@ -837,10 +843,9 @@ const inviteCoHostService = async (
 
       if (onlineUsers[inviteeId]) {
         await sendPersonalNotification(notificationPayload);
-      }else {
+      } else {
         sendPushAndSave(notificationPayload);
       }
-
     } catch (err) {
       console.error('Failed to send co-host invitation notification:', err);
     }
@@ -849,12 +854,11 @@ const inviteCoHostService = async (
   return inviteCoHost;
 };
 
-// ACCEPT CO-HOST INVITATION
+// ACCEPT CO-HOST INVITATION SERVICE
 const acceptCoHostInvitationService = async (
   userId: string,
   inviteId: string
 ) => {
-
   if (!inviteId) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Invitation id required!');
   }
@@ -873,7 +877,7 @@ const acceptCoHostInvitationService = async (
   }
 
   if (invitation.status === CoHostStatus.ACCEPTED) {
-    throw new AppError(StatusCodes.FORBIDDEN, "You are already Co Host!");
+    throw new AppError(StatusCodes.FORBIDDEN, 'You are already Co Host!');
   }
 
   invitation.status = CoHostStatus.ACCEPTED;
@@ -893,8 +897,6 @@ const acceptCoHostInvitationService = async (
   event.co_host = new Types.ObjectId(userId);
   await event.save();
 
-
-
   // // Send notification to the inviter asynchronously
   setImmediate(async () => {
     try {
@@ -910,7 +912,9 @@ const acceptCoHostInvitationService = async (
       };
 
       const inviterId = invitation.inviter.toString();
-      const inviter = await User.findById(invitation.inviter).select("fullName, email");
+      const inviter = await User.findById(invitation.inviter).select(
+        'fullName, email'
+      );
 
       const notificationPreference = await NotificationPreference.findOne({
         user: new Types.ObjectId(inviterId),
@@ -926,32 +930,31 @@ const acceptCoHostInvitationService = async (
       }
 
       // SEND EMAIL TO INVITER
-       await sendEmail({
-          to: inviter?.email as string,
-          subject: `Co-Host Invitation Accepted!`,
-          templateName: "invitationAccpted",
-          templateData: {
-            event_title: event.title,
-          }
-        });
+      await sendEmail({
+        to: inviter?.email as string,
+        subject: `Co-Host Invitation Accepted!`,
+        templateName: 'invitationAccpted',
+        templateData: {
+          event_title: event.title,
+        },
+      });
 
-        console.log("email", inviter?.email)
+      console.log('email', inviter?.email);
 
       if (onlineUsers[inviterId]) {
         await sendPersonalNotification(notificationPayload);
-      }else {
-        console.log("sending push notification")
+      } else {
+        console.log('sending push notification');
         sendPushAndSave(notificationPayload);
       }
     } catch (err) {
       console.error('Failed to send co-host acceptance notification:', err);
     }
-
   });
   return invitation;
-}
+};
 
-//  REMOVE CO HOST
+//  REMOVE CO HOST SERVICE
 const removeCoHostService = async (
   eventId: string,
   userId: string,
@@ -964,7 +967,7 @@ const removeCoHostService = async (
       co_host: new Types.ObjectId(coHostId),
     },
     {
-      $unset: { co_host: "" },
+      $unset: { co_host: '' },
     },
     { new: true }
   );
@@ -979,6 +982,109 @@ const removeCoHostService = async (
   return event;
 };
 
+// PRIVATE EVENT JOIN REQUEST SERVICE
+const eventJoinRequestService = async (userId: string, eventId: string) => {
+  const isApproved = await EventJoinRequest.findOne({
+    user: userId,
+    event: eventId,
+  });
+  if (isApproved?.approval === EventJoinRequestType.APPROVED) {
+    throw new AppError(StatusCodes.CONFLICT, 'Your request already approved!');
+  }
+
+  if (isApproved?.approval === EventJoinRequestType.DECLINED) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Your request was declined!');
+  }
+
+  if (isApproved?.approval === EventJoinRequestType.PENDING) {
+    throw new AppError(StatusCodes.CONFLICT, 'Your already sent a request!');
+  }
+
+  const requestToJoin = await EventJoinRequest.create({
+    user: userId,
+    event: eventId,
+    approval: EventJoinRequestType.PENDING,
+  });
+
+  // SEND NOTIFICATION TO HOST
+  setImmediate(async () => {
+    try {
+      const event = await Event.findById(eventId);
+      const co_host = event?.co_host && (await Event.findById(event?.co_host));
+      const members =
+        co_host === null
+          ? [event?.host as Types.ObjectId, event?.co_host as Types.ObjectId]
+          : [event?.host as Types.ObjectId];
+
+      sendMultiNotification({
+        title: 'New user want to join you event!',
+        type: NotificationType.EVENT,
+        description: `New user want to join your - ${event?.title} event. See on event analytics`,
+        receiverIds: members,
+        data: {
+          eventId: eventId,
+          image: event?.images[0],
+        },
+      });
+    } catch (error) {
+      console.log('Notification sending problem', error);
+    }
+  });
+
+  return requestToJoin;
+};
+
+// PRIVATE EVENT JOIN REQUEST APPROVAL SERVICE
+const eventJoinRequestApprovalService = async (
+  userId: string,
+  eventId: string,
+  requestId: string,
+  payload: Partial<IEventJoinRequest>
+) => {
+  if (!requestId && !eventId) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Request id or eventId missing!'
+    );
+  }
+
+  const event = await Event.findOne({ _id: eventId });
+  if (
+    userId !== event?.host.toString() &&
+    userId !== event?.co_host?.toString()
+  ) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'Only host or co-host allowed to update status'
+    );
+  }
+  
+  const isRequestExist = await EventJoinRequest.findOne({
+    _id: requestId,
+    event: eventId,
+  });
+  if (!isRequestExist) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'No request found by this references!'
+    );
+  }
+
+  if (payload.approval?.toLocaleUpperCase() === EventJoinRequestType.APPROVED) {
+    isRequestExist.approval = EventJoinRequestType.APPROVED;
+    await isRequestExist.save();
+  }
+  
+  if (
+    payload.approval?.toLocaleUpperCase() === EventJoinRequestType.DECLINED
+  ) {
+    isRequestExist.approval = EventJoinRequestType.DECLINED;
+    await isRequestExist.save();
+  }
+
+  return isRequestExist;
+};
+
 // EXPORT ALL SERVICES FUNCTION
 export const eventServices = {
   createEventService,
@@ -990,5 +1096,7 @@ export const eventServices = {
   geteventAnalyticsService,
   inviteCoHostService,
   acceptCoHostInvitationService,
-  removeCoHostService
+  removeCoHostService,
+  eventJoinRequestService,
+  eventJoinRequestApprovalService,
 };
