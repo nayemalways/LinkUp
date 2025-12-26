@@ -9,6 +9,7 @@ import Payment from '../payments/payment.model';
 import { generateTransactionId } from '../../utils/generateTransactionId';
 import { PaymentStatus } from '../payments/payment.interface';
 import { EventJoinRequestType, EventVisibility } from '../events/event.interface';
+import Stripe from 'stripe';
 
 
 
@@ -80,23 +81,29 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
   booking.payment = payment._id;
   await booking.save();
 
-  // Create payment intent
-  const paymentIntent = await stripe.paymentIntents.create({
+
+  // PREPARE THE PAYMENT DATA
+  const paymentIntentData: Stripe.PaymentIntentCreateParams = {
     amount: Number(isEventExist.price * 100), // cents
     currency: 'usd',
-    // payment_method: payload.paymentMethod,
     metadata: {
       payment: payment._id.toString(),
       booking: booking._id.toString(),
       transaction_id: payment.transaction_id
-    },
-    receipt_email: isUser.email,  
+    }, 
     setup_future_usage: 'off_session',
     transfer_data: {
       destination: hostPayoutAccount.stripeAccountId,
       amount: payment.transaction_amount
     },
-  });
+  }
+
+  if (isUser.email) {
+    paymentIntentData.receipt_email = isUser.email; // Include email if available
+  }
+
+  // Create payment intent
+  const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
 
   return paymentIntent;
   

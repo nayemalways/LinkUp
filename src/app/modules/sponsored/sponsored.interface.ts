@@ -21,13 +21,12 @@ export enum SponsoredPackageType {
 export interface ISponsoredship {
   _id?: Types.ObjectId;
   event: Types.ObjectId;
-  description?: string;
+  payment: Types.ObjectId;
   sponsor_type: ISponsored;
   sponsor_status: SponsorStatus;
-  payment_status: ISponsoredPaymentStatus;
   amount: number;
-  startDate: Date;
-  endDate: Date;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 //===================== SPONSORED PACKAGE INTERFACE ========================
