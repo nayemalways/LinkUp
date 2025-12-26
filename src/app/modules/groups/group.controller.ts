@@ -87,7 +87,7 @@ const addUsersToGroup = CatchAsync(
     SendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Users invited successfully!',
+      message: 'Users added successfully!',
       data: result,
     });
   }
