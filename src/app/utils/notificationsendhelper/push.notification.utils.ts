@@ -18,7 +18,7 @@ export const sendPushAndSave = async (payload: INotification) => {
 
 
     const receiverNotificationPreferences =
-      await NotificationPreference.findById(payload.user);
+      await NotificationPreference.findOne({ user: payload.user });
 
     // IF USER ALLOWED PUSH NOTIFICATION
     if (receiverNotificationPreferences?.channel.push) {
@@ -31,7 +31,8 @@ export const sendPushAndSave = async (payload: INotification) => {
         data: payload.data || {}, // optional key-value pairs
       };
 
-      await admin.messaging().send(message); // Send notificaton via FCM
+      const result = await admin.messaging().send(message); // Send notificaton via FCM
+      console.log("Push sent: ", result )
     }
 
     return notification;
