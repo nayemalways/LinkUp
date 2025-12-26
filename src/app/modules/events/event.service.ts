@@ -262,6 +262,10 @@ const updateEventService = async (
     throw new AppError(StatusCodes.NOT_FOUND, 'Event not found!');
   }
 
+  if (payload.images?.length as number <= 0) {
+    delete payload.images;
+  }
+
   const isHost = user.userId === event.host?._id.toString();
   const isCoHost =
     event.co_host && user.userId === event.co_host?._id.toString();
