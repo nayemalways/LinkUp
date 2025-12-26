@@ -6,7 +6,6 @@ export const SocketEvents = (socket: any) => {
   socket.on('join-group', (groupId: string) => {
     groupId.split(',').forEach((id: string) => {
       socket.join(id.trim());
-      console.log(`User joined group room: ${id}`);
     });
   });
 

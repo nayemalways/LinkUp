@@ -1,17 +1,23 @@
 import { StatusCodes } from 'http-status-codes';
 import { stripe } from '../../config/stripe.config';
 import AppError from '../../errorHelpers/AppError';
-import Event from '../events/event.model';
+import Event, { EventJoinRequest } from '../events/event.model';
 import { BookingStatus, IBooking } from './booking.interface';
 import User from '../users/user.model';
 import Booking from './booking.model';
 import Payment from '../payments/payment.model';
 import { generateTransactionId } from '../../utils/generateTransactionId';
 import { PaymentStatus } from '../payments/payment.interface';
+import { EventJoinRequestType, EventVisibility } from '../events/event.interface';
 
 
 
 const bookingIntentService = async (payload: Partial<IBooking>, userId: string) => {
+
+  if (!payload.event) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Event id must required!");
+  }
+
   const isEventExist = await Event.findOne({ _id: payload.event });
   if (!isEventExist) {
     throw new AppError(StatusCodes.NOT_FOUND, 'No event found!');
@@ -38,6 +44,18 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
       "Host hasn't registered payouts!"
     );
   }
+
+
+  // // IF PRIVATE EVENT: CHECK USER HAS APPROVAL
+  if (isEventExist.visibility === EventVisibility.PRIVATE) {
+      const  joinEventRequestApproval = await EventJoinRequest.findOne({ user: userId, event: payload.event, approval: EventJoinRequestType.APPROVED });
+
+      if (!joinEventRequestApproval) {
+        throw new AppError(StatusCodes.FORBIDDEN, "You can't join private event before approval!");
+      }
+  }
+   
+  
 
   // Initializing Booking
   const booking = await Booking.create({
@@ -77,6 +95,8 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
   });
 
   return paymentIntent;
+  
+ 
 };
 
 export const bookEventServices = {
