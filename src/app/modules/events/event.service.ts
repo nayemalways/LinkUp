@@ -182,11 +182,11 @@ const getInterestEventsService = async (
   const events = await qeuryBuilder
     .nearby(user?.coord as ICoord)
     .filter()
-    .category()
     .dateFilter()
     .sort()
     .select()
     .interests(user?.interests as Types.ObjectId[])
+    .category()
     .paginate()
     .join()
     .build();
