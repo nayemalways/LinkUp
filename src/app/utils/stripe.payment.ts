@@ -11,6 +11,10 @@ import User from '../modules/users/user.model';
 import { sendPersonalNotification } from './notificationsendhelper/user.notification.utils';
 import { sendEmail } from './sendMail';
 import env from '../config/env';
+import Group from '../modules/groups/group.model';
+import { GroupMemberRole } from '../modules/groups/group.interface';
+import { Types } from 'mongoose';
+import { io } from '../socket';
 
 export const payemntSuccessHandler = async (object: any) => {
   const paymentPayload: Partial<IPayment> = {
@@ -27,6 +31,7 @@ export const payemntSuccessHandler = async (object: any) => {
     },
   };
 
+  // Meta Data From Payment to update DB
   const metadata = object.metadata;
 
   // UPDATE DATABASE
@@ -53,6 +58,37 @@ export const payemntSuccessHandler = async (object: any) => {
     bookingConfirmPromise,
   ]);
 
+  // ADD USER TO EVENT CHAT GROUP
+  const joinUserToEventChatGroup = await Group.findOne({
+    event: metadata.event,
+  });
+
+  if (joinUserToEventChatGroup) {
+    const memberPayload: {
+      user: Types.ObjectId,
+      role: GroupMemberRole,
+      joinedAt: Date
+    } = {
+      user: bookingConfirm?.user as Types.ObjectId,
+      role: GroupMemberRole.MEMBER,
+      joinedAt: new Date(),
+    };
+
+    const addMember = await Group.updateOne({ event: bookingConfirm?.event }, { $push: {group_members: memberPayload }});
+    console.log("Add member: ",  addMember);
+
+    io.to(memberPayload.user.toString() as string).emit('notification', {
+      user: memberPayload.user,
+      title: 'You have been added chat group!',
+      description: `You've successfully booked an event and have been automatically added to the event chat group. You can now start chatting with other participants. Check chat group`,
+      type: NotificationType.CHAT,
+      data: {
+        goupId: joinUserToEventChatGroup._id,
+        image: joinUserToEventChatGroup.group_image,
+      },
+    });
+  }
+
   // NOTIFY USER HE IS JOINED THE EVENT
   if (
     payment?.payment_status === PaymentStatus.PAID &&
@@ -75,22 +111,22 @@ export const payemntSuccessHandler = async (object: any) => {
           image: event?.images[0],
         },
       });
-    });
 
-    // EMAIL
-    sendEmail({
-      to: user?.email as string,
-      subject: 'LinkUp - Your event booking payment is successful',
-      templateName: 'bookingConfirmation',
-      templateData: {
-        event_title: event?.title,
-        user_name: user?.fullName,
-        amount: payment.transaction_amount,
-        transaction_id: payment.transaction_id,
-        date: currentDate,
-        year: currentDate.getFullYear(),
-        support: env.ADMIN_GMAIL,
-      },
+      // EMAIL
+      sendEmail({
+        to: user?.email as string,
+        subject: 'LinkUp - Your event booking payment is successful',
+        templateName: 'bookingConfirmation',
+        templateData: {
+          event_title: event?.title,
+          user_name: user?.fullName,
+          amount: payment.transaction_amount,
+          transaction_id: payment.transaction_id,
+          date: currentDate,
+          year: currentDate.getFullYear(),
+          support: env.ADMIN_GMAIL,
+        },
+      });
     });
   }
 };
@@ -139,8 +175,7 @@ export const paymetFailedHandler = async (object: any) => {
 
   console.log('ok');
 
-
-   // NOTIFY USER HE IS JOINED THE EVENT
+  // NOTIFY USER HE IS JOINED THE EVENT
   if (
     payment?.payment_status === PaymentStatus.FAILED &&
     bookingConfirm?.booking_status === BookingStatus.FAILED
@@ -152,7 +187,7 @@ export const paymetFailedHandler = async (object: any) => {
 
     // NOTIFICATION
     setImmediate(async () => {
-    console.log("Notification sent!");
+      console.log('Notification sent!');
       await sendPersonalNotification({
         user: bookingConfirm.user,
         title: `Payment failed ❌`,
