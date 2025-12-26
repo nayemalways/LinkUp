@@ -1085,6 +1085,26 @@ const eventJoinRequestApprovalService = async (
   return isRequestExist;
 };
 
+// GET JOIN REQUEST
+const getJoinRequestService = async (userId: string, eventId: string, query: Record<string, string>) => {
+  if (!eventId) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Event id required!");
+  }
+
+  const querBuilder = new QueryBuilder(EventJoinRequest.find({ event: eventId }), query);
+  const joinRequestsPromise = await querBuilder.filter().join().select().sort().paginate().build();
+  const getmetaPromise = await querBuilder.getMeta();
+
+  
+  const [ joinRequests, getMeta] = await Promise.all([joinRequestsPromise, getmetaPromise])
+  getMeta.total = joinRequests.length; // Only This For This event
+  getMeta.totalPage = Math.ceil((getMeta.total/ getMeta.limit));
+
+  return {meta: getMeta, joinRequests};
+}
+
+
+
 // EXPORT ALL SERVICES FUNCTION
 export const eventServices = {
   createEventService,
@@ -1099,4 +1119,5 @@ export const eventServices = {
   removeCoHostService,
   eventJoinRequestService,
   eventJoinRequestApprovalService,
+  getJoinRequestService
 };

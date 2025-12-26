@@ -211,6 +211,20 @@ const eventJoinRequestApproval = CatchAsync(async (req: Request, res: Response, 
   })
 })
 
+// GET JOIN REQUEST
+const getJoinRequest = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { userId } = req.user as JwtPayload;
+  const { eventId } = req.params;
+  const query = req.query as Record<string, string>;
+  const result = await eventServices.getJoinRequestService(userId, eventId, query );
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: `Fetched event join request!`,
+    data: result
+  })
+})
+
 
 
 export const eventControllers = {
@@ -225,5 +239,6 @@ export const eventControllers = {
   acceptCoHostInvitation,
   removeCoHost,
   eventJoinRequest,
-  eventJoinRequestApproval
+  eventJoinRequestApproval,
+  getJoinRequest
 };
