@@ -11,6 +11,7 @@ import { io } from '../../socket';
 import Message from '../message/message.model';
 import { MessageStatus } from '../message/message.interface';
 import { sendMultiNotification } from '../../utils/notificationsendhelper/friends.notification.utils';
+import { deleteImageFromCLoudinary } from '../../config/cloudinary.config';
 
 // CREATE GROUP - Only verified users
 const createGroupService = async (
@@ -26,6 +27,10 @@ const createGroupService = async (
   // Check if user is verified
   const currentUser = await User.findById(userId);
   if (!currentUser?.isVerified) {
+    if (payload.group_image) {
+      deleteImageFromCLoudinary(payload?.group_image as string);
+    }
+
     throw new AppError(
       httpStatus.FORBIDDEN,
       'Only verified users can create groups!'
@@ -97,7 +102,7 @@ const getSingleGroupService = async (user: JwtPayload, groupId: string) => {
 
   // Check if user is a member
   const isMember = group.group_members.some(
-    (member) => member.user._id.toString() === userId
+    (member) => member.user?._id.toString() === userId
   );
 
   if (!isMember) {
