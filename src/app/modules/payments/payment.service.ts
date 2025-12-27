@@ -9,6 +9,7 @@ import { Request } from 'express';
 import { chargeSucceededHandler, payemntSuccessHandler, paymentCanceledHandler, paymetFailedHandler } from '../../utils/stripe.payment';
 import Booking from '../booking/booking.model';
 import { QueryBuilder } from '../../utils/QueryBuilder';
+import { Role, UserBadge } from '../users/user.interface';
 
 // ======================  STRIPE PAYMENT QUERY ====================
 // CREATE STRIPE CONNECT ACCOUNT
@@ -51,6 +52,10 @@ const checkAccountStatusService = async (userId: string) => {
     const account = await stripe.accounts.retrieve(user?.stripeAccountId as string);
 
     if (account.payouts_enabled) {
+        if (!user.badge) {
+          user.badge = user.role === Role.ORGANIZER ? UserBadge.ORGANIZER : UserBadge.HOST
+          await user.save();
+        }
         return true;
     } else {
       return false;
@@ -84,7 +89,6 @@ const getConnectedBankAccountService = async (userId: string) => {
 
     return bankAccountData;
 }
-
 
 // STRIPE WEBHOOK
 const handleWebHookService = async (req: Request) => {
