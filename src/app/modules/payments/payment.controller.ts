@@ -57,6 +57,17 @@ const handleWebHook = CatchAsync(async (req: Request, res: Response, next: NextF
     })
 })
 
+// HANDLE STRIPE SPONSORED PAYMENT WEBHOOK TO LISTEN EVENT
+const handleSponsoredWebHook = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    await paymentServices.handleSponsoredWebHookService(req as Request);
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "Webhook listened",
+        data: null
+    })
+})
+
 
 // GET USER'S TRANSACTION HISTORY
 const transactionHistory = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -91,5 +102,6 @@ export const paymentControllers = {
     getConnectedBankAccount,
     handleWebHook,
     transactionHistory,
-    allTransactionHistory
+    allTransactionHistory,
+    handleSponsoredWebHook
 }

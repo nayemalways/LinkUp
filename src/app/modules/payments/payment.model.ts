@@ -2,7 +2,8 @@ import { model, Schema } from "mongoose";
 import { IPayment, PaymentStatus } from "./payment.interface";
 
 const paymentSchema = new Schema<IPayment>({
-    booking: {type: Schema.Types.ObjectId, required: true, ref: 'booking'},
+    booking: {type: Schema.Types.ObjectId, ref: 'booking'},
+    sponsored: {type: Schema.Types.ObjectId, ref: "sponsored"},
     transaction_id: {type: String},
     transaction_amount: {type: Number},
     currency: { type: String },
