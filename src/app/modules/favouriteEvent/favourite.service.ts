@@ -28,7 +28,7 @@ const getEventFavouriteService = async (
   const addFavourite = await FavouriteEvent.find({ user: userId })
     .populate({
       path: 'event',
-      select: 'title images` description event_status event_start event_end venue',
+      select: 'title images description event_status event_start event_end venue',
     })
     .skip(skip)
     .limit(limit)
