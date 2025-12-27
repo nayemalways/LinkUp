@@ -63,6 +63,7 @@ interface EnvInterfaces {
 
   STRIPE_SECRET: string;
   STRIPE_WEBHOOK_SECRET: string;
+  STRIPE_SPONSORED_WEBHOOK_SECRET: string;
 }
 
 const loadEnvVarbles = (): EnvInterfaces => {
@@ -126,7 +127,8 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'UNIVERSE_DOMAIN',
 
     'STRIPE_SECRET',
-    'STRIPE_WEBHOOK_SECRET'
+    'STRIPE_WEBHOOK_SECRET',
+    'STRIPE_SPONSORED_WEBHOOK_SECRET'
   ];
 
   requireEnvVariables.forEach((KEY) => {
@@ -199,6 +201,7 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     STRIPE_SECRET: process.env.STRIPE_SECRET as string,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET as string,
+    STRIPE_SPONSORED_WEBHOOK_SECRET: process.env.STRIPE_SPONSORED_WEBHOOK_SECRET as string,
   };
 };
 
