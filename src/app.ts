@@ -29,9 +29,9 @@ app.use(
   })
 );
 
+// STRIPE WEBHOOK ROUTES
 app.post('/webhook', express.raw({ type: 'application/json' }), paymentControllers.handleWebHook);
-
-
+app.post('/webhook_sponsored', express.raw({ type: 'application/json' }), paymentControllers.handleWebHook);
 
 app.use(passport.initialize()); // Initilazed Passport
 app.use(passport.session()); // Create a session
