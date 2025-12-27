@@ -12,6 +12,7 @@ import { paymentRouter } from '../modules/payments/payment.route';
 import { favouriteRoutes } from '../modules/favouriteEvent/favourite.route';
 import { bookingRouter } from '../modules/booking/booking.route';
 import { sponsoredRouter } from '../modules/sponsored/sponsored.route';
+import { dashboardRouter } from '../modules/dashboard/dashboard.route';
 
 export const router = Router();
 
@@ -67,6 +68,10 @@ const moduleRoutes = [
   {
     path: '/sponsored',  
     route: sponsoredRouter,
+  },
+  {
+    path: '/dashboard',  
+    route: dashboardRouter,
   }
 ];
 
