@@ -7,6 +7,8 @@ const router = Router();
 
 // BOOKING EVENT
 router.post('/', checkAuth(...Object.values(Role)), bookingControllers.bookEvent);
+// GET MY BOOKINGS
+router.get('/my_bookings', checkAuth(...Object.keys(Role)), bookingControllers.myBookings);
 
 
 export const bookingRouter = router;
