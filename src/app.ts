@@ -37,7 +37,7 @@ app.use(passport.initialize()); // Initilazed Passport
 app.use(passport.session()); // Create a session
 app.use(express.json());
 app.use(cors({
-  origin: env.FRONTEND_URL
+  origin: env.FRONTEND_URL || 'http://localhost:5173',
 }));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
