@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose, { Types } from 'mongoose';
-import { IAuthProvider, IsActive, IUser, Role } from './user.interface';
+import { IAuthProvider, IsActive, IUser, Role, UserBadge } from './user.interface';
 import bcrypt from 'bcrypt';
 import env from '../../config/env';
+import { string } from 'zod';
 
 const authProviderSchema = new mongoose.Schema<IAuthProvider>(
   {
@@ -29,6 +30,7 @@ const userSchema = new mongoose.Schema<IUser>(
     interests: [{ type: Types.ObjectId }],
     instagramHandle: { type: String },
     stripeAccountId: { type: String },
+    badge: { type: string, enum: [...Object.keys(UserBadge)]},
     isActive: {
       type: String,
       enum: [...Object.values(IsActive)],

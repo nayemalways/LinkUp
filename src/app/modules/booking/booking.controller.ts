@@ -7,6 +7,7 @@ import { bookEventServices } from "./booking.service";
 import { IBooking } from "./booking.interface";
 import { JwtPayload } from "jsonwebtoken";
 
+// BOOK EVENT
 const bookEvent = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const payload = req.body;
     const { userId } = req.user as JwtPayload;
@@ -19,8 +20,22 @@ const bookEvent = CatchAsync(async (req: Request, res: Response, next: NextFunct
     })
 });
 
+// GET MY BOOKINGS
+const myBookings = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.user as JwtPayload;
+    const query = req.query as Record<string, string>
+    const result = await bookEventServices.myBookingsService(userId, query);
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "My booking fetched!",
+        data: result
+    })
+})
+
 
 
 export const bookingControllers = {
-    bookEvent
+    bookEvent,
+    myBookings
 }
