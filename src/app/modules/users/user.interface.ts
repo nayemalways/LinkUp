@@ -22,6 +22,11 @@ export interface ICoord {
   long: number;
 }
 
+export enum UserBadge {
+  HOST = 'HOST',
+  ORGANIZER = 'ORGANIZER'
+}
+
 export interface IUser {
   _id?: Types.ObjectId;
   fullName?: string;
@@ -33,6 +38,7 @@ export interface IUser {
   gender?: string;
   fcmToken?: string;
   instagramHandle?: string;
+  badge?: UserBadge;
   role: Role;
   stripeAccountId?: string;
   phone?: string;

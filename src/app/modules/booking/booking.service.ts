@@ -10,9 +10,10 @@ import { generateTransactionId } from '../../utils/generateTransactionId';
 import { PaymentStatus } from '../payments/payment.interface';
 import { EventJoinRequestType, EventVisibility } from '../events/event.interface';
 import Stripe from 'stripe';
+import { QueryBuilder } from '../../utils/QueryBuilder';
 
 
-
+// BOOK EVENT SERVICE
 const bookingIntentService = async (payload: Partial<IBooking>, userId: string) => {
 
   if (!payload.event) {
@@ -61,7 +62,6 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
   }
    
   
-
   // Initializing Booking
   const booking = await Booking.create({
     event: isEventExist._id,
@@ -110,6 +110,27 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
  
 };
 
+// GET MY BOOKINGS SERVICE
+const myBookingsService = async (userId: string, query: Record<string, string>) => {
+const queryBuilder = new QueryBuilder(Booking.find({
+  user: userId,
+  booking_status: BookingStatus.CONFIRMED
+}).populate({
+  path: 'payment',
+  match: { payment_status: PaymentStatus.PAID },
+  select: '_id payment_status  createdAt'
+}), query);
+
+const bookings = await queryBuilder.filter().select().join().sort().paginate().build();
+
+const meta = await queryBuilder.getMeta();
+meta.total = bookings.length;
+meta.totalPage = Math.ceil(meta.total / meta.limit)
+
+  return {meta, bookings};
+}
+
 export const bookEventServices = {
   bookingIntentService,
+  myBookingsService
 };
