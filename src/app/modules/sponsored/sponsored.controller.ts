@@ -4,6 +4,7 @@ import { CatchAsync } from "../../utils/CatchAsync";
 import { SendResponse } from "../../utils/SendResponse";
 import { StatusCodes } from "http-status-codes";
 import { sponsoredServices } from "./sponsored.service";
+import { JwtPayload } from "jsonwebtoken";
 
 
 // CREATE SPONSORSHIP PACKAGE
@@ -45,34 +46,24 @@ const updatePackage = CatchAsync(async (req: Request, res: Response, next: NextF
 });
 
 
-
-
-
-
 const requestSponsoredEvent = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    // const { eventId, sponsorType, amount } = req.body;
+    const { userId } = req.user as JwtPayload;
+    const { eventId, packageId } = req.body;
+
+    const result = await sponsoredServices.sponsoredPaymentIntentService(userId, eventId, packageId);
 
     SendResponse(res, {
         success: true,
         statusCode: StatusCodes.CREATED,
-        message: 'Sponsored event request created successfully',
-        data: {}
+        message: 'Sponsored event request successfully',
+        data: result
     })
 });
-
-
-/*
-1
- 1. create sponsored package
- 2. if free handle logic
- 3. if paid create payment intent
- 4. after payment update sponsored package status
-*/
 
 
 export const SponsoredController = {
     createSponsoredPackage,
     requestSponsoredEvent,
     getAvailablePackage,
-    updatePackage
+    updatePackage,
 };

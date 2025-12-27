@@ -90,7 +90,7 @@ const getConnectedBankAccountService = async (userId: string) => {
     return bankAccountData;
 }
 
-// STRIPE WEBHOOK
+// STRIPE WEBHOOK - FOR EVENT JOINING
 const handleWebHookService = async (req: Request) => {
   const sig = req.headers['stripe-signature'] as string;
   const event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_WEBHOOK_SECRET);
@@ -112,13 +112,52 @@ const handleWebHookService = async (req: Request) => {
 
     case 'payment_intent.canceled': {
       const paymentIntent = event.data.object;
-      paymentCanceledHandler(paymentIntent)
+      await paymentCanceledHandler(paymentIntent)
       break;
     }
 
     case 'charge.succeeded': {
       const charge = event.data.object;
-       chargeSucceededHandler(charge);
+      await chargeSucceededHandler(charge);
+      break;
+    }
+
+    default: {
+      console.log(`Unhandled event type: ${event.type}`);
+    }
+  }
+  return [];
+};
+
+// STRIPE WEBHOOK - FOR SPONSORE EVENT
+const handleSponsoredWebHookService = async (req: Request) => {
+  const sig = req.headers['stripe-signature'] as string;
+  const event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_SPONSORED_WEBHOOK_SECRET);
+
+  // Handle the event
+  switch (event.type) {
+    case 'payment_intent.succeeded': {
+      const paymentIntent = event.data.object;
+      console.log(paymentIntent);
+      break;
+    }
+
+    case 'payment_intent.payment_failed': {
+      const paymentFailed = event.data.object;
+      console.log(paymentFailed);
+      break;
+    }
+
+
+    case 'payment_intent.canceled': {
+      const paymentIntent = event.data.object;
+      console.log(paymentIntent)
+      break;
+    }
+
+    case 'charge.succeeded': {
+      const charge = event.data.object;
+      console.log(charge);
       break;
     }
 
@@ -131,7 +170,7 @@ const handleWebHookService = async (req: Request) => {
 
 
 
-// ======================  PAYMENT QUERY ====================
+// ======================  PAYMENT TRANSACTION QUERY ====================
 // GET TRANSACTION HISTORY
 const getTransactionHistory = async (userId: string, query: Record<string, string>) => {
   const queryBuilder = new QueryBuilder(Booking.find({ user: userId }), query);
@@ -158,5 +197,6 @@ export const paymentServices = {
   getConnectedBankAccountService,
   handleWebHookService,
   getTransactionHistory,
-  getAllTransactionHistory
+  getAllTransactionHistory,
+  handleSponsoredWebHookService
 };

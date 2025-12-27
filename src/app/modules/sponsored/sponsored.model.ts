@@ -9,9 +9,9 @@ const sponsoredSchema = new Schema<ISponsoredship>({
     payment: { type: Schema.Types.ObjectId, ref: 'payment' },
     sponsor_type: { type: String, enum: [...Object.keys(ISponsored)], default: ISponsored.NORMAL , required: true },
     sponsor_status: { type: String, enum: [...Object.keys(SponsorStatus)], required: true },
-    amount: { type: Number, required: true },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
+    amount: { type: Number   },
+    startDate: { type: Date },
+    endDate: { type: Date  },
 }, { timestamps: true, versionKey: false });
 
 
@@ -24,5 +24,5 @@ const sponsoredPackage = new Schema({
 });
 
 
-export const Sponsored = model<ISponsoredship>('sponsored_request', sponsoredSchema);
+export const Sponsored = model<ISponsoredship>('sponsored', sponsoredSchema);
 export const SponsoredPackage = model<ISponsoredPackage>('sponsored_package', sponsoredPackage);

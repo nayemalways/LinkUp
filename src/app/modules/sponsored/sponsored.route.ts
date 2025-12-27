@@ -8,7 +8,10 @@ const router = Router();
 // ONLY FOR ADMIN
 router.post('/create_package', checkAuth(Role.ADMIN), SponsoredController.createSponsoredPackage);
 router.get('/available_package', checkAuth(...Object.keys(Role)), SponsoredController.getAvailablePackage);
-router.patch('/update_package', checkAuth(Role.ADMIN), SponsoredController.updatePackage)
+router.patch('/update_package/:packageId', checkAuth(Role.ADMIN), SponsoredController.updatePackage)
+
+// SPONSORE EVENT
+router.post('/event_sponsore', checkAuth(...Object.keys(Role)), SponsoredController.requestSponsoredEvent)
 
 
 export const sponsoredRouter = router;

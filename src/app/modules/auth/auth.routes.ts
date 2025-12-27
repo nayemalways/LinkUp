@@ -5,6 +5,7 @@ import { Role } from '../users/user.interface';
 import { validateRequest } from '../../middlewares/validateRequest';
 import { passwordZodSchema } from '../users/user.validate';
 
+
 const router = Router();
 
 router.post('/login', authController.credentialsLogin);
@@ -13,4 +14,9 @@ router.post('/chnage-password', checkAuth(...Object.keys(Role)), authController.
 router.get('/forget-password/:email', authController.forgetPassword);
 router.get('/verify_reset_password_otp/:email/:otp', authController.verifyOTP);
 router.post('/reset-password', validateRequest(passwordZodSchema), authController.resetPassword);
+
+// INSTAGRAM AUTHENTICATION
+router.get('/instagram', authController.facebookRegister);
+router.get('/instagram/callback', authController.facebookRegister);
+
 export const authRouter = router;

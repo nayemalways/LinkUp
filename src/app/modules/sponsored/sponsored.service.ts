@@ -58,7 +58,7 @@ const updatePackageService = async (
 };
 
 // CREATE SPONSORE PAYMENT INTENT
-const sponsoredPaymentIntent = async (
+const sponsoredPaymentIntentService = async (
   userId: string,
   eventId: string,
   packageId: string
@@ -130,5 +130,5 @@ export const sponsoredServices = {
   createSponsoredPackageService,
   getAvailablePackageService,
   updatePackageService,
-  sponsoredPaymentIntent
+  sponsoredPaymentIntentService
 };
