@@ -15,8 +15,5 @@ router.get('/forget-password/:email', authController.forgetPassword);
 router.get('/verify_reset_password_otp/:email/:otp', authController.verifyOTP);
 router.post('/reset-password', validateRequest(passwordZodSchema), authController.resetPassword);
 
-// INSTAGRAM AUTHENTICATION
-router.get('/instagram', authController.facebookRegister);
-router.get('/instagram/callback', authController.facebookRegister);
 
 export const authRouter = router;

@@ -44,10 +44,6 @@ interface EnvInterfaces {
   GOOGLE_OAUTH_SECRET: string;
   GOOGLE_CALLBACK_URL: string;
 
-  META_API_SECRET: string;
-  META_APP_ID: string;
-  META_CALLBACK_URL: string;
-
   GOOGLE_MAP_API_KEY: string;
 
   EXPRESS_SESSION_SECRET: string;
@@ -114,10 +110,6 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'GOOGLE_OAUTH_ID',
     'GOOGLE_CALLBACK_URL',
     'GOOGLE_MAP_API_KEY',
-
-    'META_CALLBACK_URL',
-    'META_APP_ID',
-    'META_API_SECRET',
 
     'EXPRESS_SESSION_SECRET',
     'BACKEND_URL',
@@ -191,10 +183,6 @@ const loadEnvVarbles = (): EnvInterfaces => {
     GOOGLE_OAUTH_SECRET: process.env.GOOGLE_OAUTH_SECRET as string,
     GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
     GOOGLE_MAP_API_KEY: process.env.GOOGLE_MAP_API_KEY as string,
-
-    META_APP_ID: process.env.META_APP_ID as string,
-    META_API_SECRET: process.env.META_API_SECRET as string,
-    META_CALLBACK_URL: process.env.META_CALLBACK_URL as string,
 
     EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET as string,
     BACKEND_URL: process.env.BACKEND_URL as string,

@@ -112,47 +112,22 @@ const resetPassword = CatchAsync(async (req: Request, res: Response) => {
 
 async function getUserDetails(accessToken: string) {
   try {
-    const response = await axios.get(`https://graph.instagram.com/me?fields=id,username,media_count&access_token=${accessToken}`);
-    return response.data;  // Instagram user details
+    // Note the change in host and fields (user_id instead of id)
+    const response = await axios.get(`https://graph.instagram.com/me`, {
+      params: {
+        fields: 'user_id,username,account_type,media_count',
+        access_token: accessToken
+      }
+    });
+    // The new API returns data inside a 'data' array or object depending on version
+    return response.data; 
   } catch (error) {
     console.error('Error fetching user details', error);
     throw error;
   }
 }
 
-
-// INSTAGRAM LOGIN HANDLE
-const facebookRegister = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?` + querystring.stringify({
-    client_id: env.META_APP_ID,
-    redirect_uri: env.META_CALLBACK_URL,
-    scope: 'user_profile,user_media',
-    response_type: 'code',
-  });
-  res.redirect(instagramAuthUrl);
-})
-
-const instagramCallback = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const code = req.query.code;
-
-  const response = await axios.post('https://api.instagram.com/oauth/access_token', null, {
-      params: {
-        client_id: env.META_APP_ID,
-        client_secret: env.META_API_SECRET,
-        grant_type: 'authorization_code',
-        redirect_uri: env.META_CALLBACK_URL,
-        code: code,
-      },
-})
-
-  const accessToken = response.data.access_token;  // Instagram returns the access token here
-    const userId = response.data.user_id;
-
-    const userDetails = await getUserDetails(accessToken);
-    res.json(userDetails); 
-})
  
-
 export const authController = {
   credentialsLogin,
   getNeAccessToken,
@@ -160,5 +135,4 @@ export const authController = {
   forgetPassword,
   verifyOTP,
   resetPassword,
-  facebookRegister
 };
