@@ -7,7 +7,7 @@ const router = Router();
 
 // ONLY FOR ADMIN
 router.post('/create_package', checkAuth(Role.ADMIN), SponsoredController.createSponsoredPackage);
-router.get('/available_package', checkAuth(Role.ADMIN), SponsoredController.getAvailablePackage);
+router.get('/available_package', checkAuth(...Object.keys(Role)), SponsoredController.getAvailablePackage);
 router.patch('/update_package', checkAuth(Role.ADMIN), SponsoredController.updatePackage)
 
 
