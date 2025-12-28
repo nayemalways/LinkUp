@@ -125,7 +125,6 @@ const getMeService = async (userId: string) => {
 
   setImmediate(async () => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // start of today
 
     await UserActivity.updateOne(
       { user: new Types.ObjectId(userId), date: today }, // match user + date

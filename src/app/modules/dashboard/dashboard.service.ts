@@ -384,93 +384,78 @@ const dashboardStatsService = async () => {
 
 // USER ACTIVITY
 const dailyUserActivityService = async (query: Record<string, string>) => {
-  const { range = "weekly" } = query;
-  const today = new Date();
-
+  const { range = "weekly", timezone = "UTC" } = query;
+  const now = new Date();
+  
   const match: any = {};
   let groupId: any;
 
+  // ---------- 1. DYNAMIC RANGE CONFIGURATION ----------
   if (range === "weekly") {
-    const start = new Date();
-    start.setDate(today.getDate() - 6);
+    const start = new Date(now);
+    start.setDate(now.getDate() - 6);
     start.setHours(0, 0, 0, 0);
-
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-
-    match.date = { $gte: start, $lte: end };
-
+    
+    match.date = { $gte: start, $lte: now };
     groupId = {
-      $dateToString: {
-        format: "%Y-%m-%d",
-        date: "$date",
-        timezone: "+06:00" // 🔴 CRITICAL FIX
-      }
+      $dateToString: { format: "%Y-%m-%d", date: "$date", timezone }
     };
-  }
-
-  if (range === "monthly") {
-    const year = today.getFullYear();
+  } else if (range === "monthly") {
+    // Correctly match the full current year
+    const year = now.getFullYear();
     match.date = {
-      $gte: new Date(year, 0, 1),
-      $lte: new Date(year, 11, 31, 23, 59, 59, 999)
+      $gte: new Date(year, 0, 1), // Jan 1st
+      $lte: new Date(year, 11, 31, 23, 59, 59, 999) // Dec 31st
     };
-
     groupId = {
-      $dateToString: {
-        format: "%Y-%m",
-        date: "$date",
-        timezone: "+06:00" // 🔴 CRITICAL FIX
-      }
+      $dateToString: { format: "%Y-%m", date: "$date", timezone }
     };
   }
 
+  // ---------- 2. AGGREGATION ----------
   const rawData = await UserActivity.aggregate([
     { $match: match },
-    { $group: { _id: groupId, users: { $sum: 1 } } },
-    { $sort: { _id: 1 } }
+    { $group: { _id: groupId, users: { $sum: 1 } } }
   ]);
 
-  // ---------------- WEEKLY ----------------
+  // Map for O(1) lookups
+  const dataMap = new Map(rawData.map(item => [item._id, item.users]));
+
+  // ---------- 3. FORMATTING & ZERO-FILLING ----------
   if (range === "weekly") {
-    const result: { day: string; users: number }[] = [];
-
+    const result = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
 
-      const key = `${d.getFullYear()}-${(d.getMonth() + 1)
-        .toString()
-        .padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+      // ISO format YYYY-MM-DD that matches MongoDB _id
+      const key = d.toLocaleDateString("en-CA", { timeZone: timezone });
+      const dayName = d.toLocaleDateString("en-US", { weekday: "short", timeZone: timezone });
 
-      const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
-
-      const found = rawData.find(r => r._id === key);
-      result.push({ day: dayName, users: found ? found.users : 0 });
+      result.push({ day: dayName, users: dataMap.get(key) || 0 });
     }
-
     return result;
   }
 
-  // ---------------- MONTHLY ----------------
   if (range === "monthly") {
-    const result: { month: string; users: number }[] = [];
-
+    const result = [];
     for (let m = 0; m < 12; m++) {
-      const d = new Date(today.getFullYear(), m, 1);
-      const key = `${d.getFullYear()}-${(m + 1).toString().padStart(2, "0")}`;
-      const monthName = d.toLocaleDateString("en-US", { month: "short" });
+      // Create key YYYY-MM (e.g., 2025-12)
+      // We use m + 1 because MongoDB's %m is 1-indexed
+      const monthNum = (m + 1).toString().padStart(2, "0");
+      const key = `${now.getFullYear()}-${monthNum}`;
 
-      const found = rawData.find(r => r._id === key);
-      result.push({ month: monthName, users: found ? found.users : 0 });
+      // Get display name (Jan, Feb...)
+      const displayDate = new Date(now.getFullYear(), m, 1);
+      const monthName = displayDate.toLocaleDateString("en-US", { month: "short" });
+
+      result.push({ month: monthName, users: dataMap.get(key) || 0 });
     }
-
     return result;
   }
 
   return rawData;
 };
-
 
 
 export const dashboardService = {
