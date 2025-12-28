@@ -382,6 +382,7 @@ const dashboardStatsService = async () => {
   };
 };
 
+// USER ACTIVITY
 const dailyUserActivityService = async (query: Record<string, string>) => {
   const { range = "weekly" } = query;
   const today = new Date();
@@ -469,9 +470,6 @@ const dailyUserActivityService = async (query: Record<string, string>) => {
 
   return rawData;
 };
-
-
-
 
 
 
