@@ -1,10 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose, { Types } from 'mongoose';
-import { IAuthProvider, IsActive, IUser, Role, UserBadge } from './user.interface';
+import mongoose, { model, Types } from 'mongoose';
+import { IAuthProvider, IsActive, IUser, IUserActivity, Role, UserBadge } from './user.interface';
 import bcrypt from 'bcrypt';
 import env from '../../config/env';
-import { string } from 'zod';
+import { Schema } from 'mongoose';
 
+// USER DAILY ACTIVITY SCHEMA
+const dailyActivitySchema = new Schema<IUserActivity>({
+  user: { type: Schema.Types.ObjectId, ref: "user"},
+  date: { type: Date, required: true}
+}, {
+  versionKey: false,
+  timestamps: true
+})
+
+dailyActivitySchema.index(
+  { user: 1, date: 1 },
+  { unique: true }
+);
+
+export const UserActivity = model<IUserActivity>('user_activity', dailyActivitySchema);
+
+
+
+// ============USER MAIN SCHEMA=============
 const authProviderSchema = new mongoose.Schema<IAuthProvider>(
   {
     provider: { type: String, required: true },
@@ -30,7 +49,7 @@ const userSchema = new mongoose.Schema<IUser>(
     interests: [{ type: Types.ObjectId }],
     instagramHandle: { type: String },
     stripeAccountId: { type: String },
-    badge: { type: string, enum: [...Object.keys(UserBadge)]},
+    badge: { type: String, enum: [...Object.keys(UserBadge)]},
     isActive: {
       type: String,
       enum: [...Object.values(IsActive)],
