@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookingStatus } from '../booking/booking.interface';
 import Booking from '../booking/booking.model';
 import Event from '../events/event.model';
 import { SponsorStatus } from '../sponsored/sponsored.interface';
 import { Sponsored } from '../sponsored/sponsored.model';
-import User from '../users/user.model';
+import User, { UserActivity } from '../users/user.model';
 
 const last_week = new Date();
 last_week.setDate(last_week.getDate() - 7); // Get the date 7 days ago
@@ -361,7 +362,6 @@ const dashboardStatsService = async () => {
     { $limit: 5 },
   ]);
 
-
   // RESOLVE ALL PROMISES
   const [event, user, sponsored, hostStats, revenue] = await Promise.all([
     eventPromise,
@@ -382,6 +382,83 @@ const dashboardStatsService = async () => {
   };
 };
 
+// USER ACTIVITY
+const dailyUserActivityService = async (query: Record<string, string>) => {
+  const { range = "weekly", timezone = "UTC" } = query;
+  const now = new Date();
+  
+  const match: any = {};
+  let groupId: any;
+
+  // ---------- 1. DYNAMIC RANGE CONFIGURATION ----------
+  if (range === "weekly") {
+    const start = new Date(now);
+    start.setDate(now.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+    
+    match.date = { $gte: start, $lte: now };
+    groupId = {
+      $dateToString: { format: "%Y-%m-%d", date: "$date", timezone }
+    };
+  } else if (range === "monthly") {
+    // Correctly match the full current year
+    const year = now.getFullYear();
+    match.date = {
+      $gte: new Date(year, 0, 1), // Jan 1st
+      $lte: new Date(year, 11, 31, 23, 59, 59, 999) // Dec 31st
+    };
+    groupId = {
+      $dateToString: { format: "%Y-%m", date: "$date", timezone }
+    };
+  }
+
+  // ---------- 2. AGGREGATION ----------
+  const rawData = await UserActivity.aggregate([
+    { $match: match },
+    { $group: { _id: groupId, users: { $sum: 1 } } }
+  ]);
+
+  // Map for O(1) lookups
+  const dataMap = new Map(rawData.map(item => [item._id, item.users]));
+
+  // ---------- 3. FORMATTING & ZERO-FILLING ----------
+  if (range === "weekly") {
+    const result = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+
+      // ISO format YYYY-MM-DD that matches MongoDB _id
+      const key = d.toLocaleDateString("en-CA", { timeZone: timezone });
+      const dayName = d.toLocaleDateString("en-US", { weekday: "short", timeZone: timezone });
+
+      result.push({ day: dayName, users: dataMap.get(key) || 0 });
+    }
+    return result;
+  }
+
+  if (range === "monthly") {
+    const result = [];
+    for (let m = 0; m < 12; m++) {
+      // Create key YYYY-MM (e.g., 2025-12)
+      // We use m + 1 because MongoDB's %m is 1-indexed
+      const monthNum = (m + 1).toString().padStart(2, "0");
+      const key = `${now.getFullYear()}-${monthNum}`;
+
+      // Get display name (Jan, Feb...)
+      const displayDate = new Date(now.getFullYear(), m, 1);
+      const monthName = displayDate.toLocaleDateString("en-US", { month: "short" });
+
+      result.push({ month: monthName, users: dataMap.get(key) || 0 });
+    }
+    return result;
+  }
+
+  return rawData;
+};
+
+
 export const dashboardService = {
   dashboardStatsService,
+  dailyUserActivityService
 };

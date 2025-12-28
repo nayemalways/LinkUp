@@ -50,3 +50,12 @@ export interface IUser {
   location?: string;
   coord?: ICoord;
 }
+
+
+// DAILY USER ACTIVITY
+export interface IUserActivity {
+  _id?: Types.ObjectId;
+  user?: Types.ObjectId;
+  date: Date;
+  createdAt?: Date;
+}

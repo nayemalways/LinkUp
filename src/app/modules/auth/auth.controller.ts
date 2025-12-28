@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from 'express';
 import { CatchAsync } from '../../utils/CatchAsync';
@@ -10,9 +8,6 @@ import { createUserTokens } from '../../utils/user.tokens';
 import { SendResponse } from '../../utils/SendResponse';
 import { authService } from './auth.service';
 import { JwtPayload } from 'jsonwebtoken';
-import querystring from 'querystring';
-import env from '../../config/env';
-import axios from 'axios';
 
  // Login User
 const credentialsLogin = CatchAsync(
@@ -108,26 +103,6 @@ const resetPassword = CatchAsync(async (req: Request, res: Response) => {
 
 })
 
-
-
-async function getUserDetails(accessToken: string) {
-  try {
-    // Note the change in host and fields (user_id instead of id)
-    const response = await axios.get(`https://graph.instagram.com/me`, {
-      params: {
-        fields: 'user_id,username,account_type,media_count',
-        access_token: accessToken
-      }
-    });
-    // The new API returns data inside a 'data' array or object depending on version
-    return response.data; 
-  } catch (error) {
-    console.error('Error fetching user details', error);
-    throw error;
-  }
-}
-
- 
 export const authController = {
   credentialsLogin,
   getNeAccessToken,

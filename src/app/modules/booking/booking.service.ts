@@ -16,100 +16,124 @@ import { QueryBuilder } from '../../utils/QueryBuilder';
 // BOOK EVENT SERVICE
 const bookingIntentService = async (payload: Partial<IBooking>, userId: string) => {
 
-  if (!payload.event) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "Event id must required!");
-  }
+  // 1. VALIDATIONS
+  if (!payload.event) throw new AppError(StatusCodes.BAD_REQUEST, "Event id required!");
 
   const isEventExist = await Event.findOne({ _id: payload.event });
-  if (!isEventExist) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'No event found!');
-  }
-  
+  if (!isEventExist) throw new AppError(StatusCodes.NOT_FOUND, 'Event not found!');
   
   const isUser = await User.findOne({ _id: userId });
-  if (!isUser) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'No user found!');
-  }
-
-  if (!isUser.isVerified) {
-    throw new AppError(StatusCodes.FORBIDDEN, "Please verify your profile!");
-  }
+  if (!isUser) throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
+  if (!isUser.isVerified) throw new AppError(StatusCodes.FORBIDDEN, "Please verify your profile!");
   
-  // CHECK USER IS ALREADY IN EVENT
-  const isAlreadyBooked = await Booking.findOne({ user: userId, event: payload.event, booking_status: BookingStatus.CONFIRMED});
+  // 2. CHECK FOR COMPLETED BOOKINGS
+  const isAlreadyBooked = await Booking.findOne({ 
+    user: userId, 
+    event: payload.event, 
+    booking_status: BookingStatus.CONFIRMED // Only block if they actually paid
+  });
   
   if (isAlreadyBooked) {
-    throw new AppError(StatusCodes.CONFLICT, "You already joined this event! Go to my booking.")
+    throw new AppError(StatusCodes.CONFLICT, "You already joined this event!");
   }
   
-  // CHECK HOST HAS STRPE PAYOUTS REGISTERED
+  // 3. CHECK HOST PAYOUTS
   const hostPayoutAccount = await User.findOne({ _id: isEventExist.host });
   if (!hostPayoutAccount?.stripeAccountId) {
-    throw new AppError(
-      StatusCodes.FORBIDDEN,
-      "Host hasn't registered payouts!"
-    );
+    throw new AppError(StatusCodes.FORBIDDEN, "Host hasn't registered payouts!");
   }
 
-
-  // // IF PRIVATE EVENT: CHECK USER HAS APPROVAL
+  // 4. PRIVATE EVENT CHECK
   if (isEventExist.visibility === EventVisibility.PRIVATE) {
-      const  joinEventRequestApproval = await EventJoinRequest.findOne({ user: userId, event: payload.event, approval: EventJoinRequestType.APPROVED });
-
-      if (!joinEventRequestApproval) {
-        throw new AppError(StatusCodes.FORBIDDEN, "You can't join private event before approval!");
-      }
+      const isApproved = await EventJoinRequest.findOne({ 
+        user: userId, 
+        event: payload.event, 
+        approval: EventJoinRequestType.APPROVED 
+      });
+      if (!isApproved) throw new AppError(StatusCodes.FORBIDDEN, "Approval required!");
   }
    
-  
-  // Initializing Booking
-  const booking = await Booking.create({
-    event: isEventExist._id,
-    user: isUser._id,
-    price: isEventExist.price,
+  // 5. PREVENT DUPLICATE PENDING BOOKINGS (Reuse logic)
+  // If user clicked "Pay", failed, and clicked again, don't make a new booking. Reuse the pending one.
+  let booking = await Booking.findOne({
+    user: userId,
+    event: payload.event,
     booking_status: BookingStatus.PENDING
   });
 
-  const payment = await Payment.create({
-    booking: booking._id,
-    transaction_amount: isEventExist.price,
-    transaction_id: generateTransactionId(),
-    payment_status: PaymentStatus.PENDING
-   });
+  let payment;
 
-  // Update payment reference
-  booking.payment = payment._id;
-  await booking.save();
+  if (!booking) {
+    // CREATE NEW BOOKING & PAYMENT RECORD
+    booking = await Booking.create({
+      event: isEventExist._id,
+      user: isUser._id,
+      price: isEventExist.price,
+      booking_status: BookingStatus.PENDING
+    });
 
+    payment = await Payment.create({
+      booking: booking._id,
+      transaction_amount: isEventExist.price,
+      transaction_id: generateTransactionId(),
+      payment_status: PaymentStatus.PENDING
+    });
 
-  // PREPARE THE PAYMENT DATA
+    booking.payment = payment._id;
+    await booking.save();
+  } else {
+    // REUSE EXISTING PAYMENT RECORD
+    payment = await Payment.findOne({ booking: booking._id });
+    if (!payment) {
+        // Fallback if payment record missing for some reason
+        payment = await Payment.create({
+            booking: booking._id,
+            transaction_amount: isEventExist.price,
+            transaction_id: generateTransactionId(),
+            payment_status: PaymentStatus.PENDING
+        });
+        booking.payment = payment._id;
+        await booking.save();
+    }
+  }
+
+  // 6. CALCULATION (Using Math.round)
+  const totalAmountCents = Math.round(isEventExist.price * 100);
+  
+  // STRIPE FEE CALCULATION
+  // Assuming Stripe fee ~2.9% + 30 cents. 
+  const stripeFeeCents = Math.round(totalAmountCents * 0.029) + 30; 
+  const amountToHostCents = totalAmountCents - stripeFeeCents;
+  
+  // 7. STRIPE INTENT
   const paymentIntentData: Stripe.PaymentIntentCreateParams = {
-    amount: Number(isEventExist.price * 100), // cents
+    amount: totalAmountCents, 
     currency: 'usd',
     metadata: {
       payment: payment._id.toString(),
       booking: booking._id.toString(),
       transaction_id: payment.transaction_id
     }, 
-    setup_future_usage: 'off_session',
     transfer_data: {
       destination: hostPayoutAccount.stripeAccountId,
-      amount: payment.transaction_amount
+      amount: amountToHostCents
     },
-  }
-
-  if (isUser.email) {
-    paymentIntentData.receipt_email = isUser.email; // Include email if available
-  }
-
-  // Create payment intent
-  const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+  };
+  
+  if (isUser.email) paymentIntentData.receipt_email = isUser.email;
+  
+  // 8. IDEMPOTENCY
+  // Now strictly tied to the specific booking ID. 
+  // Since we reuse pending bookings (Step 5), this key stays the same for retries!
+  const idempotencyKey = `booking_intent_${booking._id.toString()}`;
+  
+  const paymentIntent = await stripe.paymentIntents.create(
+    paymentIntentData, 
+    { idempotencyKey }
+  );
 
   return paymentIntent;
-  
- 
 };
-
 // GET MY BOOKINGS SERVICE
 const myBookingsService = async (userId: string, query: Record<string, string>) => {
 const queryBuilder = new QueryBuilder(Booking.find({

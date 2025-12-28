@@ -1,6 +1,6 @@
 import AppError from '../../errorHelpers/AppError';
 import { IAuthProvider, IsActive, IUser, Role } from './user.interface';
-import User from './user.model';
+import User, { UserActivity } from './user.model';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
@@ -67,13 +67,16 @@ const createUserService = async (payload: Partial<IUser>) => {
 };
 
 // GET ALL USERS
-const getAllUserService = async (query: Record<string, string>, userId: string) => {
-
-  const getBlockList = await BlockedUser.find({ user: userId }).select('blockedUser');
-  const blockedUsersIds = getBlockList.map(block => block.blockedUser);
+const getAllUserService = async (
+  query: Record<string, string>,
+  userId: string
+) => {
+  const getBlockList = await BlockedUser.find({ user: userId }).select(
+    'blockedUser'
+  );
+  const blockedUsersIds = getBlockList.map((block) => block.blockedUser);
   const filter = { _id: { $nin: blockedUsersIds } };
 
- 
   const queryBuilder = new QueryBuilder(User.find(filter), query);
 
   const users = await queryBuilder
@@ -116,22 +119,30 @@ const getMeService = async (userId: string) => {
     },
   ]);
 
-  if (!user) {
+  if (!user || user.length === 0) {
     throw new AppError(404, 'User not found');
   }
+
+  setImmediate(async () => {
+    const today = new Date();
+
+    await UserActivity.updateOne(
+      { user: new Types.ObjectId(userId), date: today }, // match user + date
+      { $setOnInsert: { createdAt: new Date() } }, // insert only if missing
+      { upsert: true } // create if missing
+    );
+  });
 
   return user[0];
 };
 
-// GET PROFILD 
+// GET PROFILD
 const getProfileService = async (userId: string) => {
-
-  if(!userId){
+  if (!userId) {
     throw new AppError(400, 'User ID is required');
   }
 
-  // const user = await User.findById(userId).select('-password -auths');
-    const _user = await User.aggregate([
+  const _user = await User.aggregate([
     // Stage 1: Matching
     { $match: { _id: new Types.ObjectId(userId) } },
 
@@ -155,29 +166,32 @@ const getProfileService = async (userId: string) => {
   ]);
 
   const user = _user[0];
-
-  
   if (!user) {
     throw new AppError(404, 'User not found');
   }
-  
-  const totalEventsJoinedPromise =  Booking.countDocuments({ user: user?._id });
-  const totalEventsOrganizedPromise =  Event.countDocuments({ host : user?._id });
-  const totalFriendsPormise = FriendRequest.countDocuments({ 
+
+  // Total count
+  const totalEventsJoinedPromise = Booking.countDocuments({ user: user?._id });
+  const totalEventsOrganizedPromise = Event.countDocuments({ host: user?._id });
+  const totalFriendsPormise = FriendRequest.countDocuments({
     $or: [
       { sender: user?._id, status: RequestStatus.ACCEPTED },
-      { receiver: user?._id, status: RequestStatus.ACCEPTED }
-    ]
+      { receiver: user?._id, status: RequestStatus.ACCEPTED },
+    ],
   });
 
-  
-  const [totalEventsJoined, totalEventsOrganized, totalFriends] = await Promise.all([ totalEventsJoinedPromise, totalEventsOrganizedPromise, totalFriendsPormise]);
-  
+  const [totalEventsJoined, totalEventsOrganized, totalFriends] =
+    await Promise.all([
+      totalEventsJoinedPromise,
+      totalEventsOrganizedPromise,
+      totalFriendsPormise,
+    ]);
+
   return {
     totalEventsJoined,
     totalEventsOrganized,
     totalFriends,
-    ...user
+    ...user,
   };
 };
 
@@ -247,9 +261,16 @@ const userUpdateService = async (
   }
 
   // PREVENT BLOCKED - INACTIVE, IF USER IS ADMIN
-  if (payload.isActive === IsActive.INACTIVE || payload.isActive === IsActive.BLOCKED || payload.isDeleted === true) {
+  if (
+    payload.isActive === IsActive.INACTIVE ||
+    payload.isActive === IsActive.BLOCKED ||
+    payload.isDeleted === true
+  ) {
     if (user.role === Role.ADMIN) {
-      throw new AppError(StatusCodes.FORBIDDEN, "Admin can't disabled himself!")
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        "Admin can't disabled himself!"
+      );
     }
   }
 
@@ -258,7 +279,10 @@ const userUpdateService = async (
     const { lat, long } = payload.coord;
     const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&key=${env.GOOGLE_MAP_API_KEY}`;
     const response = await axios.get(url);
-    const address = response.data.results[0].formatted_address.split(', ').slice(-2).join(', ' );
+    const address = response.data.results[0].formatted_address
+      .split(', ')
+      .slice(-2)
+      .join(', ');
 
     // update location field
     payload.location = address;
@@ -420,5 +444,5 @@ export const userServices = {
   userUpdateService,
   userDeleteService,
   getAllUserService,
-  getProfileService
+  getProfileService,
 };

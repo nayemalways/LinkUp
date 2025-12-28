@@ -831,7 +831,7 @@ const inviteCoHostService = async (
         description: `You have been invited to be a co-host for the event "${event.title}". Tap to respond to the invitation.`,
         data: {
           eventId: event._id.toString(),
-          inviteId: inviteCoHost._id,
+          inviteId: inviteCoHost._id.toString(),
           image: event.images[0] || '',
         },
       };
