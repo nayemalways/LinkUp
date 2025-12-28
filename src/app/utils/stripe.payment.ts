@@ -22,16 +22,20 @@ export const payemntSuccessHandler = async (object: any) => {
   const paymentPayload: Partial<IPayment> = {
     payment_intent: object?.id,
     payment_method_id: object?.payment_method,
+    withdrawable_amount: object.transfer_data.amount,
     payment_status:
       object?.status === 'succeeded'
         ? PaymentStatus.PAID
         : PaymentStatus.FAILED,
     receipt_email: object?.receipt_email,
+    currency: object?.currency,
     transfer_data: {
       amount: object?.transfer_data?.amount,
       destination: object?.transfer_data?.destination,
     },
   };
+
+
 
   // Meta Data From Payment to update DB
   const metadata = object.metadata;
@@ -43,11 +47,15 @@ export const payemntSuccessHandler = async (object: any) => {
       payment_intent: paymentPayload.payment_intent,
       payment_method_id: paymentPayload.payment_method_id,
       payment_status: paymentPayload.payment_status,
+      currency: paymentPayload.currency,
+      withdrawable_amount: (paymentPayload.withdrawable_amount as number) / 100,
       receipt_email: paymentPayload.receipt_email,
       transfer_data: paymentPayload.transfer_data,
     },
     { new: true, runValidators: true }
   );
+
+
   const bookingConfirmPromise = Booking.findByIdAndUpdate(
     metadata.booking,
     { booking_status: BookingStatus.CONFIRMED },

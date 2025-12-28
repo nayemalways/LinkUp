@@ -14,6 +14,7 @@ export interface IPayment {
   sponsored?: Types.ObjectId;
   transaction_id: string;
   transaction_amount: number;
+  withdrawable_amount?: number;
   currency: string;
   invoiceURL?: string;
   transfer_data?:  {

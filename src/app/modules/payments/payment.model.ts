@@ -6,6 +6,7 @@ const paymentSchema = new Schema<IPayment>({
     sponsored: {type: Schema.Types.ObjectId, ref: "sponsored"},
     transaction_id: {type: String},
     transaction_amount: {type: Number},
+    withdrawable_amount: {type: Number},
     currency: { type: String },
     invoiceURL: {type: String },
     transfer_data: {type: {amount: Number, destination: String}, _id: false },

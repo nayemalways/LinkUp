@@ -104,7 +104,7 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
   // Assuming Stripe fee ~2.9% + 30 cents. 
   const stripeFeeCents = Math.round(totalAmountCents * 0.029) + 30; 
   const amountToHostCents = totalAmountCents - stripeFeeCents;
-
+  
   // 7. STRIPE INTENT
   const paymentIntentData: Stripe.PaymentIntentCreateParams = {
     amount: totalAmountCents, 
@@ -119,14 +119,14 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
       amount: amountToHostCents
     },
   };
-
+  
   if (isUser.email) paymentIntentData.receipt_email = isUser.email;
-
+  
   // 8. IDEMPOTENCY
   // Now strictly tied to the specific booking ID. 
   // Since we reuse pending bookings (Step 5), this key stays the same for retries!
   const idempotencyKey = `booking_intent_${booking._id.toString()}`;
-
+  
   const paymentIntent = await stripe.paymentIntents.create(
     paymentIntentData, 
     { idempotencyKey }
