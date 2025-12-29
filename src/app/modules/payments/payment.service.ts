@@ -138,28 +138,28 @@ const handleSponsoredWebHookService = async (req: Request) => {
   switch (event.type) {
     case 'payment_intent.succeeded': {
       const paymentIntent = event.data.object;
-      console.log(paymentIntent);
+      console.log("Success payment", paymentIntent);
       break;
     }
 
-    case 'payment_intent.payment_failed': {
-      const paymentFailed = event.data.object;
-      console.log(paymentFailed);
-      break;
-    }
+    // case 'payment_intent.payment_failed': {
+    //   const paymentFailed = event.data.object;
+    //   console.log(paymentFailed);
+    //   break;
+    // }
 
 
-    case 'payment_intent.canceled': {
-      const paymentIntent = event.data.object;
-      console.log(paymentIntent)
-      break;
-    }
+    // case 'payment_intent.canceled': {
+    //   const paymentIntent = event.data.object;
+    //   console.log(paymentIntent)
+    //   break;
+    // }
 
-    case 'charge.succeeded': {
-      const charge = event.data.object;
-      console.log(charge);
-      break;
-    }
+    // case 'charge.succeeded': {
+    //   const charge = event.data.object;
+    //   console.log(charge);
+    //   break;
+    // }
 
     default: {
       console.log(`Unhandled event type: ${event.type}`);
