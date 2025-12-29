@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
-import env from "../config/env"
-import { IAuthProvider, IUser, Role } from "../modules/users/user.interface";
-import User from "../modules/users/user.model"
+import env from '../config/env';
+import { NotificationPreference } from '../modules/notifications/notification.model';
+import { IAuthProvider, IUser, Role } from '../modules/users/user.interface';
+import User from '../modules/users/user.model';
 
 export const adminCreate = async () => {
   try {
@@ -26,6 +27,25 @@ export const adminCreate = async () => {
 
     const super_admin = await User.create(payload);
     console.log(super_admin);
+
+    await NotificationPreference.create({
+      user: super_admin._id,
+      channel: {
+        push: true,
+        email: true,
+        inApp: true,
+      },
+      directmsg: true,
+      app: {
+        product_updates: true,
+        special_offers: true,
+      },
+      event: {
+        event_invitations: true,
+        event_changes: true,
+        event_reminders: true,
+      },
+    });
   } catch (error) {
     console.log(error);
   }
