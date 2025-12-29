@@ -123,15 +123,21 @@ const getMeService = async (userId: string) => {
     throw new AppError(404, 'User not found');
   }
 
-  setImmediate(async () => {
-    const today = new Date();
+   // Normalize the date to remove time part
+  const normalizeDate = (date: Date) => {
+    const normalizedDate = new Date(date);
+    normalizedDate.setHours(0, 0, 0, 0); // Set time to midnight
+    return normalizedDate;
+  };
 
-    await UserActivity.updateOne(
-      { user: new Types.ObjectId(userId), date: today }, // match user + date
-      { $setOnInsert: { createdAt: new Date() } }, // insert only if missing
-      { upsert: true } // create if missing
-    );
-  });
+  const todayNormalized = normalizeDate(new Date());
+
+  // Update user activity for the day
+  await UserActivity.updateOne(
+    { user: new Types.ObjectId(userId), date: todayNormalized }, // match user + normalized date
+    { $setOnInsert: { createdAt: new Date() } }, // insert only if missing
+    { upsert: true } // create if missing
+  );
 
   return user[0];
 };
