@@ -23,7 +23,7 @@ const CoHostInviteSchema = new Schema<CoHostInvite>({
     enum: [...Object.values(CoHostStatus)],
     default:  CoHostStatus.PENDING
   }
-});
+}, {timestamps: true, versionKey: false});
 export const InviteCoHost = mongoose.model('inviteCoHost', CoHostInviteSchema);
 
 
