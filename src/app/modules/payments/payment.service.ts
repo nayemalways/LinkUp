@@ -6,10 +6,11 @@ import AppError from '../../errorHelpers/AppError';
 import User from '../users/user.model';
 import env from '../../config/env';
 import { Request } from 'express';
-import { chargeSucceededHandler, payemntSuccessHandler, paymentCanceledHandler, paymetFailedHandler } from '../../utils/stripe.payment';
+import { chargeSucceededHandler, payemntSuccessHandler, paymentCanceledHandler, paymetFailedHandler } from '../../utils/stripe.booking_webhook';
 import Booking from '../booking/booking.model';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { Role, UserBadge } from '../users/user.interface';
+import { sponsoredSuccessHandler } from '../../utils/stripe.sponsored_webhook';
 
 // ======================  STRIPE PAYMENT QUERY ====================
 // CREATE STRIPE CONNECT ACCOUNT
@@ -138,7 +139,7 @@ const handleSponsoredWebHookService = async (req: Request) => {
   switch (event.type) {
     case 'payment_intent.succeeded': {
       const paymentIntent = event.data.object;
-      console.log("Success payment", paymentIntent);
+      await sponsoredSuccessHandler(paymentIntent);
       break;
     }
 
