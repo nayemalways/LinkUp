@@ -4,7 +4,9 @@ import { ISponsored } from "../events/event.interface";
 
 export enum SponsorStatus {
   PENDING = 'PENDING',
-  APPROVED = 'APPROVED'
+  APPROVED = 'APPROVED',
+  DECLINED = 'DECLINED',
+  EXPIRED = 'EXPIRED'
 }
 
 export enum ISponsoredPaymentStatus {
@@ -26,6 +28,7 @@ export interface ISponsoredship {
   sponsor_type: ISponsored;
   sponsor_status: SponsorStatus;
   amount: number;
+  currency?: string;
   startDate?: Date;
   endDate?: Date;
 }

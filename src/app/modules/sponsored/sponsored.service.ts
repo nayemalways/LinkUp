@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errorHelpers/AppError';
-import { ISponsoredPackage, SponsorStatus } from './sponsored.interface';
+import { ISponsoredPackage, SponsoredPackageType, SponsorStatus } from './sponsored.interface';
 import { Sponsored, SponsoredPackage } from './sponsored.model';
 import { stripe } from '../../config/stripe.config';
 import Event from '../events/event.model';
@@ -10,6 +10,7 @@ import Stripe from 'stripe';
 import Payment from '../payments/payment.model';
 import { generateTransactionId } from '../../utils/generateTransactionId';
 import { PaymentStatus } from '../payments/payment.interface';
+import { ISponsored } from '../events/event.interface';
 
 // CREATE SPONSORSHIP PACKAGE SERVICE
 const createSponsoredPackageService = async (
@@ -82,18 +83,28 @@ const sponsoredPaymentIntentService = async (
     );
   }
 
+  // USER
   const user = (await User.findOne({ _id: userId })) as IUser;
 
+  // CHECK PENDING SPONSORSHIP
   let sponsored = await Sponsored.findOne({
     event: eventId,
     sponsor_status: SponsorStatus.PENDING,
-    user: userId,
+    user: userId
   });
 
-  if ((sponsored?.endDate as Date) > new Date()) {
+  // ALREADY APPROVED SPONSOSHIP
+  const alreadySponsored = await Sponsored.findOne({
+    event: eventId,
+    sponsor_status: SponsorStatus.APPROVED,
+    user: userId
+  })
+
+
+  if ((alreadySponsored?.endDate as Date) > new Date()) {
     throw new AppError(
       StatusCodes.CONFLICT,
-      `This event is already sponsored as ${sponsored?.sponsor_type} and cannot be sponsored again until the current sponsorship ends.`
+      `Already sponsored as ${alreadySponsored?.sponsor_type}. You cannot ${alreadySponsored?.sponsor_type} again until the current sponsorship ends.`
     );
   }
 
@@ -103,10 +114,11 @@ const sponsoredPaymentIntentService = async (
     sponsored = await Sponsored.create({
       amount: sponsoredPackage.price,
       event: event._id,
-      sponsor_type: sponsoredPackage.type,
+      sponsor_type: sponsoredPackage.type === SponsoredPackageType.SPONSORED ? ISponsored.SPONSORED : sponsoredPackage.type === SponsoredPackageType.BOOST ? ISponsored.BOOSTED : ISponsored.NORMAL,
       sponsor_status: SponsorStatus.PENDING,
       user: userId,
     });
+
 
     payment = await Payment.create({
       sponsored: sponsored._id,
@@ -138,9 +150,10 @@ const sponsoredPaymentIntentService = async (
     amount: Number(sponsoredPackage.price * 100),
     currency: 'usd',
     metadata: {
-      sponsorship_type: sponsoredPackage.type,
+      sponsored: sponsored._id.toString(),
       package: sponsoredPackage._id.toString(),
       event: event._id.toString(),
+      payment: payment._id.toString()
     },
     description: 'Event Sponsorship Payment',
   };

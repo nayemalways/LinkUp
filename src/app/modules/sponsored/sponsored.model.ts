@@ -11,6 +11,7 @@ const sponsoredSchema = new Schema<ISponsoredship>({
     sponsor_type: { type: String, enum: [...Object.keys(ISponsored)], default: ISponsored.NORMAL , required: true },
     sponsor_status: { type: String, enum: [...Object.keys(SponsorStatus)], required: true },
     amount: { type: Number   },
+    currency: { type: String   },
     startDate: { type: Date },
     endDate: { type: Date  },
 }, { timestamps: true, versionKey: false });
