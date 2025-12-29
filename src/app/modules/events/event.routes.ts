@@ -32,7 +32,7 @@ router.get('/event_analytics/:eventId', checkAuth(...Object.keys(Role)), eventCo
 // INVITE CO-HOST
 router.post('/invite_cohost/:eventId/:inviteeId', checkAuth(...Object.values(Role)), eventControllers.inviteCoHost);
 // ACCEPT CO-HOST INVITATION
-router.get('/accept_cohost_invitation/:inviteId', checkAuth(...Object.values(Role)), eventControllers.acceptCoHostInvitation);
+router.patch('/cohost_invitation_approval/:inviteId', checkAuth(...Object.values(Role)), eventControllers.approvalCoHostInvitation);
 // REMOVE CO-HOST
 router.delete('/remove_cohost/:eventId/:coHostId', checkAuth(...Object.values(Role)), eventControllers.removeCoHost);
 // GET INVITATION LIST

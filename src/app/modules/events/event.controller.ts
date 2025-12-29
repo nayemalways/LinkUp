@@ -154,11 +154,12 @@ const inviteCoHost = CatchAsync(
 );
 
 // ACCEPT CO-HOST INVITATION CONTROLLER
-const acceptCoHostInvitation = CatchAsync(
+const approvalCoHostInvitation = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
     const { inviteId } = req.params;
-    const result = await eventServices.acceptCoHostInvitationService(user.userId, inviteId);
+    const { status } = req.body;
+    const result = await eventServices.acceptCoHostInvitationService(user.userId, inviteId, status);
     SendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -264,7 +265,7 @@ export const eventControllers = {
   getMyEvents,
   geteventAnalytics,
   inviteCoHost,
-  acceptCoHostInvitation,
+  approvalCoHostInvitation,
   removeCoHost,
   eventJoinRequest,
   eventJoinRequestApproval,

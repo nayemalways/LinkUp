@@ -262,7 +262,7 @@ const updateEventService = async (
     throw new AppError(StatusCodes.NOT_FOUND, 'Event not found!');
   }
 
-  if (payload.images?.length as number <= 0) {
+  if ((payload.images?.length as number) <= 0) {
     delete payload.images;
   }
 
@@ -861,12 +861,12 @@ const inviteCoHostService = async (
 // ACCEPT CO-HOST INVITATION SERVICE
 const acceptCoHostInvitationService = async (
   userId: string,
-  inviteId: string
+  inviteId: string,
+  status: CoHostStatus
 ) => {
   if (!inviteId) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Invitation id required!');
   }
-
   const invitation = await InviteCoHost.findOne({
     _id: inviteId,
     invitee: new Types.ObjectId(userId),
@@ -884,9 +884,6 @@ const acceptCoHostInvitationService = async (
     throw new AppError(StatusCodes.FORBIDDEN, 'You are already Co Host!');
   }
 
-  invitation.status = CoHostStatus.ACCEPTED;
-  await invitation.save();
-
   // ADD CO HOST TO EVENT
   const event = await Event.findById(invitation.event);
 
@@ -898,64 +895,73 @@ const acceptCoHostInvitationService = async (
     throw new AppError(StatusCodes.BAD_REQUEST, 'Co-host already assigned!');
   }
 
-  event.co_host = new Types.ObjectId(userId);
-  await event.save();
+  if (status === CoHostStatus.ACCEPTED) {
+    invitation.status = CoHostStatus.ACCEPTED;
+    await invitation.save();
+    event.co_host = new Types.ObjectId(userId);
+    await event.save();
 
-  // // Send notification to the inviter asynchronously
-  setImmediate(async () => {
-    try {
-      const notificationPayload = {
-        title: `Co-Host Invitation Accepted!`,
-        type: NotificationType.EVENT,
-        user: invitation.inviter,
-        description: `Your invitation to be a co-host for the event "${event.title}" has been accepted.`,
-        data: {
-          eventId: event._id,
-          image: event.images[0] || '',
-        },
-      };
+    // // Send notification to the inviter asynchronously
+    setImmediate(async () => {
+      try {
+        const notificationPayload = {
+          title: `Co-Host Invitation Accepted!`,
+          type: NotificationType.EVENT,
+          user: invitation.inviter,
+          description: `Your invitation to be a co-host for the event "${event.title}" has been accepted.`,
+          data: {
+            eventId: event._id,
+            image: event.images[0] || '',
+          },
+        };
 
-      const inviterId = invitation.inviter.toString();
-      const inviter = await User.findById(invitation.inviter).select(
-        'fullName, email'
-      );
+        const inviterId = invitation.inviter.toString();
+        const inviter = await User.findById(invitation.inviter).select(
+          'fullName, email'
+        );
 
-      const notificationPreference = await NotificationPreference.findOne({
-        user: new Types.ObjectId(inviterId),
-      });
+        const notificationPreference = await NotificationPreference.findOne({
+          user: new Types.ObjectId(inviterId),
+        });
 
-      if (
-        notificationPreference &&
-        !notificationPreference.event.event_invitations
-      ) {
-        // Inviter has disabled event invitation notifications
-        await Notification.create(notificationPayload); // Just save to DB
-        return;
+        if (
+          notificationPreference &&
+          !notificationPreference.event.event_invitations
+        ) {
+          // Inviter has disabled event invitation notifications
+          await Notification.create(notificationPayload); // Just save to DB
+          return;
+        }
+
+        // SEND EMAIL TO INVITER
+        await sendEmail({
+          to: inviter?.email as string,
+          subject: `Co-Host Invitation Accepted!`,
+          templateName: 'invitationAccpted',
+          templateData: {
+            event_title: event.title,
+          },
+        });
+
+        console.log('email', inviter?.email);
+
+        if (onlineUsers[inviterId]) {
+          await sendPersonalNotification(notificationPayload);
+        } else {
+          console.log('sending push notification');
+          sendPushAndSave(notificationPayload);
+        }
+      } catch (err) {
+        console.error('Failed to send co-host acceptance notification:', err);
       }
+    });
 
-      // SEND EMAIL TO INVITER
-      await sendEmail({
-        to: inviter?.email as string,
-        subject: `Co-Host Invitation Accepted!`,
-        templateName: 'invitationAccpted',
-        templateData: {
-          event_title: event.title,
-        },
-      });
-
-      console.log('email', inviter?.email);
-
-      if (onlineUsers[inviterId]) {
-        await sendPersonalNotification(notificationPayload);
-      } else {
-        console.log('sending push notification');
-        sendPushAndSave(notificationPayload);
-      }
-    } catch (err) {
-      console.error('Failed to send co-host acceptance notification:', err);
-    }
-  });
-  return invitation;
+    return invitation;
+  } else {
+    invitation.status = CoHostStatus.DECLINE;
+    await invitation.save();
+    return invitation;
+  }
 };
 
 //  REMOVE CO HOST SERVICE
@@ -988,9 +994,11 @@ const removeCoHostService = async (
 
 // GET MY CO-HOST INVITATION
 const myCoHostInvitation = async (userId: string) => {
-  const invitation= await InviteCoHost.find({ invitee: userId }).populate("inviter", "fullName avatar").populate("event", "title images");
+  const invitation = await InviteCoHost.find({ invitee: userId })
+    .populate('inviter', 'fullName avatar')
+    .populate('event', 'title images');
   return invitation;
-}
+};
 
 // PRIVATE EVENT JOIN REQUEST SERVICE
 const eventJoinRequestService = async (userId: string, eventId: string) => {
@@ -1068,7 +1076,7 @@ const eventJoinRequestApprovalService = async (
       'Only host or co-host allowed to update status'
     );
   }
-  
+
   const isRequestExist = await EventJoinRequest.findOne({
     _id: requestId,
     event: eventId,
@@ -1084,10 +1092,8 @@ const eventJoinRequestApprovalService = async (
     isRequestExist.approval = EventJoinRequestType.APPROVED;
     await isRequestExist.save();
   }
-  
-  if (
-    payload.approval?.toLocaleUpperCase() === EventJoinRequestType.DECLINED
-  ) {
+
+  if (payload.approval?.toLocaleUpperCase() === EventJoinRequestType.DECLINED) {
     isRequestExist.approval = EventJoinRequestType.DECLINED;
     await isRequestExist.save();
   }
@@ -1096,34 +1102,53 @@ const eventJoinRequestApprovalService = async (
 };
 
 // GET PRIVATE EVENT JOIN REQUEST
-const getJoinRequestService = async (userId: string, eventId: string, query: Record<string, string>) => {
+const getJoinRequestService = async (
+  userId: string,
+  eventId: string,
+  query: Record<string, string>
+) => {
   if (!eventId) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "Event id required!");
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Event id required!');
   }
 
-  const querBuilder = new QueryBuilder(EventJoinRequest.find({ event: eventId }), query);
-  const joinRequestsPromise = await querBuilder.filter().join().select().sort().paginate().build();
+  const querBuilder = new QueryBuilder(
+    EventJoinRequest.find({ event: eventId }),
+    query
+  );
+  const joinRequestsPromise = await querBuilder
+    .filter()
+    .join()
+    .select()
+    .sort()
+    .paginate()
+    .build();
   const getmetaPromise = await querBuilder.getMeta();
 
-  
-  const [ joinRequests, getMeta] = await Promise.all([joinRequestsPromise, getmetaPromise])
+  const [joinRequests, getMeta] = await Promise.all([
+    joinRequestsPromise,
+    getmetaPromise,
+  ]);
   getMeta.total = joinRequests.length; // Only This For This event
-  getMeta.totalPage = Math.ceil((getMeta.total/ getMeta.limit));
+  getMeta.totalPage = Math.ceil(getMeta.total / getMeta.limit);
 
-  return {meta: getMeta, joinRequests};
-}
+  return { meta: getMeta, joinRequests };
+};
 
 // CHECK PRIVATE EVENT APPROVAL
-const checkPrivateEventApprovalService = async(userId: string, eventId: string) =>{
-  const invitation = await InviteCoHost.findOne({ event: eventId, invitee: userId });
+const checkPrivateEventApprovalService = async (
+  userId: string,
+  eventId: string
+) => {
+  const invitation = await InviteCoHost.findOne({
+    event: eventId,
+    invitee: userId,
+  });
   if (!invitation) {
-    throw new AppError(StatusCodes.NOT_FOUND, "No invitation found!");
+    throw new AppError(StatusCodes.NOT_FOUND, 'No invitation found!');
   }
 
   return invitation;
-}
-
-
+};
 
 // EXPORT ALL SERVICES FUNCTION
 export const eventServices = {
@@ -1141,5 +1166,5 @@ export const eventServices = {
   eventJoinRequestApprovalService,
   getJoinRequestService,
   myCoHostInvitation,
-  checkPrivateEventApprovalService
+  checkPrivateEventApprovalService,
 };
