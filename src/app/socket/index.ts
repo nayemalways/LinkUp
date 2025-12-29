@@ -16,7 +16,6 @@ export const initSocket = (server: any) => {
   });
 
   io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
 
     // Register All event here
     SocketEvents(socket);
@@ -28,8 +27,6 @@ export const initSocket = (server: any) => {
       userId = _userId;
       socket.join(userId);
       onlineUsers[userId] = socket.id;
-
-      console.log('User joined room:', userId);
       io.emit('get_online_users', Object.keys(onlineUsers));
     });
 
@@ -37,9 +34,7 @@ export const initSocket = (server: any) => {
     // Handle Disconnect
     socket.on('disconnect', () => {
       if (userId) delete onlineUsers[userId];
-
       io.emit('get_online_users', Object.keys(onlineUsers));
-      console.log('User disconnected:', socket.id);
     });
   });
 };
