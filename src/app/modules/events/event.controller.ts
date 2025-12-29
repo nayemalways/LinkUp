@@ -239,6 +239,20 @@ const getJoinRequest = CatchAsync(async (req: Request, res: Response, next: Next
   })
 })
 
+// GET JOIN REQUEST
+const checkPrivateEventApproval = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { userId } = req.user as JwtPayload;
+  const { eventId } = req.params;
+  const result = await eventServices.checkPrivateEventApprovalService(userId, eventId);
+
+  SendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: `Fetche invitation!`,
+    data: result
+  })
+})
+
 
 
 export const eventControllers = {
@@ -255,5 +269,6 @@ export const eventControllers = {
   eventJoinRequest,
   eventJoinRequestApproval,
   getJoinRequest,
-  myCoHostInvitation
+  myCoHostInvitation,
+  checkPrivateEventApproval
 };

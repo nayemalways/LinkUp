@@ -1095,7 +1095,7 @@ const eventJoinRequestApprovalService = async (
   return isRequestExist;
 };
 
-// GET JOIN REQUEST
+// GET PRIVATE EVENT JOIN REQUEST
 const getJoinRequestService = async (userId: string, eventId: string, query: Record<string, string>) => {
   if (!eventId) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Event id required!");
@@ -1111,6 +1111,16 @@ const getJoinRequestService = async (userId: string, eventId: string, query: Rec
   getMeta.totalPage = Math.ceil((getMeta.total/ getMeta.limit));
 
   return {meta: getMeta, joinRequests};
+}
+
+// CHECK PRIVATE EVENT APPROVAL
+const checkPrivateEventApprovalService = async(userId: string, eventId: string) =>{
+  const invitation = await InviteCoHost.findOne({ event: eventId, invitee: userId });
+  if (!invitation) {
+    throw new AppError(StatusCodes.NOT_FOUND, "No invitation found!");
+  }
+
+  return invitation;
 }
 
 
@@ -1130,5 +1140,6 @@ export const eventServices = {
   eventJoinRequestService,
   eventJoinRequestApprovalService,
   getJoinRequestService,
-  myCoHostInvitation
+  myCoHostInvitation,
+  checkPrivateEventApprovalService
 };
