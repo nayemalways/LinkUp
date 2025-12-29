@@ -15,9 +15,9 @@ import {
 
 // ================== CO-HOST INVITATION SCHEMA ====================
 const CoHostInviteSchema = new Schema<CoHostInvite>({
-  event: { type: Schema.Types.ObjectId, ref: 'Event', required: true },
-  inviter: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  invitee: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  event: { type: Schema.Types.ObjectId, ref: 'event', required: true },
+  inviter: { type: Schema.Types.ObjectId, ref: 'user', required: true },
+  invitee: { type: Schema.Types.ObjectId, ref: 'user', required: true },
   status: {
     type: String,
     enum: [...Object.values(CoHostStatus)],

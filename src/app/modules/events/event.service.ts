@@ -988,7 +988,7 @@ const removeCoHostService = async (
 
 // GET MY CO-HOST INVITATION
 const myCoHostInvitation = async (userId: string) => {
-  const invitation= await InviteCoHost.find({ invitee: userId });
+  const invitation= await InviteCoHost.find({ invitee: userId }).populate("inviter", "fullName avatar").populate("event", "title images");
   return invitation;
 }
 
