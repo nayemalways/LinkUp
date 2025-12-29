@@ -6,7 +6,6 @@ import {
   LocationType,
   CoHostInvite,
   CoHostStatus,
-  ISponsored,
   EventJoinRequestType,
   IEventJoinRequest,
 } from './event.interface';
@@ -68,10 +67,6 @@ const eventSchema = new mongoose.Schema<IEvent>(
       type: Boolean,
       default: false
       },
-    sponsored: {type: String,
-      enum: [...Object.values(ISponsored)],
-      default: ISponsored.NORMAL
-    },
     price: { type: Number, required: true },
     max_attendence: { type: Number },
     age_limit: { type: Number },

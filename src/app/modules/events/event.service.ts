@@ -7,7 +7,6 @@ import {
   EventStatus,
   IEvent,
   IEventJoinRequest,
-  ISponsored,
   LocationType,
 } from '../../modules/events/event.interface';
 import Event, {
@@ -606,86 +605,7 @@ const updateEventService = async (
           },
         });
       }
-
-      // ================== HOST AND CO-HOST UPDATE ONLY============
-      // 8. GET HOST AND CO-HOST ID
-      const host_and_cos_host_id = [updateEvent?.host];
-      if (updateEvent?.co_host) {
-        host_and_cos_host_id.push(updateEvent?.co_host);
-      }
-
-      // GET HOST AND CO-HOST INFO
-      const hostAndCoHostInfo = await User.find({
-        _id: {
-          $in: [...host_and_cos_host_id],
-        },
-      }).populate('fullName email');
-
-      // EXTRACT EMAIL
-      const host_CoHost_email = hostAndCoHostInfo.map((b) => b.email);
-
-      // 9. WHEN EVENT GOT SPONSORED - NOTIFY HOST AND CO-HOST
-      if (payload?.sponsored === ISponsored.SPONSORED) {
-        // SEND NOTIFICATION
-        await sendMultiNotification({
-          title: `Hurray! Your event is now Sponsored!🎉`,
-          type: NotificationType.EVENT,
-          description: `Your event "${event.title}" has been sponsored in the LinkUp app.Your event will now get more visibility and reach.`,
-          receiverIds: host_and_cos_host_id as Types.ObjectId[],
-          data: {
-            eventId: event?._id,
-            image: event?.images[0],
-          },
-        });
-        // SEND EMAIL
-        sendEmail({
-          to: env.ADMIN_GMAIL,
-          bcc: host_CoHost_email as string[],
-          subject: 'Linkup - Hurray! Your event is now Sponsored!🎉',
-          templateName: 'eventSponsoredUpdate',
-          templateData: {
-            event_title: event?.title,
-            event_venue: updateEvent?.venue,
-            event_date: dayjs(event?.event_start).format(
-              'MM/DD/YYYY, hh:mm:ss A'
-            ),
-            sponsor_name: 'LinkUp Team',
-            support_email: env?.ADMIN_GMAIL,
-          },
-        });
-      }
-
-      // 10. WHEN EVENT GOT BOOSTED - NOTIFY HOST AND CO-HOST
-      if (payload?.sponsored === ISponsored.BOOSTED) {
-        // SEND NOTIFICATION
-        await sendMultiNotification({
-          title: `Your event is now Boosted!🚀`,
-          type: NotificationType.EVENT,
-          description: `Great news! Your event "${event.title}" has been boosted on the LinkUp app. Your event will now get more visibility and reach.`,
-          receiverIds: host_and_cos_host_id as Types.ObjectId[],
-          data: {
-            eventId: event?._id,
-            image: event?.images?.[0],
-          },
-        });
-
-        // SEND EMAIL
-        await sendEmail({
-          to: env.ADMIN_GMAIL,
-          bcc: host_CoHost_email as string[],
-          subject: 'LinkUp - 🚀 Your event is now Boosted!',
-          templateName: 'eventBoostedUpdate',
-          templateData: {
-            event_title: event?.title,
-            event_venue: updateEvent?.venue,
-            event_date: dayjs(event?.event_start).format(
-              'MM/DD/YYYY, hh:mm:ss A'
-            ),
-            sponsor_name: 'LinkUp',
-            support_email: env?.ADMIN_GMAIL,
-          },
-        });
-      }
+      
     } catch (error) {
       console.log(`Notification sending error`, error);
     }
