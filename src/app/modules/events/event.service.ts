@@ -1139,9 +1139,9 @@ const checkPrivateEventApprovalService = async (
   userId: string,
   eventId: string
 ) => {
-  const invitation = await InviteCoHost.findOne({
-    event: eventId,
-    invitee: userId,
+  const invitation = await EventJoinRequest.findOne({
+     user: userId,
+     event: eventId
   });
   if (!invitation) {
     throw new AppError(StatusCodes.NOT_FOUND, 'No invitation found!');

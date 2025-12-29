@@ -249,7 +249,7 @@ const checkPrivateEventApproval = CatchAsync(async (req: Request, res: Response,
   SendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: `Fetche invitation!`,
+    message: `Fetched invitation!`,
     data: result
   })
 })

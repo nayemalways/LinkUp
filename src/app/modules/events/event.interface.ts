@@ -88,5 +88,5 @@ export interface IEventJoinRequest {
   _id?: Types.ObjectId;
   user: Types.ObjectId;
   event: Types.ObjectId;
-  approval: string;
+  approval: EventJoinRequestType;
 }
