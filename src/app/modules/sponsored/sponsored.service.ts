@@ -63,7 +63,6 @@ const sponsoredPaymentIntentService = async (
   eventId: string,
   packageId: string
 ) => {
-
   // CHECK PACKAGE
   const sponsoredPackage = await SponsoredPackage.findOne({ _id: packageId });
   if (!sponsoredPackage) {
@@ -83,25 +82,56 @@ const sponsoredPaymentIntentService = async (
     );
   }
 
-  const user = await User.findOne({ _id: userId }) as IUser;
+  const user = (await User.findOne({ _id: userId })) as IUser;
 
-  const sponsored = await Sponsored.create({
-    amount: sponsoredPackage.price,
-    event: event._id,
-    sponsor_type: sponsoredPackage.type,
-    sponsor_status: SponsorStatus.PENDING
+  let sponsored = await Sponsored.findOne({
+    event: eventId,
+    sponsor_status: SponsorStatus.PENDING,
+    user: userId,
   });
 
-    const payment = await Payment.create({
+  if ((sponsored?.endDate as Date) > new Date()) {
+    throw new AppError(
+      StatusCodes.CONFLICT,
+      `This event is already sponsored as ${sponsored?.sponsor_type} and cannot be sponsored again until the current sponsorship ends.`
+    );
+  }
+
+  let payment;
+
+  if (!sponsored) {
+    sponsored = await Sponsored.create({
+      amount: sponsoredPackage.price,
+      event: event._id,
+      sponsor_type: sponsoredPackage.type,
+      sponsor_status: SponsorStatus.PENDING,
+      user: userId,
+    });
+
+    payment = await Payment.create({
+      sponsored: sponsored._id,
+      transaction_amount: sponsoredPackage.price,
+      transaction_id: generateTransactionId(),
+      payment_status: PaymentStatus.PENDING,
+    });
+  } else {
+    payment = await Payment.findOne({
+      sponsored: sponsored._id,
+      payment_status: PaymentStatus.PENDING,
+    });
+    if (!payment) {
+      payment = await Payment.create({
         sponsored: sponsored._id,
         transaction_amount: sponsoredPackage.price,
         transaction_id: generateTransactionId(),
-        payment_status: PaymentStatus.PENDING
-   });
+        payment_status: PaymentStatus.PENDING,
+      });
+    }
+  }
 
-   // Update payment reference
-   sponsored.payment = payment._id;
-   await sponsored.save()
+  // Update payment reference
+  sponsored.payment = payment._id;
+  await sponsored.save();
 
   // Prepare the payment data
   const paymentIntentData: Stripe.PaymentIntentCreateParams = {
@@ -110,18 +140,20 @@ const sponsoredPaymentIntentService = async (
     metadata: {
       sponsorship_type: sponsoredPackage.type,
       package: sponsoredPackage._id.toString(),
-      event: event._id.toString()
+      event: event._id.toString(),
     },
     description: 'Event Sponsorship Payment',
   };
-
 
   if (user.email) {
     paymentIntentData.receipt_email = user.email; // Include email if available
   }
 
   // Create the payment intent
-  const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+  const idempotencyKey = `sponsored_intent_${sponsored._id.toString()}_${new Date().toISOString()}`;
+  const paymentIntent = await stripe.paymentIntents.create(paymentIntentData, {
+    idempotencyKey,
+  });
 
   return paymentIntent;
 };
@@ -130,5 +162,5 @@ export const sponsoredServices = {
   createSponsoredPackageService,
   getAvailablePackageService,
   updatePackageService,
-  sponsoredPaymentIntentService
+  sponsoredPaymentIntentService,
 };
