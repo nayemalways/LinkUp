@@ -7,7 +7,7 @@ export const adminCreate = async () => {
   try {
     const isUserExist = await User.findOne({ email: env?.ADMIN_GMAIL });
     if (isUserExist) {
-      console.log('Super Admin Already Created');
+      console.log('Admin Already Created');
       return;
     }
 
