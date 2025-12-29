@@ -134,6 +134,8 @@ const bookingIntentService = async (payload: Partial<IBooking>, userId: string) 
 
   return paymentIntent;
 };
+
+
 // GET MY BOOKINGS SERVICE
 const myBookingsService = async (userId: string, query: Record<string, string>) => {
 const queryBuilder = new QueryBuilder(Booking.find({
