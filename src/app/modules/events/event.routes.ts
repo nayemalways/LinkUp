@@ -35,6 +35,8 @@ router.post('/invite_cohost/:eventId/:inviteeId', checkAuth(...Object.values(Rol
 router.get('/accept_cohost_invitation/:inviteId', checkAuth(...Object.values(Role)), eventControllers.acceptCoHostInvitation);
 // REMOVE CO-HOST
 router.delete('/remove_cohost/:eventId/:coHostId', checkAuth(...Object.values(Role)), eventControllers.removeCoHost);
+// GET INVITATION LIST
+router.get('/invitation_list', checkAuth(...Object.values(Role)), eventControllers.myCoHostInvitation);
 
 
 // EVENT JOIN REQUEST

@@ -986,6 +986,12 @@ const removeCoHostService = async (
   return event;
 };
 
+// GET MY CO-HOST INVITATION
+const myCoHostInvitation = async (userId: string) => {
+  const invitation= await InviteCoHost.find({ invitee: userId });
+  return invitation;
+}
+
 // PRIVATE EVENT JOIN REQUEST SERVICE
 const eventJoinRequestService = async (userId: string, eventId: string) => {
   const isApproved = await EventJoinRequest.findOne({
@@ -1123,5 +1129,6 @@ export const eventServices = {
   removeCoHostService,
   eventJoinRequestService,
   eventJoinRequestApprovalService,
-  getJoinRequestService
+  getJoinRequestService,
+  myCoHostInvitation
 };

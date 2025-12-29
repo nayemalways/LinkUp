@@ -184,6 +184,20 @@ const removeCoHost = CatchAsync(
   }
 );
 
+// ACCEPT CO-HOST INVITATION CONTROLLER
+const myCoHostInvitation = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    const result = await eventServices.myCoHostInvitation( user.userId );
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Invitation fetched!',
+      data: result,
+    });
+  }
+);
+
 // PRIVATE EVENT JOIN REQUEST
 const eventJoinRequest = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { userId } = req.user as JwtPayload;
@@ -240,5 +254,6 @@ export const eventControllers = {
   removeCoHost,
   eventJoinRequest,
   eventJoinRequestApproval,
-  getJoinRequest
+  getJoinRequest,
+  myCoHostInvitation
 };
