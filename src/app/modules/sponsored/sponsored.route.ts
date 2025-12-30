@@ -12,6 +12,9 @@ router.patch('/update_package/:packageId', checkAuth(Role.ADMIN), SponsoredContr
 
 // SPONSORE EVENT
 router.post('/event_sponsore', checkAuth(...Object.keys(Role)), SponsoredController.requestSponsoredEvent)
+router.get('/random_sponsored_events', checkAuth(...Object.keys(Role)), SponsoredController.getRandomSponsoredEvents)
+router.get('/sponsored_events', checkAuth(...Object.keys(Role)), SponsoredController.getSponsoredEvents)
+
 
 
 export const sponsoredRouter = router;

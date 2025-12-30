@@ -45,7 +45,7 @@ const updatePackage = CatchAsync(async (req: Request, res: Response, next: NextF
     })
 });
 
-
+// SPONSORE EVENTS
 const requestSponsoredEvent = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { userId } = req.user as JwtPayload;
     const { eventId, packageId } = req.body;
@@ -60,10 +60,35 @@ const requestSponsoredEvent = CatchAsync(async (req: Request, res: Response, nex
     })
 });
 
+// GET RANDOM SPONSORED EVENT
+const getRandomSponsoredEvents = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const result = await sponsoredServices.getRandomSponsoredEventsService();
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "Sponsored event fetch randomly!",
+        data: result
+    })
+})
+
+// GET SPONSORED EVENTS
+const getSponsoredEvents = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query as Record<string, string>;
+    const result = await sponsoredServices.getSponsoredEventsService(query);
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "Sponsored event fetch successfully",
+        data: result
+    })
+})
+
 
 export const SponsoredController = {
     createSponsoredPackage,
     requestSponsoredEvent,
     getAvailablePackage,
     updatePackage,
+    getRandomSponsoredEvents,
+    getSponsoredEvents
 };

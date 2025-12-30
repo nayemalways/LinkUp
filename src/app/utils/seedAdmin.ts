@@ -23,6 +23,7 @@ export const adminCreate = async () => {
       password: env?.ADMIN_PASSWORD,
       role: Role.ADMIN,
       auths: [authProvider],
+      isVerified: true
     };
 
     const super_admin = await User.create(payload);

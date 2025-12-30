@@ -10,6 +10,9 @@ import Stripe from 'stripe';
 import Payment from '../payments/payment.model';
 import { generateTransactionId } from '../../utils/generateTransactionId';
 import { PaymentStatus } from '../payments/payment.interface';
+import { QueryBuilder } from '../../utils/QueryBuilder';
+
+
 
 // CREATE SPONSORSHIP PACKAGE SERVICE
 const createSponsoredPackageService = async (
@@ -170,9 +173,77 @@ const sponsoredPaymentIntentService = async (
   return paymentIntent;
 };
 
+ 
+// GET SPONSORED EVENT (Randomly Selected Every API Call)
+const getRandomSponsoredEventsService = async () => {
+  const limit = 10; // Number of random documents requested by the frontend
+
+  // Randomly sample documents based on the 'limit' requested
+  const sponsoredEvents = await Sponsored.aggregate([
+    {
+      $match: {
+        sponsor_status: SponsorStatus.APPROVED,
+        sponsor_type: SponsoredPackageType.SPONSORED
+      }
+    },
+    {
+      $sample: { size: limit }  
+    },
+    {
+      $lookup: {
+        from: 'payments',  
+        localField: 'payment', 
+        foreignField: '_id', 
+        as: 'payment'
+      }
+    },
+    {
+      $match: { 'payment.payment_status': PaymentStatus.PAID }  // Correct reference to payment.payment_status
+    },
+    {
+      $lookup: {
+        from: 'events',  
+        localField: 'event',  
+        foreignField: '_id',  
+        as: 'event'
+      }
+    },
+    {
+      $project: {
+        event: 1,
+        sponsor_status: 1,
+        payment: { _id: 1, payment_status: 1, createdAt: 1 },  // Correct field name for payment
+      }
+    }
+  ]);
+
+  return sponsoredEvents;
+};
+
+// GET ALL SPONSORED EVENTS
+const getSponsoredEventsService = async (query: Record<string, string>) => {
+  const queryBuild = new QueryBuilder(Sponsored.find({ sponsor_status: SponsorStatus.APPROVED, sponsor_type: SponsoredPackageType.SPONSORED  }).populate({
+  path: 'payment',
+  match: { payment_status: PaymentStatus.PAID },
+  select: '_id payment_status createdAt'
+}).populate("event"), query);
+
+  const sponsoredEvents = await queryBuild.filter().select().sort().paginate().build();
+
+  const meta = await queryBuild.getMeta();
+  return {
+    meta,
+    sponsoredEvents
+  }
+}
+
+
+
 export const sponsoredServices = {
   createSponsoredPackageService,
   getAvailablePackageService,
   updatePackageService,
   sponsoredPaymentIntentService,
+  getRandomSponsoredEventsService,
+  getSponsoredEventsService
 };
