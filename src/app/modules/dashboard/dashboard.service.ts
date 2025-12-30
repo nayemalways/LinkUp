@@ -542,7 +542,6 @@ const getRevenueService = async (type: string) => {
 };
 
 // GET SPONSORED
-
 const sponsoredEventsAnalytics = async () => {
 
   // Get today's date and calculate last week's range
