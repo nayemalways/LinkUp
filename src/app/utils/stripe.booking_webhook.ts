@@ -255,8 +255,6 @@ export const paymentCanceledHandler = async (paymentIntent: any) => {
 
       // NOTIFICATION: Payment has been canceled
       setImmediate(async () => {
-        console.log('Sending notification about canceled payment');
-
         await sendPersonalNotification({
           user: bookingCancel.user,
           title: `Your payment has been canceled ❌`,
@@ -278,7 +276,7 @@ export const paymentCanceledHandler = async (paymentIntent: any) => {
 export const chargeSucceededHandler = async (object: any) => {
   try {
     const metadata = object.metadata;
-    if (metadata.booking && metadata.payment && metadata.transaction_id) {
+    if (metadata.event && metadata.package && metadata.sponsored && metadata.payment) {
       await Payment.findByIdAndUpdate(object.metadata.payment, {
         invoiceURL: object.receipt_url,
       });

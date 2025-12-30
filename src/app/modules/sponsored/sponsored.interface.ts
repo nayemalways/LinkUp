@@ -4,8 +4,9 @@ import { Types } from "mongoose";
 export enum SponsorStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
-  DECLINED = 'DECLINED',
-  EXPIRED = 'EXPIRED'
+  EXPIRED = 'EXPIRED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED'
 }
 
 export enum ISponsoredPaymentStatus {

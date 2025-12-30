@@ -10,7 +10,7 @@ import { chargeSucceededHandler, payemntSuccessHandler, paymentCanceledHandler, 
 import Booking from '../booking/booking.model';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { Role, UserBadge } from '../users/user.interface';
-import { sponsoredSuccessHandler } from '../../utils/stripe.sponsored_webhook';
+import { sponsoredCancelledHandler, sponsoredFailedHandler, sponsoredSuccessHandler } from '../../utils/stripe.sponsored_webhook';
 
 // ======================  STRIPE PAYMENT QUERY ====================
 // CREATE STRIPE CONNECT ACCOUNT
@@ -143,24 +143,24 @@ const handleSponsoredWebHookService = async (req: Request) => {
       break;
     }
 
-    // case 'payment_intent.payment_failed': {
-    //   const paymentFailed = event.data.object;
-    //   console.log(paymentFailed);
-    //   break;
-    // }
+    case 'payment_intent.payment_failed': {
+      const paymentFailed = event.data.object;
+      await sponsoredFailedHandler(paymentFailed); 
+      break;
+    }
 
 
-    // case 'payment_intent.canceled': {
-    //   const paymentIntent = event.data.object;
-    //   console.log(paymentIntent)
-    //   break;
-    // }
+    case 'payment_intent.canceled': {
+      const paymentIntent = event.data.object;
+      await sponsoredCancelledHandler(paymentIntent);
+      break;
+    }
 
-    // case 'charge.succeeded': {
-    //   const charge = event.data.object;
-    //   console.log(charge);
-    //   break;
-    // }
+    case 'charge.succeeded': {
+      const charge = event.data.object;
+      await chargeSucceededHandler(charge)
+      break;
+    }
 
     default: {
       console.log(`Unhandled event type: ${event.type}`);
