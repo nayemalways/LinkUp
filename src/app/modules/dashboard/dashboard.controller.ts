@@ -5,6 +5,7 @@ import { SendResponse } from "../../utils/SendResponse";
 import { StatusCodes } from "http-status-codes";
 import { dashboardService } from "./dashboard.service";
 
+
 // GET DASBOARD ANALYTICS
 const dashboardStats = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const result = await dashboardService.dashboardStatsService();
@@ -31,7 +32,23 @@ const userActivity = CatchAsync(async (req: Request, res: Response, next: NextFu
 })
 
 
+// DAILY USER ACTIVITY
+const getRevenue = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { type } = req.query as Record<string, string>;
+    const { eventId } = req.params;
+    const result = await dashboardService.getRevenueService( type);
+
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message:"Fetched revenue!",
+        data: result
+    })
+})
+
+
 export const dashboardControllers = {
     dashboardStats,
-    userActivity
+    userActivity,
+    getRevenue
 }

@@ -2,6 +2,8 @@
 import { BookingStatus } from '../booking/booking.interface';
 import Booking from '../booking/booking.model';
 import Event from '../events/event.model';
+import { PaymentStatus } from '../payments/payment.interface';
+import Payment from '../payments/payment.model';
 import { SponsorStatus } from '../sponsored/sponsored.interface';
 import { Sponsored } from '../sponsored/sponsored.model';
 import User, { UserActivity } from '../users/user.model';
@@ -457,8 +459,99 @@ const dailyUserActivityService = async (query: Record<string, string>) => {
   return rawData;
 };
 
+// GET TOTAL REVENUE 
+const getRevenueService = async (type: string) => {
+  const last12Months = new Date();
+  last12Months.setMonth(last12Months.getMonth() - 12); 
+
+  // Map of months for converting month numbers to names
+  const monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  let revenueData: any[] = [];
+
+  // Check if the revenue type is 'booking'
+  if (type === 'booking') {
+    // Aggregate the total revenue from payments related to bookings for the last 12 months
+    revenueData = await Payment.aggregate([
+      {
+        $match: {
+          payment_status: PaymentStatus.PAID,   
+          createdAt: { $gte: last12Months },  
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },  
+          totalRevenue: { $sum: "$transaction_amount" },   
+        },
+      },
+      {
+        $sort: { _id: 1 },   
+      },
+      {
+        $project: {
+          _id: 0,   
+          month: "$_id",   
+          totalRevenue: 1,   
+        },
+      },
+    ]);
+  }
+  // Check if the revenue type is 'sponsorship'
+  else if (type === 'sponsorship') {
+    // Aggregate the total revenue from sponsorships for the last 12 months
+    revenueData = await Sponsored.aggregate([
+      {
+        $match: {
+          sponsor_status: SponsorStatus.APPROVED, 
+          startDate: { $gte: last12Months },   
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$startDate" },   
+          totalRevenue: { $sum: "$amount" }, 
+        },
+      },
+      {
+        $sort: { _id: 1 },  
+      },
+      {
+        $project: {
+          _id: 0,  
+          month: "$_id", 
+          totalRevenue: 1, 
+        },
+      },
+    ]);
+  }
+
+  // Convert revenue data to the desired format (with month names and 0 for missing months)
+  const formattedRevenueData = monthNames.map((month, index) => {
+    const revenueForMonth = revenueData.find(item => item.month === index + 1);
+    return {
+      month,
+      revenue: revenueForMonth ? revenueForMonth.totalRevenue : 0, 
+    };
+  });
+
+  return formattedRevenueData; 
+};
+
+
+
+
+
+
+
+
+
 
 export const dashboardService = {
   dashboardStatsService,
-  dailyUserActivityService
+  dailyUserActivityService,
+  getRevenueService
 };
