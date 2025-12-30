@@ -15,6 +15,8 @@ import FriendRequest from '../friends/friend.model';
 import { RequestStatus } from '../friends/friend.interface';
 import env from '../../config/env';
 import axios from 'axios';
+import EventVote from '../voting/voting.model';
+import { VotingType } from '../voting/voting.interface';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -186,6 +188,16 @@ const getProfileService = async (userId: string) => {
     ],
   });
 
+  // REPUTATION AS HOST OR ORGANIZER
+  const myEvents = await Event.find({ host: userId }); // MY EVENTS
+  const myEventIds = myEvents.map(e => e._id.toString()); // EXTRACT EVENT ID
+  const getMyEventVoting = await EventVote.find({ event: {$in: myEventIds }}); // GET VOTE FOR MY EVENTS
+
+  const totalUpvote = getMyEventVoting.filter((v) => v.voteType === VotingType.UPVOTE); // FILTER ONLY UPVOTE
+  const totalDownvote = getMyEventVoting.filter((v) => v.voteType === VotingType.DOWNVOTE);  // FILTER ONLY DOWNVOTE
+
+  const host_or_organizer_reputation = totalUpvote.length - totalDownvote.length;
+
   const [totalEventsJoined, totalEventsOrganized, totalFriends] =
     await Promise.all([
       totalEventsJoinedPromise,
@@ -193,10 +205,12 @@ const getProfileService = async (userId: string) => {
       totalFriendsPormise,
     ]);
 
+
   return {
     totalEventsJoined,
     totalEventsOrganized,
     totalFriends,
+    reputation: host_or_organizer_reputation,
     ...user,
   };
 };

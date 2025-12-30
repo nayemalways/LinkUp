@@ -27,7 +27,7 @@ export interface IEvent {
   host: Types.ObjectId;
   co_host?: Types.ObjectId;
   category: Types.ObjectId;
-  reviews?: Types.ObjectId;
+  voting?: Types.ObjectId;  
   title: string;  
   description: string; 
   images: string[];
@@ -45,7 +45,7 @@ export interface IEvent {
   age_limit: number; 
   avg_rating: number;
   visibility: EventVisibility; 
-  location?: ILocation;  
+  location?: ILocation;
   address: {
     city: string;
     state: string;
