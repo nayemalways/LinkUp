@@ -54,9 +54,24 @@ const getUserNotifications = CatchAsync(async (req, res) => {
   });
 });
 
+// Get user's notification preferences (using)
+const sendSystemNotification = CatchAsync(async (req, res) => {
+  const paylod = req.body;
+  const result =
+    await NotificationService.sendSystemNotificationService(paylod);
+
+  SendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Notification retrieved successfully',
+    data: result,
+  });
+});
+
 
 export const NotificationController = {
   getUserNotificationPreferences,
   updateNotificationPreferences,
-  getUserNotifications
+  getUserNotifications,
+  sendSystemNotification
 };

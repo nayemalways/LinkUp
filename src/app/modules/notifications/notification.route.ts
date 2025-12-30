@@ -23,5 +23,6 @@ router.patch(
 );
 
 router.get('/my_notifications', checkAuth(...Object.keys(Role)), NotificationController.getUserNotifications);
+router.post('/send_system_notificatin', checkAuth(Role.ADMIN), NotificationController.sendSystemNotification);
 
 export const notificationRouter = router;
