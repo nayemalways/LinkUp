@@ -71,6 +71,8 @@ export class QueryBuilder<T> {
 
     this.queryModel = this.queryModel.find({ category: categoryId });
 
+    this.queryModel = this.queryModel.sort({ boosted: -1 })
+
     return this;
   }
 

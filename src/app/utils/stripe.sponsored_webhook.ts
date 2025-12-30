@@ -9,6 +9,7 @@ import Payment from '../modules/payments/payment.model';
 import {
   ISponsored,
   ISponsoredPackage,
+  SponsoredPackageType,
   SponsorStatus,
 } from '../modules/sponsored/sponsored.interface';
 import {
@@ -81,10 +82,15 @@ export const sponsoredSuccessHandler = async (paymentIntent: any) => {
         { new: true, runValidators: true }
       );
 
+    // BOOST ADD
+    if (sponsoredPackage.type === SponsoredPackageType.BOOST) {
+      await Event.findByIdAndUpdate(metadata.event, { boosted: true })
+    }
+
       // RESOLVE PROMISE
       const [payment, sponsored] = await Promise.all([
         paymentPromise,
-        sponsoredPromise,
+        sponsoredPromise
       ]);
 
       // WITHDRAW SPONSORSHIP AFTER DURATION END
@@ -93,6 +99,10 @@ export const sponsoredSuccessHandler = async (paymentIntent: any) => {
           await Sponsored.findByIdAndUpdate(sponsored?._id, {
             sponsor_status: SponsorStatus.EXPIRED,
           });
+
+           if (sponsoredPackage.type === SponsoredPackageType.BOOST) { 
+             await Event.findByIdAndUpdate(metadata.event, { boosted: false })
+           }
         },
         Number(sponsoredPackage.duration) * 24 * 60 * 60 * 1000
       );

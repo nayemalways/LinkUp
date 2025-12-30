@@ -228,10 +228,9 @@ const eventJoinRequestApproval = CatchAsync(async (req: Request, res: Response, 
 
 // GET JOIN REQUEST
 const getJoinRequest = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const { userId } = req.user as JwtPayload;
   const { eventId } = req.params;
   const query = req.query as Record<string, string>;
-  const result = await eventServices.getJoinRequestService(userId, eventId, query );
+  const result = await eventServices.getJoinRequestService(eventId, query );
   SendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,

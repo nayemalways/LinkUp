@@ -40,11 +40,16 @@ import { sendPersonalNotification } from '../../utils/notificationsendhelper/use
 import { onlineUsers } from '../../socket';
 import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
 import BlockedUser from '../BlockedUser/blocked.model';
+ 
 
 // CREATE EVENT SERVICE
-const createEventService = async (payload: IEvent, user: JwtPayload) => {
-  // CHECK USER IS NOT VERIFIED
-  if (!user.isVerified) {
+const createEventService = async (payload: IEvent, _user: JwtPayload) => {
+  const user = await User.findOne({ _id: _user.userId})
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, "No user found!");
+  }
+
+  if (!user.isVerified ) {
     payload.images?.forEach((image) => deleteImageFromCLoudinary(image));
     throw new AppError(StatusCodes.FORBIDDEN, 'Please verify your profile!');
   }
@@ -78,18 +83,18 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
   };
 
   payload.location = location;
-  payload.host = user.userId;
+  payload.host = _user.userId;
 
   // => -------Create event & chat group in parallel--------
   const groupMemberPayload: IGroupMember = {
-    user: user.userId,
+    user: _user.userId,
     role: GroupMemberRole.SUPERADMIN,
     joinedAt: new Date(),
   };
   const [createEvent, createChatGroup] = await Promise.all([
     Event.create(payload),
     Group.create({
-      group_admin: user.userId,
+      group_admin: _user.userId,
       group_name: `Event: ${payload.title} Chat Group`,
       group_image: payload.images?.[0] || '',
       group_members: [groupMemberPayload],
@@ -107,18 +112,18 @@ const createEventService = async (payload: IEvent, user: JwtPayload) => {
       // GET - ACCPTED FRIENDS
       const friends = await FriendRequest.find({
         $or: [
-          { sender: user.userId, status: RequestStatus.ACCEPTED },
-          { receiver: user.userId, status: RequestStatus.ACCEPTED },
+          { sender: _user.userId, status: RequestStatus.ACCEPTED },
+          { receiver: _user.userId, status: RequestStatus.ACCEPTED },
         ],
       });
 
       // GET ONLY FRIENDS ID
       const friendIds = friends.map((fr) =>
-        fr.sender.toString() === user.userId ? fr.receiver : fr.sender
+        fr.sender.toString() === _user.userId ? fr.receiver : fr.sender
       );
 
       // Event host
-      const host = await User.findById(user.userId).select('fullName avatar');
+      const host = await User.findById(_user.userId).select('fullName avatar');
 
       if (friendIds.length > 0) {
         await sendMultiNotification({
@@ -605,7 +610,6 @@ const updateEventService = async (
           },
         });
       }
-      
     } catch (error) {
       console.log(`Notification sending error`, error);
     }
@@ -1023,7 +1027,6 @@ const eventJoinRequestApprovalService = async (
 
 // GET PRIVATE EVENT JOIN REQUEST
 const getJoinRequestService = async (
-  userId: string,
   eventId: string,
   query: Record<string, string>
 ) => {
@@ -1060,8 +1063,8 @@ const checkPrivateEventApprovalService = async (
   eventId: string
 ) => {
   const invitation = await EventJoinRequest.findOne({
-     user: userId,
-     event: eventId
+    user: userId,
+    event: eventId,
   });
   if (!invitation) {
     throw new AppError(StatusCodes.NOT_FOUND, 'No invitation found!');

@@ -36,6 +36,7 @@ export interface IEvent {
   event_start: Date
   event_end: Date; 
   time_zone: string;
+  boosted?: boolean;
   organization?: Types.ObjectId;
   event_status?: EventStatus;
   featured?: boolean;
