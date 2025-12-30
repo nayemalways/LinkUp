@@ -11,7 +11,10 @@ const getAllFriends = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
 
-    const result = await friendServices.getAllFriendsService(user, req.query as Record<string, string>);
+    const result = await friendServices.getAllFriendsService(
+      user,
+      req.query as Record<string, string>
+    );
 
     SendResponse(res, {
       success: true,
@@ -27,7 +30,10 @@ const getFriendRequest = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
 
-    const result = await friendServices.getFriendRequest(user?.userId, req.query as Record<string, string>);
+    const result = await friendServices.getFriendRequest(
+      user?.userId,
+      req.query as Record<string, string>
+    );
 
     SendResponse(res, {
       success: true,
@@ -37,7 +43,6 @@ const getFriendRequest = CatchAsync(
     });
   }
 );
-
 
 // SEND FRIEND REQUEST
 const sendFriendRequest = CatchAsync(
@@ -119,5 +124,5 @@ export const friendControllers = {
   acceptFriendRequest,
   removeFriend,
   blockFriend,
-  getFriendRequest
+  getFriendRequest,
 };

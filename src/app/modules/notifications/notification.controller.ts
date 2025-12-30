@@ -43,8 +43,10 @@ const updateNotificationPreferences = CatchAsync(async (req, res) => {
 const getUserNotifications = CatchAsync(async (req, res) => {
   const { userId } = req.user as JwtPayload;
   const query = req.query as Record<string, string>;
-  const result =
-    await NotificationService.getusersNotificationService(userId, query);
+  const result = await NotificationService.getusersNotificationService(
+    userId,
+    query
+  );
 
   SendResponse(res, {
     statusCode: httpStatus.OK,
@@ -68,10 +70,9 @@ const sendSystemNotification = CatchAsync(async (req, res) => {
   });
 });
 
-
 export const NotificationController = {
   getUserNotificationPreferences,
   updateNotificationPreferences,
   getUserNotifications,
-  sendSystemNotification
+  sendSystemNotification,
 };

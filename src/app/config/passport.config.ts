@@ -11,8 +11,7 @@ passport.use(
     { usernameField: 'email', passwordField: 'password' },
     async (email: string, password: string, done: any) => {
       try {
-
-        const user = await User.findOne({ email }).select("+password");
+        const user = await User.findOne({ email }).select('+password');
         if (!user) {
           return done(null, false, { message: 'User does not exist!' });
         }
@@ -24,11 +23,9 @@ passport.use(
 
         if (isInstagramUser) {
           return done(null, false, {
-            message:
-              'Please Login with instagram!',
+            message: 'Please Login with instagram!',
           });
         }
-
 
         // Matching Password
         const isMatchPassowrd = await bcrypt.compare(
@@ -48,7 +45,6 @@ passport.use(
     }
   )
 );
-
 
 passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
   done(null, user._id);

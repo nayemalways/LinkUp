@@ -20,7 +20,6 @@ import User from '../modules/users/user.model';
 import { sendPersonalNotification } from './notificationsendhelper/user.notification.utils';
 import { sendEmail } from './sendMail';
 
-
 // SPONSORSHIP PAYMENT SUCCESS HANDLER
 export const sponsoredSuccessHandler = async (paymentIntent: any) => {
   // Meta Data From Payment to update DB
@@ -82,15 +81,15 @@ export const sponsoredSuccessHandler = async (paymentIntent: any) => {
         { new: true, runValidators: true }
       );
 
-    // BOOST ADD
-    if (sponsoredPackage.type === SponsoredPackageType.BOOST) {
-      await Event.findByIdAndUpdate(metadata.event, { boosted: true })
-    }
+      // BOOST ADD
+      if (sponsoredPackage.type === SponsoredPackageType.BOOST) {
+        await Event.findByIdAndUpdate(metadata.event, { boosted: true });
+      }
 
       // RESOLVE PROMISE
       const [payment, sponsored] = await Promise.all([
         paymentPromise,
-        sponsoredPromise
+        sponsoredPromise,
       ]);
 
       // WITHDRAW SPONSORSHIP AFTER DURATION END
@@ -100,9 +99,9 @@ export const sponsoredSuccessHandler = async (paymentIntent: any) => {
             sponsor_status: SponsorStatus.EXPIRED,
           });
 
-           if (sponsoredPackage.type === SponsoredPackageType.BOOST) { 
-             await Event.findByIdAndUpdate(metadata.event, { boosted: false })
-           }
+          if (sponsoredPackage.type === SponsoredPackageType.BOOST) {
+            await Event.findByIdAndUpdate(metadata.event, { boosted: false });
+          }
         },
         Number(sponsoredPackage.duration) * 24 * 60 * 60 * 1000
       );
@@ -171,10 +170,11 @@ export const chargeSucceededHandler = async (paymentIntent: any) => {
   try {
     const metadata = paymentIntent.metadata;
     if (
-    metadata.payment &&
-    metadata.event &&
-    metadata.package &&
-    metadata.sponsored) {
+      metadata.payment &&
+      metadata.event &&
+      metadata.package &&
+      metadata.sponsored
+    ) {
       await Payment.findByIdAndUpdate(paymentIntent.metadata.payment, {
         invoiceURL: paymentIntent.receipt_url,
       });
@@ -188,7 +188,7 @@ export const chargeSucceededHandler = async (paymentIntent: any) => {
 
 // SPONSORESHIP PAYMENT FAILED HANDLER
 export const sponsoredFailedHandler = async (paymentIntent: any) => {
-   // Meta Data From Payment to update DB
+  // Meta Data From Payment to update DB
   const metadata = paymentIntent.metadata;
 
   if (
@@ -251,7 +251,6 @@ export const sponsoredFailedHandler = async (paymentIntent: any) => {
         sponsoredPromise,
       ]);
 
-      
       // NOTIFY HOST THAT HIS PAYMENT SUCCESSFULL AND HIS EVENT ARE SPONSORED
       setImmediate(async () => {
         try {
@@ -259,7 +258,6 @@ export const sponsoredFailedHandler = async (paymentIntent: any) => {
           const host = await User.findOne({ _id: event?.host }).select(
             'fullName email'
           );
-          
 
           const capitalize = (str: string) =>
             str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -291,7 +289,7 @@ export const sponsoredFailedHandler = async (paymentIntent: any) => {
   }
 
   return null;
-}
+};
 
 // SPONSORSHIP PAYMENT CANCELLED HANDLER
 export const sponsoredCancelledHandler = async (paymentIntent: any) => {
@@ -344,7 +342,10 @@ export const sponsoredCancelledHandler = async (paymentIntent: any) => {
       );
 
       // RESOLVE PROMISE
-      const [payment, sponsored] = await Promise.all([paymentPromise, sponsoredPromise]);
+      const [payment, sponsored] = await Promise.all([
+        paymentPromise,
+        sponsoredPromise,
+      ]);
 
       // NOTIFY HOST THAT THE SPONSORSHIP WAS CANCELLED
       setImmediate(async () => {
@@ -368,7 +369,10 @@ export const sponsoredCancelledHandler = async (paymentIntent: any) => {
             });
           }
         } catch (error) {
-          console.log('Notification sending error from stripe.sponsored_webhook.ts', error);
+          console.log(
+            'Notification sending error from stripe.sponsored_webhook.ts',
+            error
+          );
         }
       });
     }

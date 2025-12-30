@@ -3,7 +3,6 @@ import { IFriendRequest, RequestStatus } from './friend.interface';
 
 const friendRequestSchema = new mongoose.Schema<IFriendRequest>(
   {
-    
     blockedBy: { type: Schema.Types.ObjectId, ref: 'user' },
     sender: { type: Schema.Types.ObjectId, required: true, ref: 'user' },
     receiver: { type: Schema.Types.ObjectId, required: true, ref: 'user' },

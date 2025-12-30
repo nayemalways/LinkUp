@@ -10,7 +10,7 @@ const sendDirectMessage = CatchAsync(async (req, res) => {
   const { receiverId } = req.params;
   const payload = {
     ...req.body,
-    image: req.file?.path as string
+    image: req.file?.path as string,
   };
 
   const result = await messageServices.sendDirectMessageService(

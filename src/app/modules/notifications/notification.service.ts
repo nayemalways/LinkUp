@@ -1,6 +1,10 @@
 import httpStatus from 'http-status-codes';
 import AppError from '../../errorHelpers/AppError';
-import { INotification, INotificationPreference, NotificationType } from './notification.interface';
+import {
+  INotification,
+  INotificationPreference,
+  NotificationType,
+} from './notification.interface';
 import { Notification, NotificationPreference } from './notification.model';
 import { io } from '../../socket';
 
@@ -41,40 +45,49 @@ const updateNotificationPreferences = async (
   return updatedPreferences;
 };
 
-// Get user's notification 
-const getusersNotificationService = async (userId: string, query: Record<string, string>) => {
-
+// Get user's notification
+const getusersNotificationService = async (
+  userId: string,
+  query: Record<string, string>
+) => {
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const sort = query.sort || "-createdAt";
+  const sort = query.sort || '-createdAt';
 
   const notifications = await Notification.find({
-    $or: [{ user: userId}, {receiverIds: [ userId ]}, {type: NotificationType.SYSTEM }]
-  }).skip(skip).limit(limit).sort(sort)
+    $or: [
+      { user: userId },
+      { receiverIds: [userId] },
+      { type: NotificationType.SYSTEM },
+    ],
+  })
+    .skip(skip)
+    .limit(limit)
+    .sort(sort);
 
   return notifications;
-}
+};
 
 // SAVE SYSTEM NOTIFICATION FOR ALL USER'S
 const sendSystemNotificationService = async (payload: INotification) => {
   const notificationPayload: INotification = {
     title: payload.title,
     description: payload.description,
-    type: payload.type
-  }
+    type: payload.type,
+  };
 
   const notify_users = await Notification.create(notificationPayload);
 
   io.emit('notification', notify_users);
 
   return null;
-}
+};
 
 export const NotificationService = {
   getUserNotificationPreferences,
   updateNotificationPreferences,
   getusersNotificationService,
-  sendSystemNotificationService
+  sendSystemNotificationService,
 };

@@ -1,7 +1,7 @@
-import { Types } from "mongoose";
+import { Types } from 'mongoose';
 
 export interface IFavouriteEvent {
-    _id?: Types.ObjectId,
-    user?: Types.ObjectId,
-    event: Types.ObjectId
+  _id?: Types.ObjectId;
+  user?: Types.ObjectId;
+  event: Types.ObjectId;
 }

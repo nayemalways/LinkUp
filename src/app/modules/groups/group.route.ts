@@ -9,14 +9,28 @@ import { sendMessageSchema } from '../message/message.validate';
 
 const router = express.Router();
 
-// CREATE GROUP 
-router.post('/create', checkAuth(...Object.keys(Role)), multerUpload.single("file"), validateRequest(groupZodSchema), groupControllers.createGroup);
+// CREATE GROUP
+router.post(
+  '/create',
+  checkAuth(...Object.keys(Role)),
+  multerUpload.single('file'),
+  validateRequest(groupZodSchema),
+  groupControllers.createGroup
+);
 
 // GET USER'S GROUPS
-router.get('/', checkAuth(...Object.keys(Role)), groupControllers.getUserGroups);
+router.get(
+  '/',
+  checkAuth(...Object.keys(Role)),
+  groupControllers.getUserGroups
+);
 
 // GET SINGLE GROUP
-router.get('/:groupId', checkAuth(...Object.keys(Role)), groupControllers.getSingleGroup);
+router.get(
+  '/:groupId',
+  checkAuth(...Object.keys(Role)),
+  groupControllers.getSingleGroup
+);
 
 // INVITE USERS TO GROUP - Admin/Superadmin only
 router.post(
@@ -42,7 +56,11 @@ router.get(
 );
 
 // LEAVE GROUP
-router.delete('/:groupId/leave', checkAuth(...Object.keys(Role)), groupControllers.leaveGroup);
+router.delete(
+  '/:groupId/leave',
+  checkAuth(...Object.keys(Role)),
+  groupControllers.leaveGroup
+);
 
 // REMOVE MEMBER FROM GROUP - Admin/Superadmin only
 router.delete(
@@ -52,6 +70,10 @@ router.delete(
 );
 
 // DELETE GROUP - Superadmin only
-router.delete('/:groupId', checkAuth(...Object.keys(Role)), groupControllers.deleteGroup);
+router.delete(
+  '/:groupId',
+  checkAuth(...Object.keys(Role)),
+  groupControllers.deleteGroup
+);
 
 export const groupRouter = router;

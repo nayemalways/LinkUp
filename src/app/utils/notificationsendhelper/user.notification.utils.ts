@@ -10,7 +10,9 @@ export const sendPersonalNotification = async (payload: INotification) => {
   // Save to DB (for offline support)
   const notification = await Notification.create(payload);
 
-  const receiverNotificationPreferences = await NotificationPreference.findOne({ user:  payload.user});
+  const receiverNotificationPreferences = await NotificationPreference.findOne({
+    user: payload.user,
+  });
 
   if (receiverNotificationPreferences?.channel.inApp) {
     const userRoom = (payload.user as Types.ObjectId).toString();

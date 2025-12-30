@@ -14,8 +14,8 @@ const createGroup = CatchAsync(
 
     const payload = {
       ...req.body,
-      group_image: req.file?.path as string
-    }
+      group_image: req.file?.path as string,
+    };
 
     const result = await groupServices.createGroupService(user, payload);
 
@@ -72,9 +72,9 @@ const addUsersToGroup = CatchAsync(
     const { userIds } = payload;
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-       throw new AppError(
-         StatusCodes.BAD_REQUEST,
-         'userIds (array of user IDs) is required in request body',
+      throw new AppError(
+        StatusCodes.BAD_REQUEST,
+        'userIds (array of user IDs) is required in request body'
       );
     }
 
@@ -101,8 +101,8 @@ const sendGroupMessage = CatchAsync(
 
     const payload = {
       ...req.body,
-      image: req.file?.path as string
-    }
+      image: req.file?.path as string,
+    };
 
     const result = await groupServices.sendGroupMessageService(
       user,
@@ -126,7 +126,11 @@ const getGroupMessages = CatchAsync(
     const { groupId } = req.params;
     const query = req.query as Record<string, string>;
 
-    const result = await groupServices.getGroupMessagesService(user, groupId, query);
+    const result = await groupServices.getGroupMessagesService(
+      user,
+      groupId,
+      query
+    );
 
     SendResponse(res, {
       success: true,

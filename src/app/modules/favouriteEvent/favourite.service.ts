@@ -28,7 +28,8 @@ const getEventFavouriteService = async (
   const addFavourite = await FavouriteEvent.find({ user: userId })
     .populate({
       path: 'event',
-      select: 'title images description event_status event_start event_end venue',
+      select:
+        'title images description event_status event_start event_end venue',
     })
     .skip(skip)
     .limit(limit)
@@ -38,11 +39,11 @@ const getEventFavouriteService = async (
 };
 
 //REMOVE FAVOURITE EVENT SERVICE
-const removeEventFavouriteService = async (
-  userId: string,
-  eventId: string
-) => {
-  const favourite = await FavouriteEvent.findOne({ user: userId, event: eventId });
+const removeEventFavouriteService = async (userId: string, eventId: string) => {
+  const favourite = await FavouriteEvent.findOne({
+    user: userId,
+    event: eventId,
+  });
   if (!favourite) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Favourite event not found');
   }
@@ -54,5 +55,5 @@ const removeEventFavouriteService = async (
 export const favouriteService = {
   addEventFavouriteService,
   getEventFavouriteService,
-  removeEventFavouriteService
+  removeEventFavouriteService,
 };

@@ -276,7 +276,12 @@ export const paymentCanceledHandler = async (paymentIntent: any) => {
 export const chargeSucceededHandler = async (object: any) => {
   try {
     const metadata = object.metadata;
-    if (metadata.event && metadata.package && metadata.sponsored && metadata.payment) {
+    if (
+      metadata.event &&
+      metadata.package &&
+      metadata.sponsored &&
+      metadata.payment
+    ) {
       await Payment.findByIdAndUpdate(object.metadata.payment, {
         invoiceURL: object.receipt_url,
       });

@@ -9,7 +9,7 @@ import { SendResponse } from '../../utils/SendResponse';
 import { authService } from './auth.service';
 import { JwtPayload } from 'jsonwebtoken';
 
- // Login User
+// Login User
 const credentialsLogin = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate('local', async (err: any, user: any, info: any) => {
@@ -25,7 +25,7 @@ const credentialsLogin = CatchAsync(
         success: true,
         statusCode: httpStatus.OK,
         message: 'Login success',
-        data: userTokens
+        data: userTokens,
       });
     })(req, res, next);
   }
@@ -39,69 +39,67 @@ const getNeAccessToken = CatchAsync(async (req: Request, res: Response) => {
   SendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "New accessToken generated!",
-    data: result
-  })
-
-})
+    message: 'New accessToken generated!',
+    data: result,
+  });
+});
 
 // CHANGE PASSWORD
 const changePassword = CatchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as JwtPayload;
   const { oldPassword, newPassword } = req.body;
-  const result = await authService.changePasswordService(userId, {oldPassword, newPassword});
+  const result = await authService.changePasswordService(userId, {
+    oldPassword,
+    newPassword,
+  });
 
   SendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "Password has been changed!",
-    data: result
-  })
-
-})
+    message: 'Password has been changed!',
+    data: result,
+  });
+});
 
 // FORGET PASSWORD
 const forgetPassword = CatchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
-  const result = await authService.forgetPasswrodService( email );
+  const result = await authService.forgetPasswrodService(email);
 
   SendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "Password reset OTP send to your email!",
-    data: result
-  })
-
-})
+    message: 'Password reset OTP send to your email!',
+    data: result,
+  });
+});
 
 // RESET PASSWORD
 const verifyOTP = CatchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.params;
-  const result = await authService.verifyOTPService( email, otp );
+  const result = await authService.verifyOTPService(email, otp);
 
   SendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "OTP verified success!",
-    data: result
-  })
-
-})
+    message: 'OTP verified success!',
+    data: result,
+  });
+});
 
 // RESET PASSWORD
 const resetPassword = CatchAsync(async (req: Request, res: Response) => {
   const token = req.headers.authorization as string;
   const { newPassword } = req.body;
-  const result = await authService.resetPasswordService( token, newPassword );
+  const result = await authService.resetPasswordService(token, newPassword);
 
   SendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "Password reset success!",
-    data: result
-  })
-
-})
+    message: 'Password reset success!',
+    data: result,
+  });
+});
 
 export const authController = {
   credentialsLogin,

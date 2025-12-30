@@ -1,5 +1,5 @@
-import { model, Schema } from "mongoose";
-import { IEventVote, VotingType } from "./voting.interface";
+import { model, Schema } from 'mongoose';
+import { IEventVote, VotingType } from './voting.interface';
 
 const eventVoteSchema = new Schema<IEventVote>(
   {

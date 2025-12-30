@@ -113,7 +113,7 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     'EXPRESS_SESSION_SECRET',
     'BACKEND_URL',
-    
+
     'TYPE',
     'PROJECT_ID',
     'PRIVATE_KEY_ID',
@@ -128,7 +128,7 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     'STRIPE_SECRET',
     'STRIPE_WEBHOOK_SECRET',
-    'STRIPE_SPONSORED_WEBHOOK_SECRET'
+    'STRIPE_SPONSORED_WEBHOOK_SECRET',
   ];
 
   requireEnvVariables.forEach((KEY) => {
@@ -155,7 +155,8 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     TWILIO_AUTH_TOKEN: process.env.AUTH_TOKEN as string,
     TWILIO_ACCOUNT_SID: process.env.ACCOUNT_SID as string,
-    TWILIO_MESSAGING_SERVICE_SID: process.env.TWILIO_MESSAGING_SERVICE_SID as string,
+    TWILIO_MESSAGING_SERVICE_SID: process.env
+      .TWILIO_MESSAGING_SERVICE_SID as string,
 
     CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET as string,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
@@ -195,13 +196,15 @@ const loadEnvVarbles = (): EnvInterfaces => {
     CLIENT_ID: process.env.CLIENT_ID as string,
     AUTH_URI: process.env.AUTH_URI as string,
     TOKEN_URI: process.env.TOKEN_URI as string,
-    AUTH_PROVIDER_X509_CERT_URL: process.env.AUTH_PROVIDER_X509_CERT_URL as string,
+    AUTH_PROVIDER_X509_CERT_URL: process.env
+      .AUTH_PROVIDER_X509_CERT_URL as string,
     CLIENT_X509_CERT_URL: process.env.CLIENT_X509_CERT_URL as string,
     UNIVERSE_DOMAIN: process.env.UNIVERSE_DOMAIN as string,
 
     STRIPE_SECRET: process.env.STRIPE_SECRET as string,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET as string,
-    STRIPE_SPONSORED_WEBHOOK_SECRET: process.env.STRIPE_SPONSORED_WEBHOOK_SECRET as string,
+    STRIPE_SPONSORED_WEBHOOK_SECRET: process.env
+      .STRIPE_SPONSORED_WEBHOOK_SECRET as string,
   };
 };
 

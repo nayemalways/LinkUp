@@ -18,8 +18,8 @@ const transporter = nodemailer.createTransport({
 
 interface SendEmailOptions {
   to: string;
-  cc?: string[],
-  bcc?: string[],
+  cc?: string[];
+  bcc?: string[];
   subject: string;
   templateName: string;
   templateData?: Record<string, any>;

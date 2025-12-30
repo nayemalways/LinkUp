@@ -9,7 +9,11 @@ import { Role } from '../users/user.interface';
 const router = express.Router();
 
 // Get all conversations (list of users with last message)
-router.get('/conversations', checkAuth(...Object.values(Role)), messageControllers.getConversations);
+router.get(
+  '/conversations',
+  checkAuth(...Object.values(Role)),
+  messageControllers.getConversations
+);
 
 // Send direct message to a user
 router.post(
@@ -21,7 +25,11 @@ router.post(
 );
 
 // Get all messages with a specific user
-router.get('/:userId', checkAuth(...Object.values(Role)), messageControllers.getDirectMessages);
+router.get(
+  '/:userId',
+  checkAuth(...Object.values(Role)),
+  messageControllers.getDirectMessages
+);
 
 // Mark messages as seen
 router.patch(

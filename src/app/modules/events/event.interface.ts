@@ -14,11 +14,11 @@ export enum EventVisibility {
 }
 
 export enum LocationType {
-  POINT = 'Point'
+  POINT = 'Point',
 }
 
 export interface ILocation {
-  type: LocationType,
+  type: LocationType;
   coordinates: number[];
 }
 
@@ -27,14 +27,14 @@ export interface IEvent {
   host: Types.ObjectId;
   co_host?: Types.ObjectId;
   category: Types.ObjectId;
-  voting?: Types.ObjectId;  
-  title: string;  
-  description: string; 
+  voting?: Types.ObjectId;
+  title: string;
+  description: string;
   images: string[];
   deletedImages?: string[];
-  venue: string; 
-  event_start: Date
-  event_end: Date; 
+  venue: string;
+  event_start: Date;
+  event_end: Date;
   time_zone: string;
   boosted?: boolean;
   organization?: Types.ObjectId;
@@ -42,9 +42,9 @@ export interface IEvent {
   featured?: boolean;
   price: number;
   max_attendence: number;
-  age_limit: number; 
+  age_limit: number;
   avg_rating: number;
-  visibility: EventVisibility; 
+  visibility: EventVisibility;
   location?: ILocation;
   address: {
     city: string;
@@ -54,29 +54,27 @@ export interface IEvent {
   };
 }
 
-
 // ============= CO-HOST INVITE INTERFACE =============
 
 export enum CoHostStatus {
   PENDING = 'PENDING',
   ACCEPTED = 'ACCEPTED',
-  DECLINE = 'DECLINE'
+  DECLINE = 'DECLINE',
 }
 
 export interface CoHostInvite {
-  event: Types.ObjectId,
-  inviter: Types.ObjectId,
-  invitee: Types.ObjectId,
-  status: CoHostStatus
+  event: Types.ObjectId;
+  inviter: Types.ObjectId;
+  invitee: Types.ObjectId;
+  status: CoHostStatus;
 }
 
-
 // ========== PRIVATE EVENT JOINING REQUEST INTERFACE ================
-export enum EventJoinRequestType  {
+export enum EventJoinRequestType {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
-  DECLINED = 'DECLINED'
-};
+  DECLINED = 'DECLINED',
+}
 
 export interface IEventJoinRequest {
   _id?: Types.ObjectId;

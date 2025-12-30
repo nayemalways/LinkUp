@@ -12,7 +12,6 @@ import { onlineUsers, io } from '../../socket';
 import BlockedUser from '../BlockedUser/blocked.model';
 import { deleteImageFromCLoudinary } from '../../config/cloudinary.config';
 
-
 // SEND DIRECT MESSAGE (1-to-1)
 const sendDirectMessageService = async (
   user: JwtPayload,
@@ -24,18 +23,23 @@ const sendDirectMessageService = async (
   // Check if receiver exists
   const receiver = await User.findById(receiverId);
   if (!receiver) {
-    deleteImageFromCLoudinary(payload.image || "");
+    deleteImageFromCLoudinary(payload.image || '');
     throw new AppError(httpStatus.NOT_FOUND, 'Receiver not found!');
   }
 
   // Check receiver is in blocked list
-  const isBlocked = await BlockedUser.findOne({user: senderId, blockedUser: receiverId});
-  
-  if(isBlocked){
-    deleteImageFromCLoudinary(payload.image || "");
-    throw new AppError(httpStatus.FORBIDDEN, 'You cannot send message to this user!');
+  const isBlocked = await BlockedUser.findOne({
+    user: senderId,
+    blockedUser: receiverId,
+  });
+
+  if (isBlocked) {
+    deleteImageFromCLoudinary(payload.image || '');
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'You cannot send message to this user!'
+    );
   }
- 
 
   // Check if sender exists
   const sender = await User.findById(senderId);
@@ -71,7 +75,6 @@ const sendDirectMessageService = async (
     replyTo: payload.replyTo,
   });
 
-
   io.to(onlineUsers[receiverId]).emit('direct_message', message);
 
   // Populate sender and replyTo details
@@ -80,17 +83,17 @@ const sendDirectMessageService = async (
     { path: 'replyTo', select: 'message sender' },
   ]);
 
-   const notificationPayload = {
-      user: new Types.ObjectId(receiverId),
-      type: NotificationType.CHAT,
-      title: 'New Message',
-      description: `${sender.fullName} sent you a message`,
-      data: {
-        senderId: sender?._id,
-        message: message.message.text ||  message.message.image,
-        image: sender?.avatar
-      },
-    };
+  const notificationPayload = {
+    user: new Types.ObjectId(receiverId),
+    type: NotificationType.CHAT,
+    title: 'New Message',
+    description: `${sender.fullName} sent you a message`,
+    data: {
+      senderId: sender?._id,
+      message: message.message.text || message.message.image,
+      image: sender?.avatar,
+    },
+  };
 
   // Send real-time notification via socket if receiver is online
   if (onlineUsers[receiverId]) {

@@ -1,27 +1,35 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose, { model, Types } from 'mongoose';
-import { IAuthProvider, IsActive, IUser, IUserActivity, Role, UserBadge } from './user.interface';
+import {
+  IAuthProvider,
+  IsActive,
+  IUser,
+  IUserActivity,
+  Role,
+  UserBadge,
+} from './user.interface';
 import bcrypt from 'bcrypt';
 import env from '../../config/env';
 import { Schema } from 'mongoose';
 
 // USER DAILY ACTIVITY SCHEMA
-const dailyActivitySchema = new Schema<IUserActivity>({
-  user: { type: Schema.Types.ObjectId, ref: "user"},
-  date: { type: Date, required: true}
-}, {
-  versionKey: false,
-  timestamps: true
-})
-
-dailyActivitySchema.index(
-  { user: 1, date: 1 },
-  { unique: true }
+const dailyActivitySchema = new Schema<IUserActivity>(
+  {
+    user: { type: Schema.Types.ObjectId, ref: 'user' },
+    date: { type: Date, required: true },
+  },
+  {
+    versionKey: false,
+    timestamps: true,
+  }
 );
 
-export const UserActivity = model<IUserActivity>('user_activity', dailyActivitySchema);
+dailyActivitySchema.index({ user: 1, date: 1 }, { unique: true });
 
-
+export const UserActivity = model<IUserActivity>(
+  'user_activity',
+  dailyActivitySchema
+);
 
 // ============USER MAIN SCHEMA=============
 const authProviderSchema = new mongoose.Schema<IAuthProvider>(
@@ -38,7 +46,7 @@ const authProviderSchema = new mongoose.Schema<IAuthProvider>(
 const userSchema = new mongoose.Schema<IUser>(
   {
     fullName: { type: String },
-    bio: { type: String},
+    bio: { type: String },
     organizationName: { type: String },
     email: { type: String, required: true, unique: true, lowercase: true },
     avatar: { type: String },
@@ -49,7 +57,7 @@ const userSchema = new mongoose.Schema<IUser>(
     interests: [{ type: Types.ObjectId }],
     instagramHandle: { type: String },
     stripeAccountId: { type: String },
-    badge: { type: String, enum: [...Object.keys(UserBadge)]},
+    badge: { type: String, enum: [...Object.keys(UserBadge)] },
     isActive: {
       type: String,
       enum: [...Object.values(IsActive)],
@@ -89,7 +97,7 @@ userSchema.pre('save', async function (next) {
 
 // Indexing through search field
 userSchema.index({
-   fullName: "text"
+  fullName: 'text',
 });
 
 const User = mongoose.model<IUser>('user', userSchema);

@@ -1,28 +1,27 @@
-import { Types } from "mongoose";
-
+import { Types } from 'mongoose';
 
 export enum SponsorStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   EXPIRED = 'EXPIRED',
   FAILED = 'FAILED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 export enum ISponsoredPaymentStatus {
   UNPAID = 'UNPAID',
-  PAID = 'PAID'
+  PAID = 'PAID',
 }
 
 export enum SponsoredPackageType {
-  SPONSORED = "SPONSORED",
-  BOOST =  "BOOST"
+  SPONSORED = 'SPONSORED',
+  BOOST = 'BOOST',
 }
 
 export enum ISponsored {
-  SPONSORED= 'SPONSORED',
+  SPONSORED = 'SPONSORED',
   BOOSTED = 'BOOSTED',
-  NORMAL = 'NORMAL'
+  NORMAL = 'NORMAL',
 }
 
 //===================== SPONSORED INTERFACE ========================

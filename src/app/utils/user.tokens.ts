@@ -13,7 +13,7 @@ export const createUserTokens = async (user: JwtPayload) => {
     userId: user?._id,
     email: user?.email,
     role: user?.role,
-    isVerified: user?.isVerified
+    isVerified: user?.isVerified,
   };
 
   // Jsonwebtoken

@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const SocketEvents = (socket: any) => {
-
   // User joins group room
   socket.on('join-group', (groupId: string) => {
     groupId.split(',').forEach((id: string) => {

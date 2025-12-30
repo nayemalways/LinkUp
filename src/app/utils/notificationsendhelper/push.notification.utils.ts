@@ -9,13 +9,11 @@ import User from '../../modules/users/user.model';
 
 export const sendPushAndSave = async (payload: INotification) => {
   try {
-    
     // Save in MongoDB
     const notification = await Notification.create({ ...payload });
 
     const user = await User.findById(payload.user);
     if (!user || !user.fcmToken) return;
-
 
     const receiverNotificationPreferences =
       await NotificationPreference.findOne({ user: payload.user });
@@ -32,7 +30,7 @@ export const sendPushAndSave = async (payload: INotification) => {
       };
 
       const result = await admin.messaging().send(message); // Send notificaton via FCM
-      console.log("Push sent: ", result )
+      console.log('Push sent: ', result);
     }
 
     return notification;

@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Types } from 'mongoose';
 
 export enum Role {
   USER = 'USER',
@@ -24,7 +24,7 @@ export interface ICoord {
 
 export enum UserBadge {
   HOST = 'HOST',
-  ORGANIZER = 'ORGANIZER'
+  ORGANIZER = 'ORGANIZER',
 }
 
 export interface IUser {
@@ -50,7 +50,6 @@ export interface IUser {
   location?: string;
   coord?: ICoord;
 }
-
 
 // DAILY USER ACTIVITY
 export interface IUserActivity {

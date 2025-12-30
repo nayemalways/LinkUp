@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Server } from "socket.io";
-import { SocketEvents } from "./event.socket";
+import { Server } from 'socket.io';
+import { SocketEvents } from './event.socket';
 
 export let io: Server;
 export const onlineUsers: Record<string, string> = {}; // userId -> socketId
-
-
 
 // Socket - Init
 export const initSocket = (server: any) => {
@@ -15,7 +13,6 @@ export const initSocket = (server: any) => {
   });
 
   io.on('connection', (socket) => {
-
     // Register All event here
     SocketEvents(socket);
 
@@ -28,7 +25,6 @@ export const initSocket = (server: any) => {
       onlineUsers[userId] = socket.id;
       io.emit('get_online_users', Object.keys(onlineUsers));
     });
-
 
     // Handle Disconnect
     socket.on('disconnect', () => {

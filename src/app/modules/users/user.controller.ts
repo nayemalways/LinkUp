@@ -20,7 +20,6 @@ const registerUser = CatchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 // GET ME
 const getMe = CatchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as JwtPayload;
@@ -29,37 +28,37 @@ const getMe = CatchAsync(async (req: Request, res: Response) => {
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "User fetched successful!",
-    data: result
-  })
-})
+    message: 'User fetched successful!',
+    data: result,
+  });
+});
 
 // GET ME
 const getAllUser = CatchAsync(async (req: Request, res: Response) => {
-  const query = req.query as Record<string, string> ;
-  const {userId} = req.user as JwtPayload;
+  const query = req.query as Record<string, string>;
+  const { userId } = req.user as JwtPayload;
   const result = await userServices.getAllUserService(query, userId);
 
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "Users fetched successful!",
-    data: result
-  })
-})
+    message: 'Users fetched successful!',
+    data: result,
+  });
+});
 
 // Get Profile
 const getProfile = CatchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.params ;
+  const { userId } = req.params;
   const result = await userServices.getProfileService(userId as string);
 
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "Profile fetched successful!",
-    data: result
-  })
-})
+    message: 'Profile fetched successful!',
+    data: result,
+  });
+});
 
 // USER UPDATE
 const userUpdate = CatchAsync(async (req: Request, res: Response) => {
@@ -69,18 +68,22 @@ const userUpdate = CatchAsync(async (req: Request, res: Response) => {
 
   const payload = {
     ...body,
-    avatar: req.file?.path as string
-  }
+    avatar: req.file?.path as string,
+  };
 
-  const result = await userServices.userUpdateService(userId, payload, decodedToken);
+  const result = await userServices.userUpdateService(
+    userId,
+    payload,
+    decodedToken
+  );
 
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "User updated successful!",
-    data: result
-  })
-})
+    message: 'User updated successful!',
+    data: result,
+  });
+});
 
 // USER UPDATE
 const userDelete = CatchAsync(async (req: Request, res: Response) => {
@@ -92,11 +95,10 @@ const userDelete = CatchAsync(async (req: Request, res: Response) => {
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "User deleted successful!",
-    data: result
-  })
-})
-
+    message: 'User deleted successful!',
+    data: result,
+  });
+});
 
 // VERIFY USER
 const verifyUser = CatchAsync(async (req: Request, res: Response) => {
@@ -113,7 +115,7 @@ const verifyUser = CatchAsync(async (req: Request, res: Response) => {
   };
 
   // Set refreshToken and accessToken in Cookies
-  const userTokens = await createUserTokens(jwtPayload );
+  const userTokens = await createUserTokens(jwtPayload);
   SetCookies(res, userTokens);
 
   SendResponse(res, {
@@ -139,7 +141,6 @@ const resendOTP = CatchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 // EXPORT ALL CONTROLLERS
 export const userControllers = {
   registerUser,
@@ -149,5 +150,5 @@ export const userControllers = {
   userUpdate,
   userDelete,
   getAllUser,
-  getProfile
+  getProfile,
 };

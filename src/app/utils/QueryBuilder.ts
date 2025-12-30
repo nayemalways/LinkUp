@@ -71,7 +71,7 @@ export class QueryBuilder<T> {
 
     this.queryModel = this.queryModel.find({ category: categoryId });
 
-    this.queryModel = this.queryModel.sort({ boosted: -1 })
+    this.queryModel = this.queryModel.sort({ boosted: -1 });
 
     return this;
   }
@@ -113,12 +113,12 @@ export class QueryBuilder<T> {
   // GET EVENTS BY USER INTERESTS
   interests(interests: Types.ObjectId[]): this {
     this.queryModel = this.queryModel.find({
-    category: { $in: interests }
-   })
+      category: { $in: interests },
+    });
     return this;
   }
 
-   // SORTING
+  // SORTING
   sort(): this {
     const sort = this.query.sort || '-createdAt'; // ex: title, or -title
     this.queryModel = this.queryModel.sort(sort);

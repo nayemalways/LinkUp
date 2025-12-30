@@ -171,7 +171,6 @@ const addUsersToGroupService = async (
   group.group_members.push(...newMembers);
   await group.save();
 
-
   // SEND NOTIFICATION ASYNCHROOUSLY
   setImmediate(async () => {
     try {
@@ -295,7 +294,7 @@ const getGroupMessagesService = async (
     totalPages: Math.ceil(totalDocuments / limit),
   };
 
-  return {meta, messages};
+  return { meta, messages };
 };
 
 // LEAVE GROUP

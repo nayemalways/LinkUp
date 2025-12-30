@@ -2,10 +2,10 @@
 import { Types } from 'mongoose';
 
 export enum PaymentStatus {
-    PAID = 'PAID',
-    PENDING = 'PENDING',
-    FAILED = 'FAILED',
-    CANCELED = 'CANCELED'
+  PAID = 'PAID',
+  PENDING = 'PENDING',
+  FAILED = 'FAILED',
+  CANCELED = 'CANCELED',
 }
 
 export interface IPayment {
@@ -17,8 +17,8 @@ export interface IPayment {
   withdrawable_amount?: number;
   currency: string;
   invoiceURL?: string;
-  transfer_data?:  {
-    amount: number,
+  transfer_data?: {
+    amount: number;
     destination: string;
   };
   payment_intent: string;

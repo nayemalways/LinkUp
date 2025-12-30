@@ -47,37 +47,37 @@ const moduleRoutes = [
     route: messageRouter,
   },
   {
-    path: '/notification',  
+    path: '/notification',
     route: notificationRouter,
   },
   {
-    path: '/favourite',  
+    path: '/favourite',
     route: favouriteRoutes,
   },
   {
-    path: '/blocked_user',  
+    path: '/blocked_user',
     route: blockedUserRoutes,
   },
   {
-    path: '/booking',  
+    path: '/booking',
     route: bookingRouter,
   },
   {
-    path: '/payment',  
+    path: '/payment',
     route: paymentRouter,
   },
   {
-    path: '/sponsored',  
+    path: '/sponsored',
     route: sponsoredRouter,
   },
   {
-    path: '/dashboard',  
+    path: '/dashboard',
     route: dashboardRouter,
   },
   {
-    path: '/voting',  
+    path: '/voting',
     route: votingRouter,
-  }
+  },
 ];
 
 moduleRoutes.forEach((r) => {

@@ -1,6 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errorHelpers/AppError';
-import { ISponsored, ISponsoredPackage, SponsoredPackageType, SponsorStatus } from './sponsored.interface';
+import {
+  ISponsored,
+  ISponsoredPackage,
+  SponsoredPackageType,
+  SponsorStatus,
+} from './sponsored.interface';
 import { Sponsored, SponsoredPackage } from './sponsored.model';
 import { stripe } from '../../config/stripe.config';
 import Event from '../events/event.model';
@@ -11,8 +16,6 @@ import Payment from '../payments/payment.model';
 import { generateTransactionId } from '../../utils/generateTransactionId';
 import { PaymentStatus } from '../payments/payment.interface';
 import { QueryBuilder } from '../../utils/QueryBuilder';
-
-
 
 // CREATE SPONSORSHIP PACKAGE SERVICE
 const createSponsoredPackageService = async (
@@ -92,16 +95,15 @@ const sponsoredPaymentIntentService = async (
   let sponsored = await Sponsored.findOne({
     event: eventId,
     sponsor_status: SponsorStatus.PENDING,
-    user: userId
+    user: userId,
   });
 
   // ALREADY APPROVED SPONSOSHIP
   const alreadySponsored = await Sponsored.findOne({
     event: eventId,
     sponsor_status: SponsorStatus.APPROVED,
-    user: userId
-  })
-
+    user: userId,
+  });
 
   if ((alreadySponsored?.endDate as Date) > new Date()) {
     throw new AppError(
@@ -116,11 +118,15 @@ const sponsoredPaymentIntentService = async (
     sponsored = await Sponsored.create({
       amount: sponsoredPackage.price,
       event: event._id,
-      sponsor_type: sponsoredPackage.type === SponsoredPackageType.SPONSORED ? ISponsored.SPONSORED : sponsoredPackage.type === SponsoredPackageType.BOOST ? ISponsored.BOOSTED : ISponsored.NORMAL,
+      sponsor_type:
+        sponsoredPackage.type === SponsoredPackageType.SPONSORED
+          ? ISponsored.SPONSORED
+          : sponsoredPackage.type === SponsoredPackageType.BOOST
+            ? ISponsored.BOOSTED
+            : ISponsored.NORMAL,
       sponsor_status: SponsorStatus.PENDING,
       user: userId,
     });
-
 
     payment = await Payment.create({
       sponsored: sponsored._id,
@@ -155,7 +161,7 @@ const sponsoredPaymentIntentService = async (
       sponsored: sponsored._id.toString(),
       package: sponsoredPackage._id.toString(),
       event: event._id.toString(),
-      payment: payment._id.toString()
+      payment: payment._id.toString(),
     },
     description: 'Event Sponsorship Payment',
   };
@@ -173,7 +179,6 @@ const sponsoredPaymentIntentService = async (
   return paymentIntent;
 };
 
- 
 // GET SPONSORED EVENT (Randomly Selected Every API Call)
 const getRandomSponsoredEventsService = async () => {
   const limit = 10; // Number of random documents requested by the frontend
@@ -183,38 +188,38 @@ const getRandomSponsoredEventsService = async () => {
     {
       $match: {
         sponsor_status: SponsorStatus.APPROVED,
-        sponsor_type: SponsoredPackageType.SPONSORED
-      }
+        sponsor_type: SponsoredPackageType.SPONSORED,
+      },
     },
     {
-      $sample: { size: limit }  
-    },
-    {
-      $lookup: {
-        from: 'payments',  
-        localField: 'payment', 
-        foreignField: '_id', 
-        as: 'payment'
-      }
-    },
-    {
-      $match: { 'payment.payment_status': PaymentStatus.PAID }  // Correct reference to payment.payment_status
+      $sample: { size: limit },
     },
     {
       $lookup: {
-        from: 'events',  
-        localField: 'event',  
-        foreignField: '_id',  
-        as: 'event'
-      }
+        from: 'payments',
+        localField: 'payment',
+        foreignField: '_id',
+        as: 'payment',
+      },
+    },
+    {
+      $match: { 'payment.payment_status': PaymentStatus.PAID }, // Correct reference to payment.payment_status
+    },
+    {
+      $lookup: {
+        from: 'events',
+        localField: 'event',
+        foreignField: '_id',
+        as: 'event',
+      },
     },
     {
       $project: {
         event: 1,
         sponsor_status: 1,
-        payment: { _id: 1, payment_status: 1, createdAt: 1 },  // Correct field name for payment
-      }
-    }
+        payment: { _id: 1, payment_status: 1, createdAt: 1 }, // Correct field name for payment
+      },
+    },
   ]);
 
   return sponsoredEvents;
@@ -222,22 +227,33 @@ const getRandomSponsoredEventsService = async () => {
 
 // GET ALL SPONSORED EVENTS
 const getSponsoredEventsService = async (query: Record<string, string>) => {
-  const queryBuild = new QueryBuilder(Sponsored.find({ sponsor_status: SponsorStatus.APPROVED, sponsor_type: SponsoredPackageType.SPONSORED  }).populate({
-  path: 'payment',
-  match: { payment_status: PaymentStatus.PAID },
-  select: '_id payment_status createdAt'
-}).populate("event"), query);
+  const queryBuild = new QueryBuilder(
+    Sponsored.find({
+      sponsor_status: SponsorStatus.APPROVED,
+      sponsor_type: SponsoredPackageType.SPONSORED,
+    })
+      .populate({
+        path: 'payment',
+        match: { payment_status: PaymentStatus.PAID },
+        select: '_id payment_status createdAt',
+      })
+      .populate('event'),
+    query
+  );
 
-  const sponsoredEvents = await queryBuild.filter().select().sort().paginate().build();
+  const sponsoredEvents = await queryBuild
+    .filter()
+    .select()
+    .sort()
+    .paginate()
+    .build();
 
   const meta = await queryBuild.getMeta();
   return {
     meta,
-    sponsoredEvents
-  }
-}
-
-
+    sponsoredEvents,
+  };
+};
 
 export const sponsoredServices = {
   createSponsoredPackageService,
@@ -245,5 +261,5 @@ export const sponsoredServices = {
   updatePackageService,
   sponsoredPaymentIntentService,
   getRandomSponsoredEventsService,
-  getSponsoredEventsService
+  getSponsoredEventsService,
 };

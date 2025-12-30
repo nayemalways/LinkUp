@@ -9,28 +9,35 @@ import { BookingStatus } from '../booking/booking.interface';
 import mongoose from 'mongoose';
 
 // ADD VOTE ON EVENT FOR HOST
-const addVotingService = async (eventId: string, userId: string, vote: VotingType) => {
+const addVotingService = async (
+  eventId: string,
+  userId: string,
+  vote: VotingType
+) => {
   const event = await Event.findOne({ _id: eventId });
 
   if (!event) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Event not found!');
   }
 
-
   // EVENT MEMBER CAN VOTING
-  const bookingMembers = await Booking.find({ event: eventId, booking_status: BookingStatus.CONFIRMED }).select("user");
+  const bookingMembers = await Booking.find({
+    event: eventId,
+    booking_status: BookingStatus.CONFIRMED,
+  }).select('user');
   const bookingMembrIds = bookingMembers.map((m) => m.user.toString());
-  
+
   const isBookedMembers = bookingMembrIds.includes(userId);
- 
 
   if (!isBookedMembers) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "Only event member can vote!");
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Only event member can vote!');
   }
- 
 
   if (event.event_status !== EventStatus.COMPLETED) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "Before completing the event, you can't vote!")
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "Before completing the event, you can't vote!"
+    );
   }
 
   // Ensure host and co-host cannot vote
@@ -59,30 +66,34 @@ const addVotingService = async (eventId: string, userId: string, vote: VotingTyp
     }
   } else {
     // Create a new vote
-    return await EventVote.create({ event: eventId, user: userId, voteType: vote });
+    return await EventVote.create({
+      event: eventId,
+      user: userId,
+      voteType: vote,
+    });
   }
 };
 
-// GET VOTE COUNT FOR EVENT 
+// GET VOTE COUNT FOR EVENT
 const getTotalVoteCountService = async (eventId: string) => {
-    // const totalVote = await EventVote.find({ event: eventId })
+  // const totalVote = await EventVote.find({ event: eventId })
   const totalVoteCount = await EventVote.aggregate([
     {
       $match: {
-        event: new mongoose.Types.ObjectId(eventId),  
+        event: new mongoose.Types.ObjectId(eventId),
       },
     },
     {
       $group: {
-        _id: "$voteType",  
-        total: { $sum: 1 },  
+        _id: '$voteType',
+        total: { $sum: 1 },
       },
     },
     {
       $project: {
-        _id: 0,  
-        voteType: "$_id",  
-        total: 1,  
+        _id: 0,
+        voteType: '$_id',
+        total: 1,
       },
     },
   ]);
@@ -91,21 +102,20 @@ const getTotalVoteCountService = async (eventId: string) => {
   return totalVoteCount;
 };
 
+const checkUserAlreadyVotedService = async (
+  eventId: string,
+  userId: string
+) => {
+  const getVote = await EventVote.findOne({ event: eventId, user: userId });
+  if (!getVote) {
+    return { vote: false };
+  }
 
-const checkUserAlreadyVotedService = async (eventId: string, userId: string) => {
-    const getVote = await EventVote.findOne({ event: eventId, user: userId });
-    if (!getVote) {
-        return {vote: false }
-    }
-
-
-    return { vote: true, voteType: getVote.voteType };
-}
-
-
+  return { vote: true, voteType: getVote.voteType };
+};
 
 export const votingService = {
-    addVotingService,
-    getTotalVoteCountService,
-    checkUserAlreadyVotedService
-}
+  addVotingService,
+  getTotalVoteCountService,
+  checkUserAlreadyVotedService,
+};

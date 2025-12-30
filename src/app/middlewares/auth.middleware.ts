@@ -7,8 +7,6 @@ import httpStatus from 'http-status-codes';
 import env from '../config/env';
 import User from '../modules/users/user.model';
 
-
-
 export const checkAuth =
   (...restRole: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
@@ -16,7 +14,7 @@ export const checkAuth =
       const accessToken = req.headers.authorization; // GET TOKEN
 
       if (!accessToken) {
-        throw new AppError(401, "Unauthorized! token must required.")
+        throw new AppError(401, 'Unauthorized! token must required.');
       }
 
       // if(!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -36,19 +34,24 @@ export const checkAuth =
         throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token!');
       }
 
-    
-      const isUser = await User.findById(verifyUser?.userId ); // IS USER EXISTS
+      const isUser = await User.findById(verifyUser?.userId); // IS USER EXISTS
 
-      if(!isUser) {
+      if (!isUser) {
         throw new AppError(httpStatus.UNAUTHORIZED, 'No user found!');
       }
 
-      if (isUser.isActive === IsActive.INACTIVE || isUser.isActive === IsActive.BLOCKED) {
-        throw new AppError(httpStatus.FORBIDDEN, "User is Blocked or Inactive!");
-      }   
+      if (
+        isUser.isActive === IsActive.INACTIVE ||
+        isUser.isActive === IsActive.BLOCKED
+      ) {
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          'User is Blocked or Inactive!'
+        );
+      }
 
-      if(isUser.isDeleted) {
-        throw new AppError(httpStatus.FORBIDDEN, "The user was deleted!");
+      if (isUser.isDeleted) {
+        throw new AppError(httpStatus.FORBIDDEN, 'The user was deleted!');
       }
 
       if (restRole.length && !restRole.includes(verifyUser.role)) {

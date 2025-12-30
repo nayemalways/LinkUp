@@ -40,16 +40,15 @@ import { sendPersonalNotification } from '../../utils/notificationsendhelper/use
 import { onlineUsers } from '../../socket';
 import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
 import BlockedUser from '../BlockedUser/blocked.model';
- 
 
 // CREATE EVENT SERVICE
 const createEventService = async (payload: IEvent, _user: JwtPayload) => {
-  const user = await User.findOne({ _id: _user.userId})
+  const user = await User.findOne({ _id: _user.userId });
   if (!user) {
-    throw new AppError(StatusCodes.NOT_FOUND, "No user found!");
+    throw new AppError(StatusCodes.NOT_FOUND, 'No user found!');
   }
 
-  if (!user.isVerified ) {
+  if (!user.isVerified) {
     payload.images?.forEach((image) => deleteImageFromCLoudinary(image));
     throw new AppError(StatusCodes.FORBIDDEN, 'Please verify your profile!');
   }

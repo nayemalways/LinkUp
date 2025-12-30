@@ -125,7 +125,7 @@ const getMeService = async (userId: string) => {
     throw new AppError(404, 'User not found');
   }
 
-   // Normalize the date to remove time part
+  // Normalize the date to remove time part
   const normalizeDate = (date: Date) => {
     const normalizedDate = new Date(date);
     normalizedDate.setHours(0, 0, 0, 0); // Set time to midnight
@@ -190,13 +190,18 @@ const getProfileService = async (userId: string) => {
 
   // REPUTATION AS HOST OR ORGANIZER
   const myEvents = await Event.find({ host: userId }); // MY EVENTS
-  const myEventIds = myEvents.map(e => e._id.toString()); // EXTRACT EVENT ID
-  const getMyEventVoting = await EventVote.find({ event: {$in: myEventIds }}); // GET VOTE FOR MY EVENTS
+  const myEventIds = myEvents.map((e) => e._id.toString()); // EXTRACT EVENT ID
+  const getMyEventVoting = await EventVote.find({ event: { $in: myEventIds } }); // GET VOTE FOR MY EVENTS
 
-  const totalUpvote = getMyEventVoting.filter((v) => v.voteType === VotingType.UPVOTE); // FILTER ONLY UPVOTE
-  const totalDownvote = getMyEventVoting.filter((v) => v.voteType === VotingType.DOWNVOTE);  // FILTER ONLY DOWNVOTE
+  const totalUpvote = getMyEventVoting.filter(
+    (v) => v.voteType === VotingType.UPVOTE
+  ); // FILTER ONLY UPVOTE
+  const totalDownvote = getMyEventVoting.filter(
+    (v) => v.voteType === VotingType.DOWNVOTE
+  ); // FILTER ONLY DOWNVOTE
 
-  const host_or_organizer_reputation = totalUpvote.length - totalDownvote.length;
+  const host_or_organizer_reputation =
+    totalUpvote.length - totalDownvote.length;
 
   const [totalEventsJoined, totalEventsOrganized, totalFriends] =
     await Promise.all([
@@ -204,7 +209,6 @@ const getProfileService = async (userId: string) => {
       totalEventsOrganizedPromise,
       totalFriendsPormise,
     ]);
-
 
   return {
     totalEventsJoined,

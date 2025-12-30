@@ -10,12 +10,12 @@ import env from './app/config/env';
 import expressSession from 'express-session';
 import passport from 'passport';
 import './app/config/passport.config';
-import http from "http";
+import http from 'http';
 import { initSocket } from './app/socket';
 import { paymentControllers } from './app/modules/payments/payment.controller';
 
 const app = express();
-const server =  http.createServer(app);
+const server = http.createServer(app);
 
 // Init Socket connection
 initSocket(server);
@@ -30,15 +30,25 @@ app.use(
 );
 
 // STRIPE WEBHOOK ROUTES
-app.post('/webhook', express.raw({ type: 'application/json' }), paymentControllers.handleWebHook);
-app.post('/webhook_sponsored', express.raw({ type: 'application/json' }), paymentControllers.handleSponsoredWebHook);
+app.post(
+  '/webhook',
+  express.raw({ type: 'application/json' }),
+  paymentControllers.handleWebHook
+);
+app.post(
+  '/webhook_sponsored',
+  express.raw({ type: 'application/json' }),
+  paymentControllers.handleSponsoredWebHook
+);
 
 app.use(passport.initialize()); // Initilazed Passport
 app.use(passport.session()); // Create a session
 app.use(express.json());
-app.use(cors({
-  origin: env.FRONTEND_URL || 'http://localhost:5173',
-}));
+app.use(
+  cors({
+    origin: env.FRONTEND_URL || 'http://localhost:5173',
+  })
+);
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(safeSanitizeMiddleware);
@@ -59,7 +69,6 @@ app.use(limiter);
 app.get('/', (req: Request, res: Response) => {
   res.send('<h1>Congratulations! Your server is running hoohhuh😍</h1>');
 });
-
 
 // GLOBAL ROUTES
 app.use('/api/v1', router);

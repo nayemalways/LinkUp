@@ -6,11 +6,20 @@ import AppError from '../../errorHelpers/AppError';
 import User from '../users/user.model';
 import env from '../../config/env';
 import { Request } from 'express';
-import { chargeSucceededHandler, payemntSuccessHandler, paymentCanceledHandler, paymetFailedHandler } from '../../utils/stripe.booking_webhook';
+import {
+  chargeSucceededHandler,
+  payemntSuccessHandler,
+  paymentCanceledHandler,
+  paymetFailedHandler,
+} from '../../utils/stripe.booking_webhook';
 import Booking from '../booking/booking.model';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { Role, UserBadge } from '../users/user.interface';
-import { sponsoredCancelledHandler, sponsoredFailedHandler, sponsoredSuccessHandler } from '../../utils/stripe.sponsored_webhook';
+import {
+  sponsoredCancelledHandler,
+  sponsoredFailedHandler,
+  sponsoredSuccessHandler,
+} from '../../utils/stripe.sponsored_webhook';
 
 // ======================  STRIPE PAYMENT QUERY ====================
 // CREATE STRIPE CONNECT ACCOUNT
@@ -45,56 +54,64 @@ const createStripeConnectAccountService = async (
 
 //  CHECK STRIPE CONNECT ACCOUNT EXIST
 const checkAccountStatusService = async (userId: string) => {
-    const user = await User.findOne({ _id: userId });
+  const user = await User.findOne({ _id: userId });
 
-    if (!user) {
-        throw new AppError(StatusCodes.NOT_FOUND, "No stripe account id found");
-    }
-    const account = await stripe.accounts.retrieve(user?.stripeAccountId as string);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'No stripe account id found');
+  }
+  const account = await stripe.accounts.retrieve(
+    user?.stripeAccountId as string
+  );
 
-    if (account.payouts_enabled) {
-        if (!user.badge) {
-          user.badge = user.role === Role.ORGANIZER ? UserBadge.ORGANIZER : UserBadge.HOST
-          await user.save();
-        }
-        return true;
-    } else {
-      return false;
-   
+  if (account.payouts_enabled) {
+    if (!user.badge) {
+      user.badge =
+        user.role === Role.ORGANIZER ? UserBadge.ORGANIZER : UserBadge.HOST;
+      await user.save();
     }
- 
+    return true;
+  } else {
+    return false;
+  }
 };
 
 // LIST OF CONNECTED BANK ACCOUNT
 const getConnectedBankAccountService = async (userId: string) => {
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
+  }
+
+  if (!user.stripeAccountId) {
+    return [];
+  }
+
+  const externalAccounts = await stripe.accounts.listExternalAccounts(
+    user?.stripeAccountId as string,
+    {
+      object: 'bank_account',
     }
+  );
 
-    if (!user.stripeAccountId) {
-         return []
-    }
-
-     const externalAccounts = await stripe.accounts.listExternalAccounts(user?.stripeAccountId as string, {
-      object: "bank_account",
-    });
-
-    // Filter out sensitive data and only send safe information
-  const bankAccountData = externalAccounts.data.map(account => ({
+  // Filter out sensitive data and only send safe information
+  const bankAccountData = externalAccounts.data.map((account) => ({
     bankName: 'bank_name' in account ? (account as any).bank_name : 'Unknown',
-    last4: account.last4,  
+    last4: account.last4,
     status: account.status,
     availablePayoutMethods: (account as any).available_payout_methods,
   }));
 
-    return bankAccountData;
-}
+  return bankAccountData;
+};
 
 // STRIPE WEBHOOK - FOR EVENT JOINING
 const handleWebHookService = async (req: Request) => {
   const sig = req.headers['stripe-signature'] as string;
-  const event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_WEBHOOK_SECRET);
+  const event = stripe.webhooks.constructEvent(
+    req.body,
+    sig,
+    env.STRIPE_WEBHOOK_SECRET
+  );
 
   // Handle the event
   switch (event.type) {
@@ -110,10 +127,9 @@ const handleWebHookService = async (req: Request) => {
       break;
     }
 
-
     case 'payment_intent.canceled': {
       const paymentIntent = event.data.object;
-      await paymentCanceledHandler(paymentIntent)
+      await paymentCanceledHandler(paymentIntent);
       break;
     }
 
@@ -133,7 +149,11 @@ const handleWebHookService = async (req: Request) => {
 // STRIPE WEBHOOK - FOR SPONSORE EVENT
 const handleSponsoredWebHookService = async (req: Request) => {
   const sig = req.headers['stripe-signature'] as string;
-  const event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_SPONSORED_WEBHOOK_SECRET);
+  const event = stripe.webhooks.constructEvent(
+    req.body,
+    sig,
+    env.STRIPE_SPONSORED_WEBHOOK_SECRET
+  );
 
   // Handle the event
   switch (event.type) {
@@ -145,10 +165,9 @@ const handleSponsoredWebHookService = async (req: Request) => {
 
     case 'payment_intent.payment_failed': {
       const paymentFailed = event.data.object;
-      await sponsoredFailedHandler(paymentFailed); 
+      await sponsoredFailedHandler(paymentFailed);
       break;
     }
-
 
     case 'payment_intent.canceled': {
       const paymentIntent = event.data.object;
@@ -158,7 +177,7 @@ const handleSponsoredWebHookService = async (req: Request) => {
 
     case 'charge.succeeded': {
       const charge = event.data.object;
-      await chargeSucceededHandler(charge)
+      await chargeSucceededHandler(charge);
       break;
     }
 
@@ -169,28 +188,41 @@ const handleSponsoredWebHookService = async (req: Request) => {
   return [];
 };
 
-
-
 // ======================  PAYMENT TRANSACTION QUERY ====================
 // GET TRANSACTION HISTORY
-const getTransactionHistory = async (userId: string, query: Record<string, string>) => {
+const getTransactionHistory = async (
+  userId: string,
+  query: Record<string, string>
+) => {
   const queryBuilder = new QueryBuilder(Booking.find({ user: userId }), query);
 
-  const transactions = await queryBuilder.filter().select().sort().join().paginate().build();
+  const transactions = await queryBuilder
+    .filter()
+    .select()
+    .sort()
+    .join()
+    .paginate()
+    .build();
 
   const meta = await queryBuilder.getMeta();
-  return {meta, transactions};
-}
+  return { meta, transactions };
+};
 
 // GET ALL TRANSACTION HISTORY (ADMIN)
 const getAllTransactionHistory = async (query: Record<string, string>) => {
   const queryBuilder = new QueryBuilder(Booking.find(), query);
 
-  const transactions = await queryBuilder.filter().select().sort().join().paginate().build();
+  const transactions = await queryBuilder
+    .filter()
+    .select()
+    .sort()
+    .join()
+    .paginate()
+    .build();
 
   const meta = await queryBuilder.getMeta();
-  return {meta, transactions};
-}
+  return { meta, transactions };
+};
 
 export const paymentServices = {
   createStripeConnectAccountService,
@@ -199,5 +231,5 @@ export const paymentServices = {
   handleWebHookService,
   getTransactionHistory,
   getAllTransactionHistory,
-  handleSponsoredWebHookService
+  handleSponsoredWebHookService,
 };
