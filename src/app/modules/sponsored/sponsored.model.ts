@@ -1,6 +1,5 @@
 import { model, Schema } from "mongoose";
-import {  ISponsoredPackage, ISponsoredship, SponsoredPackageType, SponsorStatus } from "./sponsored.interface";
-import { ISponsored } from "../events/event.interface";
+import {  ISponsored, ISponsoredPackage, ISponsoredship, SponsoredPackageType, SponsorStatus } from "./sponsored.interface";
  
 
 //===================== SPONSORED SCHEMA ========================

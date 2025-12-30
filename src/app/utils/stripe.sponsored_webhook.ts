@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dayjs from 'dayjs';
 import env from '../config/env';
-import { ISponsored } from '../modules/events/event.interface';
 import Event from '../modules/events/event.model';
 import { NotificationType } from '../modules/notifications/notification.interface';
 import { IPayment, PaymentStatus } from '../modules/payments/payment.interface';
 import Payment from '../modules/payments/payment.model';
 import {
+  ISponsored,
   ISponsoredPackage,
   SponsorStatus,
 } from '../modules/sponsored/sponsored.interface';

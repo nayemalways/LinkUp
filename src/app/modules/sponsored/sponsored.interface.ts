@@ -1,5 +1,4 @@
 import { Types } from "mongoose";
-import { ISponsored } from "../events/event.interface";
 
 
 export enum SponsorStatus {
@@ -17,6 +16,12 @@ export enum ISponsoredPaymentStatus {
 export enum SponsoredPackageType {
   SPONSORED = "SPONSORED",
   BOOST =  "BOOST"
+}
+
+export enum ISponsored {
+  SPONSORED= 'SPONSORED',
+  BOOSTED = 'BOOSTED',
+  NORMAL = 'NORMAL'
 }
 
 //===================== SPONSORED INTERFACE ========================

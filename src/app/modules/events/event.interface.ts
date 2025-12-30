@@ -8,12 +8,6 @@ export enum EventStatus {
   CANCELLED = 'CANCELLED',
 }
 
-export enum ISponsored {
-  SPONSORED= 'SPONSORED',
-  BOOSTED = 'BOOSTED',
-  NORMAL = 'NORMAL'
-}
-
 export enum EventVisibility {
   PUBLIC = 'PUBLIC',
   PRIVATE = 'PRIVATE',

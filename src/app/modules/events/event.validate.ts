@@ -1,5 +1,6 @@
 import z from "zod";
-import { EventStatus, EventVisibility, ISponsored } from "./event.interface";
+import { EventStatus, EventVisibility } from "./event.interface";
+import { ISponsored } from "../sponsored/sponsored.interface";
 
 
 // Address schema

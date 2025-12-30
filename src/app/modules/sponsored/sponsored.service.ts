@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errorHelpers/AppError';
-import { ISponsoredPackage, SponsoredPackageType, SponsorStatus } from './sponsored.interface';
+import { ISponsored, ISponsoredPackage, SponsoredPackageType, SponsorStatus } from './sponsored.interface';
 import { Sponsored, SponsoredPackage } from './sponsored.model';
 import { stripe } from '../../config/stripe.config';
 import Event from '../events/event.model';
@@ -10,7 +10,6 @@ import Stripe from 'stripe';
 import Payment from '../payments/payment.model';
 import { generateTransactionId } from '../../utils/generateTransactionId';
 import { PaymentStatus } from '../payments/payment.interface';
-import { ISponsored } from '../events/event.interface';
 
 // CREATE SPONSORSHIP PACKAGE SERVICE
 const createSponsoredPackageService = async (
