@@ -32,11 +32,10 @@ const userActivity = CatchAsync(async (req: Request, res: Response, next: NextFu
 })
 
 
-// DAILY USER ACTIVITY
+// TOTAL REVENUE SPONSORED/BOOKING FOR LAST 12 MONTH
 const getRevenue = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { type } = req.query as Record<string, string>;
-    const { eventId } = req.params;
-    const result = await dashboardService.getRevenueService( type);
+    const result = await dashboardService.getRevenueService(type);
 
     SendResponse(res, {
         success: true,
@@ -47,8 +46,35 @@ const getRevenue = CatchAsync(async (req: Request, res: Response, next: NextFunc
 })
 
 
+// SPONSORED EVENT ANALYTICS
+const sponsoredAnalytics = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const result = await dashboardService.sponsoredEventsAnalytics();
+
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message:"Fetched sponsored events analytics!",
+        data: result
+    })
+})
+
+// BOOKING EVENT ANALYTICS
+const bookingEventsAnalytics = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const result = await dashboardService.bookingEventsAnalytics();
+
+    SendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message:"Fetched booking events analytics!",
+        data: result
+    })
+})
+
+
 export const dashboardControllers = {
     dashboardStats,
     userActivity,
-    getRevenue
+    getRevenue,
+    sponsoredAnalytics,
+    bookingEventsAnalytics
 }

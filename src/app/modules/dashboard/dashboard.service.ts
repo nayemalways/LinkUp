@@ -4,7 +4,7 @@ import Booking from '../booking/booking.model';
 import Event from '../events/event.model';
 import { PaymentStatus } from '../payments/payment.interface';
 import Payment from '../payments/payment.model';
-import { SponsorStatus } from '../sponsored/sponsored.interface';
+import { SponsoredPackageType, SponsorStatus } from '../sponsored/sponsored.interface';
 import { Sponsored } from '../sponsored/sponsored.model';
 import User, { UserActivity } from '../users/user.model';
 
@@ -541,17 +541,168 @@ const getRevenueService = async (type: string) => {
   return formattedRevenueData; 
 };
 
+// GET SPONSORED
 
+const sponsoredEventsAnalytics = async () => {
 
+  // Get today's date and calculate last week's range
+  const today = new Date();
+  const lastWeekStart = new Date(today);
+  lastWeekStart.setDate(today.getDate() - 7); // Set to 7 days ago (start of last week)
 
+  // Calculate this week's range
+  const thisWeekStart = new Date(today);
+  thisWeekStart.setDate(today.getDate() - today.getDay()); // Set to the beginning of this week (Sunday)
+  
+  // Get data for this week
+  const sponsoredThisWeek = await Sponsored.find({
+    sponsor_status: SponsorStatus.APPROVED,
+    sponsor_type: SponsoredPackageType.SPONSORED,
+    createdAt: { $gte: thisWeekStart }
+  });
 
+  // Get data for last week
+  const sponsoredLastWeek = await Sponsored.find({
+    sponsor_status: SponsorStatus.APPROVED,
+    sponsor_type: SponsoredPackageType.SPONSORED,
+    createdAt: { $gte: lastWeekStart, $lt: thisWeekStart }  // Last week range
+  });
 
+  // Calculate total revenue, purchases and average per purchase for this week
+  const totalRevenue = sponsoredThisWeek.reduce((accumulator, currentValue) => accumulator + currentValue.amount, 0);
+  const totalPurchase = sponsoredThisWeek.length;
+  const avgPerPurchase = totalRevenue / totalPurchase;
 
+  // Calculate purchase increase percentage from last week to this week
+  const lastWeekPurchase = sponsoredLastWeek.length;
+  const purchaseIncreasePercentage = lastWeekPurchase === 0
+    ? 100  // If no purchases last week, set it to 100% increase (since it's the first purchase)
+    : ((totalPurchase - lastWeekPurchase) / lastWeekPurchase) * 100;
 
+  // Get the top event
+  const eventIds = sponsoredThisWeek.map((e) => e.event);
+  const booking = await Booking.aggregate([
+    {
+      $match: { event: { $in: eventIds } }
+    },
+    {
+      $group: {
+        _id: "$event",
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { count: -1 }
+    },
+    {
+      $limit: 1
+    },
+    {
+      $lookup: {
+        from: "events",
+        localField: "_id",
+        foreignField: "_id",
+        as: "event"
+      }
+    }
+  ]);
+
+  const topEventName = booking[0]?.event[0]?.title || "No event found"; // Get the event title for the top event
+  
+  return { 
+    totalRevenue, 
+    totalPurchase, 
+    topEventName, 
+    avgPerPurchase, 
+    purchaseIncreasePercentage
+  };
+};
+
+// BOOKING ANALYTICS
+const bookingEventsAnalytics = async () => {
+  const today = new Date();
+  const lastWeekStart = new Date(today);
+  lastWeekStart.setDate(today.getDate() - 7);
+
+  const thisWeekStart = new Date(today);
+  thisWeekStart.setDate(today.getDate() - today.getDay());
+
+  const bookingThisWeek = await Booking.find({
+    booking_status: BookingStatus.CONFIRMED,
+    createdAt: { $gte: thisWeekStart }
+  }).populate("payment", "transaction_amount");
+
+  // Get data for last week
+  const bookingLastWeek = await Booking.find({
+    booking_status: BookingStatus.CONFIRMED,
+    createdAt: { $gte: lastWeekStart, $lt: thisWeekStart }  // Last week range
+  }).populate("payment", "transaction_amount");
+
+  // Calculate total revenue, purchases, and average per purchase for this week
+  const totalRevenue = bookingThisWeek.reduce((accumulator, currentValue: any) => {
+    const transactionAmount = currentValue.payment?.transaction_amount || 0;
+    return accumulator + transactionAmount;
+  }, 0);
+  const totalPurchase = bookingThisWeek.length;
+  const avgPerPurchase = totalPurchase > 0 ? totalRevenue / totalPurchase : 0; // avg. per purchase
+
+  // Calculate purchase increase percentage from last week to this week
+  const lastWeekPurchase = bookingLastWeek.length;
+  let purchaseIncreasePercentage = 0;
+
+  // If there were no purchases last week, set percentage increase to 100%
+  if (lastWeekPurchase === 0 && totalPurchase > 0) {
+    purchaseIncreasePercentage = 100; // First purchase of this type
+  } else if (lastWeekPurchase > 0) {
+    // Calculate percentage increase
+    purchaseIncreasePercentage = ((totalPurchase - lastWeekPurchase) / lastWeekPurchase) * 100;
+  }
+
+  // Aggregate to find the top event
+  const booking = await Booking.aggregate([
+    {
+      $match: {
+        booking_status: BookingStatus.CONFIRMED
+      }
+    },
+    {
+      $group: {
+        _id: "$event",
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { count: -1 }
+    },
+    {
+      $limit: 1
+    },
+    {
+      $lookup: {
+        from: "events",
+        localField: "_id",
+        foreignField: "_id",
+        as: "event"
+      }
+    }
+  ]);
+
+  const topEventName = booking[0]?.event[0]?.title || "No event found"; 
+
+  return { 
+    totalRevenue, 
+    totalPurchase, 
+    topEventName, 
+    avgPerPurchase, 
+    purchaseIncreasePercentage
+  };
+};
 
 
 export const dashboardService = {
   dashboardStatsService,
   dailyUserActivityService,
-  getRevenueService
+  getRevenueService,
+  sponsoredEventsAnalytics,
+  bookingEventsAnalytics
 };
