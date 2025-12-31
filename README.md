@@ -2806,9 +2806,8 @@ The API includes real-time functionality using Socket.IO for:
 ### Firebase Cloud Messaging (FCM)
 
 Push notifications are supported through Firebase:
-- Event reminders
 - New message notifications
-- Updates to followed events
+- Updates to follow-up events
 
 ### Email Notifications
 
