@@ -5,6 +5,7 @@ import Event from '../events/event.model';
 import { PaymentStatus } from '../payments/payment.interface';
 import Payment from '../payments/payment.model';
 import {
+  ISponsored,
   SponsoredPackageType,
   SponsorStatus,
 } from '../sponsored/sponsored.interface';
@@ -573,36 +574,115 @@ const sponsoredEventsAnalytics = async () => {
   thisWeekStart.setDate(today.getDate() - today.getDay()); // Set to the beginning of this week (Sunday)
 
   // Get data for this week
-  const sponsoredThisWeek = await Sponsored.find({
+  const bosstThisWeek = await Sponsored.find({
     sponsor_status: SponsorStatus.APPROVED,
     sponsor_type: SponsoredPackageType.SPONSORED,
     createdAt: { $gte: thisWeekStart },
   });
 
   // Get data for last week
-  const sponsoredLastWeek = await Sponsored.find({
+  const boostedLastWeek = await Sponsored.find({
     sponsor_status: SponsorStatus.APPROVED,
     sponsor_type: SponsoredPackageType.SPONSORED,
     createdAt: { $gte: lastWeekStart, $lt: thisWeekStart }, // Last week range
   });
 
   // Calculate total revenue, purchases and average per purchase for this week
-  const totalRevenue = sponsoredThisWeek.reduce(
+  const totalRevenue = bosstThisWeek.reduce(
     (accumulator, currentValue) => accumulator + currentValue.amount,
     0
   );
-  const totalPurchase = sponsoredThisWeek.length;
+  const totalPurchase = bosstThisWeek.length;
   const avgPerPurchase = totalRevenue / totalPurchase;
 
   // Calculate purchase increase percentage from last week to this week
-  const lastWeekPurchase = sponsoredLastWeek.length;
+  const lastWeekPurchase = boostedLastWeek.length;
   const purchaseIncreasePercentage =
     lastWeekPurchase === 0
       ? 100 // If no purchases last week, set it to 100% increase (since it's the first purchase)
       : ((totalPurchase - lastWeekPurchase) / lastWeekPurchase) * 100;
 
   // Get the top event
-  const eventIds = sponsoredThisWeek.map((e) => e.event);
+  const eventIds = bosstThisWeek.map((e) => e.event);
+  const booking = await Booking.aggregate([
+    {
+      $match: { event: { $in: eventIds } },
+    },
+    {
+      $group: {
+        _id: '$event',
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 },
+    },
+    {
+      $limit: 1,
+    },
+    {
+      $lookup: {
+        from: 'events',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'event',
+      },
+    },
+  ]);
+
+  const topEventName = booking[0]?.event[0]?.title || 'No event found'; // Get the event title for the top event
+
+  return {
+    totalRevenue,
+    totalPurchase,
+    topEventName,
+    avgPerPurchase,
+    purchaseIncreasePercentage,
+  };
+};
+
+// GET SPONSORED
+const boostEventsAnalytics = async () => {
+  // Get today's date and calculate last week's range
+  const today = new Date();
+  const lastWeekStart = new Date(today);
+  lastWeekStart.setDate(today.getDate() - 7); // Set to 7 days ago (start of last week)
+
+  // Calculate this week's range
+  const thisWeekStart = new Date(today);
+  thisWeekStart.setDate(today.getDate() - today.getDay()); // Set to the beginning of this week (Sunday)
+
+  // Get data for this week
+  const bosstThisWeek = await Sponsored.find({
+    sponsor_status: SponsorStatus.APPROVED,
+    sponsor_type: ISponsored.BOOSTED, // Don't confused here: THIS ENUM SHOULD BE 'SponsoredPackage Type'. But Unfortunatly I forget to make BOOST TO BOOSTED.  Thats why I used ISPONSRED here. 
+    createdAt: { $gte: thisWeekStart },
+  });
+
+  // Get data for last week
+  const boostedLastWeek = await Sponsored.find({
+    sponsor_status: SponsorStatus.APPROVED,
+    sponsor_type: ISponsored.BOOSTED, // Don't confused here: THIS ENUM SHOULD BE 'SponsoredPackage Type'. But Unfortunatly I forget to make BOOST TO BOOSTED.  Thats why I used ISPONSRED here. 
+    createdAt: { $gte: lastWeekStart, $lt: thisWeekStart }, // Last week range
+  });
+
+  // Calculate total revenue, purchases and average per purchase for this week
+  const totalRevenue = bosstThisWeek.reduce(
+    (accumulator, currentValue) => accumulator + currentValue.amount,
+    0
+  );
+  const totalPurchase = bosstThisWeek.length;
+  const avgPerPurchase = totalRevenue / totalPurchase;
+
+  // Calculate purchase increase percentage from last week to this week
+  const lastWeekPurchase = boostedLastWeek.length;
+  const purchaseIncreasePercentage =
+    lastWeekPurchase === 0
+      ? 100 // If no purchases last week, set it to 100% increase (since it's the first purchase)
+      : ((totalPurchase - lastWeekPurchase) / lastWeekPurchase) * 100;
+
+  // Get the top event
+  const eventIds = bosstThisWeek.map((e) => e.event);
   const booking = await Booking.aggregate([
     {
       $match: { event: { $in: eventIds } },
@@ -730,4 +810,5 @@ export const dashboardService = {
   getRevenueService,
   sponsoredEventsAnalytics,
   bookingEventsAnalytics,
+  boostEventsAnalytics
 };

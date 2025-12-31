@@ -76,10 +76,25 @@ const bookingEventsAnalytics = CatchAsync(
   }
 );
 
+// BOSTED EVENT ANALYTICS
+const boostedAnalytics = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await dashboardService.boostEventsAnalytics();
+
+    SendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Fetched boosted events analytics!',
+      data: result,
+    });
+  }
+);
+
 export const dashboardControllers = {
   dashboardStats,
   userActivity,
   getRevenue,
   sponsoredAnalytics,
   bookingEventsAnalytics,
+  boostedAnalytics
 };

@@ -22,6 +22,11 @@ router.get(
   dashboardControllers.sponsoredAnalytics
 );
 router.get(
+  '/boosted_analytics',
+  checkAuth(Role.ADMIN),
+  dashboardControllers.boostedAnalytics
+);
+router.get(
   '/booking_analytics',
   checkAuth(Role.ADMIN),
   dashboardControllers.bookingEventsAnalytics
