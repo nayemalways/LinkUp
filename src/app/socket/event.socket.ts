@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const SocketEvents = (socket: any) => {
   // User joins group room
@@ -11,6 +10,5 @@ export const SocketEvents = (socket: any) => {
   // User leaves group room
   socket.on('leave-group', (groupId: string) => {
     socket.leave(groupId.trim());
-    console.log(`User left group room: ${groupId}`);
   });
 };

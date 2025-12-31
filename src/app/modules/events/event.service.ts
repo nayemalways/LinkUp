@@ -464,7 +464,7 @@ const updateEventService = async (
         const coord = await addressToLongLat(addressLine);
 
         if (!coord.lat || !coord.long) {
-          console.log('Coordinates not update!');
+          console.log('Coordinates not updated!');
         }
 
         const location = {
@@ -866,12 +866,10 @@ const acceptCoHostInvitationService = async (
           },
         });
 
-        console.log('email', inviter?.email);
 
         if (onlineUsers[inviterId]) {
           await sendPersonalNotification(notificationPayload);
         } else {
-          console.log('sending push notification');
           sendPushAndSave(notificationPayload);
         }
       } catch (err) {

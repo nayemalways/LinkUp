@@ -47,8 +47,6 @@ const getNewAccessTokenService = async (refreshToken: string) => {
     role: isUserExists?.role,
   };
 
-  //   console.log("refresh", jwtPayload);
-
   const userToken = await createUserTokens(jwtPayload); // Jsonwebtoken
 
   return {
