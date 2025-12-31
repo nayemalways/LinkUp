@@ -6,7 +6,7 @@
 
 ### Base Information
 
-- **Base URL**: `http://localhost:3002/api/v1`
+- **Base URL**: `http://localhost:5002/api/v1`
 - **Version**: 1.0.0
 - **Protocol**: HTTP/HTTPS
 - **Authentication**: JWT (JSON Web Tokens)
@@ -29,7 +29,6 @@
 ## Features
 
 ### 🔐 Authentication & Authorization
-
 - JWT-based authentication with access & refresh tokens
 - Password hashing with bcrypt
 - OTP-based email verification
@@ -37,7 +36,6 @@
 - Role-based access control (USER, ADMIN, ORGANIZER)
 
 ### 👤 User Management
-
 - User registration with email verification
 - Profile management with avatar upload
 - Interest-based user preferences
@@ -45,13 +43,11 @@
 - Phone number validation (E.164 format)
 
 ### 👥 Social Features
-
 - **Friend System**: Send, accept, reject friend requests
 - **Blocking**: Block/unblock users
 - **Real-time Notifications**: Push notifications for friend activities
 
 ### 💬 Messaging System
-
 - **Direct Messages**: 1-to-1 private messaging
 - **Group Chats**: Create and manage group conversations
 - **Message Status**: Sent, Delivered, Seen indicators
@@ -59,7 +55,6 @@
 - **Real-time Updates**: Socket.IO powered live messaging
 
 ### 🎉 Event Management
-
 - Create events with multiple images
 - Location-based event discovery (GeoJSON)
 - Interest-based event recommendations
@@ -69,20 +64,17 @@
 - Automatic notifications to friends on event creation
 
 ### 📱 Real-time Features
-
 - Socket.IO integration for live updates
 - Online/offline user tracking
 - Real-time message delivery
 - Live notification system
 
 ### 🔔 Notifications
-
 - Push notifications (FCM support)
 - In-app notifications
 - Notification types: Friend, Event, Chat, System
 
 ### 🛡️ Security
-
 - Helmet for HTTP headers security
 - Rate limiting to prevent abuse
 - XSS protection
@@ -90,7 +82,6 @@
 - Input validation with Zod schemas
 
 ### 📁 File Management
-
 - Image upload with Cloudinary
 - Automatic image optimization
 - Multiple file upload support
@@ -102,11 +93,19 @@
 3. [Friends Management](#friends-management)
 4. [Groups Management](#groups-management)
 5. [Direct Messages](#direct-messages)
-6. [Events](#events)
-7. [Event Categories](#event-categories)
-8. [Error Handling](#error-handling)
-9. [Rate Limiting](#rate-limiting)
-10. [Response Format](#response-format)
+6. [Notifications](#notifications)
+7. [Blocked Users](#blocked-users)
+8. [Events](#events)
+9. [Event Categories](#event-categories)
+10. [Favourites](#favourites)
+11. [Booking](#booking)
+12. [Payments](#payments)
+13. [Sponsored](#sponsored)
+14. [Dashboard](#dashboard)
+15. [Voting](#voting)
+16. [Error Handling](#error-handling)
+17. [Rate Limiting](#rate-limiting)
+18. [Response Format](#response-format)
 
 ---
 
@@ -133,7 +132,6 @@ Authorization: Bearer <access_token>
 **Authorization**: None required
 
 **Request Body**:
-
 ```json
 {
   "email": "user@example.com",
@@ -142,7 +140,6 @@ Authorization: Bearer <access_token>
 ```
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -156,7 +153,6 @@ Authorization: Bearer <access_token>
 ```
 
 **Error Response** (403 Forbidden):
-
 ```json
 {
   "success": false,
@@ -167,11 +163,11 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message                  | Description                                                                                                                   |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Error Message | Description |
+|---------------|-------------|
 | `Please Login with instagram!` | User registered with Instagram OAuth and cannot login with email/password credentials. They must use Instagram login instead. |
-| `Incorrect password!`          | The password provided does not match the stored password for this account.                                                    |
-| `Passport Local login error`   | Generic Passport.js authentication error. This may occur due to internal authentication issues or misconfiguration.           |
+| `Incorrect password!` | The password provided does not match the stored password for this account. |
+| `Passport Local login error` | Generic Passport.js authentication error. This may occur due to internal authentication issues or misconfiguration. |
 
 ---
 
@@ -184,7 +180,6 @@ Authorization: Bearer <access_token>
 **Authorization**: None required
 
 **Request Body**:
-
 ```json
 {
   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -192,7 +187,6 @@ Authorization: Bearer <access_token>
 ```
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -206,12 +200,12 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message                      | Description                                                                  |
-| ---------------------------------- | ---------------------------------------------------------------------------- |
-| `Refresh token needed!`            | No refresh token was provided in the request body.                           |
-| `User Doesn't Exist`               | The user associated with this token no longer exists in the database.        |
+| Error Message | Description |
+|---------------|-------------|
+| `Refresh token needed!` | No refresh token was provided in the request body. |
+| `User Doesn't Exist` | The user associated with this token no longer exists in the database. |
 | `The User "blocked" or "inactive"` | The user account has been blocked or marked as inactive by an administrator. |
-| `The user was "deleted"`           | The user account has been soft-deleted.                                      |
+| `The user was "deleted"` | The user account has been soft-deleted. |
 
 ---
 
@@ -224,7 +218,6 @@ Authorization: Bearer <access_token>
 **Authorization**: Required (All roles)
 
 **Request Body**:
-
 ```json
 {
   "oldPassword": "OldPassword123",
@@ -233,7 +226,6 @@ Authorization: Bearer <access_token>
 ```
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -245,12 +237,12 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message                       | Description                                                    |
-| ----------------------------------- | -------------------------------------------------------------- |
-| `User not found!`                   | No user found with the authenticated user ID.                  |
-| `Please provide your old password!` | Old password field is missing from the request body.           |
-| `Please provide your new password!` | New password field is missing from the request body.           |
-| `Password doesn't matched!`         | The old password provided does not match the current password. |
+| Error Message | Description |
+|---------------|-------------|
+| `User not found!` | No user found with the authenticated user ID. |
+| `Please provide your old password!` | Old password field is missing from the request body. |
+| `Please provide your new password!` | New password field is missing from the request body. |
+| `Password doesn't matched!` | The old password provided does not match the current password. |
 
 ---
 
@@ -263,13 +255,11 @@ Authorization: Bearer <access_token>
 **Authorization**: None required
 
 **URL Parameters**:
-
 - `email` (string, required): User's email address
 
 **Example**: `GET /auth/forget-password/user@example.com`
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -281,12 +271,12 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message       | Description                                                       |
-| ------------------- | ----------------------------------------------------------------- |
-| `User not found!`   | No user exists with the provided email address.                   |
+| Error Message | Description |
+|---------------|-------------|
+| `User not found!` | No user exists with the provided email address. |
 | `User was deleted!` | The user account has been soft-deleted and cannot reset password. |
-| `User is INACTIVE`  | The user account is inactive and cannot reset password.           |
-| `User is BLOCKED`   | The user account is blocked and cannot reset password.            |
+| `User is INACTIVE` | The user account is inactive and cannot reset password. |
+| `User is BLOCKED` | The user account is blocked and cannot reset password. |
 
 ---
 
@@ -299,12 +289,10 @@ Authorization: Bearer <access_token>
 **Authorization**: None required
 
 **URL Parameters**:
-
 - `email` (string, required): User's email address
 - `otp` (string, required): One-time password received via email
 
 **Request Body**:
-
 ```json
 {
   "newPassword": "NewSecurePassword789"
@@ -312,7 +300,6 @@ Authorization: Bearer <access_token>
 ```
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -324,12 +311,12 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message         | Description                                                |
-| --------------------- | ---------------------------------------------------------- |
-| `Email required!`     | Email parameter is missing from the URL.                   |
-| `No user found!`      | No user exists with the provided email address.            |
-| `Wrong OTP!`          | The OTP is invalid or less than 6 characters.              |
-| `OTP has expired!`    | The OTP has expired (valid for 2 minutes only).            |
+| Error Message | Description |
+|---------------|-------------|
+| `Email required!` | Email parameter is missing from the URL. |
+| `No user found!` | No user exists with the provided email address. |
+| `Wrong OTP!` | The OTP is invalid or less than 6 characters. |
+| `OTP has expired!` | The OTP has expired (valid for 2 minutes only). |
 | `OTP is not matched!` | The provided OTP does not match the one sent to the email. |
 
 ---
@@ -345,7 +332,6 @@ Authorization: Bearer <access_token>
 **Authorization**: None required
 
 **Request Body**:
-
 ```json
 {
   "fullName": "John Doe",
@@ -358,7 +344,6 @@ Authorization: Bearer <access_token>
 ```
 
 **Field Definitions**:
-
 - `fullName` (string, optional): User's full name
 - `organizationName` (string, optional): Organization name (for ORGANIZER role)
 - `email` (string, required): Valid email address
@@ -371,7 +356,6 @@ Authorization: Bearer <access_token>
 - `interests` (array, optional): Array of category IDs
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -386,8 +370,8 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message                        | Description                                          |
-| ------------------------------------ | ---------------------------------------------------- |
+| Error Message | Description |
+|---------------|-------------|
 | `User aleready exist. Please login!` | A user with this email already exists in the system. |
 
 ---
@@ -401,11 +385,9 @@ Authorization: Bearer <access_token>
 **Authorization**: None required (email stored in cookies)
 
 **URL Parameters**:
-
 - `otp` (string, required): One-time password
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -425,10 +407,10 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message                   | Description                                          |
-| ------------------------------- | ---------------------------------------------------- |
-| `OTP required!`                 | OTP parameter is missing or email cookie is not set. |
-| `User not found by this email!` | No user found with the email stored in cookies.      |
+| Error Message | Description |
+|---------------|-------------|
+| `OTP required!` | OTP parameter is missing or email cookie is not set. |
+| `User not found by this email!` | No user found with the email stored in cookies. |
 
 ---
 
@@ -441,7 +423,6 @@ Authorization: Bearer <access_token>
 **Authorization**: None required (email stored in cookies)
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -453,11 +434,11 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message                   | Description                                                |
-| ------------------------------- | ---------------------------------------------------------- |
-| `Email required!`               | Email cookie is not set or has expired.                    |
-| `User not found by this email!` | No user found with the email stored in cookies.            |
-| `User already verified!`        | The user account is already verified and doesn't need OTP. |
+| Error Message | Description |
+|---------------|-------------|
+| `Email required!` | Email cookie is not set or has expired. |
+| `User not found by this email!` | No user found with the email stored in cookies. |
+| `User already verified!` | The user account is already verified and doesn't need OTP. |
 
 ---
 
@@ -470,7 +451,6 @@ Authorization: Bearer <access_token>
 **Authorization**: Required (All roles)
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -494,8 +474,8 @@ Authorization: Bearer <access_token>
 
 **Possible Exceptions**:
 
-| Error Message    | Description                                    |
-| ---------------- | ---------------------------------------------- |
+| Error Message | Description |
+|---------------|-------------|
 | `User not found` | No user exists with the authenticated user ID. |
 
 ---
@@ -509,7 +489,6 @@ Authorization: Bearer <access_token>
 **Authorization**: None required
 
 **Query Parameters**:
-
 - `page` (number, optional): Page number for pagination (default: 1)
 - `limit` (number, optional): Items per page (default: 10)
 - `search` (string, optional): Text search across user fields
@@ -519,7 +498,6 @@ Authorization: Bearer <access_token>
 **Example**: `GET /user?page=1&limit=10&search=john&sort=-createdAt`
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -560,11 +538,9 @@ Authorization: Bearer <access_token>
 **Content-Type**: `multipart/form-data`
 
 **URL Parameters**:
-
 - `userId` (string, required): User ID to update
 
 **Request Body** (Form Data):
-
 ```
 fullName: John Updated Doe
 bio: Updated biography
@@ -575,7 +551,6 @@ file: <avatar image file>
 ```
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -592,15 +567,15 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                                     | Description                                                                       |
-| ------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `User not found!`                                 | No user exists with the provided user ID.                                         |
-| `You can only update your own profile`            | USER/ORGANIZER attempting to update another user's profile.                       |
+| Error Message | Description |
+|---------------|-------------|
+| `User not found!` | No user exists with the provided user ID. |
+| `You can only update your own profile` | USER/ORGANIZER attempting to update another user's profile. |
 | `You can't update your password from this route!` | Password field included in update request - use change password endpoint instead. |
-| `You are not allowed to update roles!`            | USER/ORGANIZER attempting to change their role.                                   |
-| `You are not allowed to update account status!`   | USER/ORGANIZER attempting to update isActive, isDeleted, or isVerified.           |
-| `You are not allowed to update: {field}`          | USER/ORGANIZER attempting to update a restricted field.                           |
-| `Invalid phone number format`                     | Phone number does not conform to E.164 format.                                    |
+| `You are not allowed to update roles!` | USER/ORGANIZER attempting to change their role. |
+| `You are not allowed to update account status!` | USER/ORGANIZER attempting to update isActive, isDeleted, or isVerified. |
+| `You are not allowed to update: {field}` | USER/ORGANIZER attempting to update a restricted field. |
+| `Invalid phone number format` | Phone number does not conform to E.164 format. |
 
 ---
 
@@ -613,11 +588,9 @@ file: <avatar image file>
 **Authorization**: Required (All roles - users can only delete their own account)
 
 **URL Parameters**:
-
 - `userId` (string, required): User ID to delete
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -629,10 +602,10 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message              | Description                                                 |
-| -------------------------- | ----------------------------------------------------------- |
-| `User not found!`          | No user exists with the provided user ID.                   |
-| `User already deleted!`    | The user account has already been soft-deleted.             |
+| Error Message | Description |
+|---------------|-------------|
+| `User not found!` | No user exists with the provided user ID. |
+| `User already deleted!` | The user account has already been soft-deleted. |
 | `You can't delete others!` | Non-admin user attempting to delete another user's account. |
 
 ---
@@ -648,14 +621,12 @@ file: <avatar image file>
 **Authorization**: Required (All roles)
 
 **Query Parameters**:
-
 - `page` (number, optional): Page number for pagination (default: 1)
 - `limit` (number, optional): Items per page (default: 10)
 
 **Example**: `GET /friend?page=1&limit=10`
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -691,7 +662,6 @@ file: <avatar image file>
 **Authorization**: Required (All roles)
 
 **Query Parameters**:
-
 - `status` (enum, optional): Filter by status (`PENDING` or `BLOCKED`, default: `PENDING`)
 - `page` (number, optional): Page number for pagination (default: 1)
 - `limit` (number, optional): Items per page (default: 10)
@@ -699,7 +669,6 @@ file: <avatar image file>
 **Example**: `GET /friend/requests?status=PENDING&page=1&limit=10`
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -740,11 +709,9 @@ file: <avatar image file>
 **Authorization**: Required (All roles)
 
 **URL Parameters**:
-
 - `receiverId` (string, required): User ID of the person to send request to
 
 **Success Response** (201 Created):
-
 ```json
 {
   "success": true,
@@ -762,13 +729,13 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                                 | Description                                           |
-| --------------------------------------------- | ----------------------------------------------------- |
-| `You cannot send friend request to yourself!` | User trying to send request to their own ID.          |
-| `User not found!`                             | The receiver user does not exist.                     |
-| `Friend request already sent!`                | A pending request already exists between these users. |
-| `You are already friends!`                    | The users are already friends (request was accepted). |
-| `Cannot send friend request to this user!`    | One of the users has blocked the other.               |
+| Error Message | Description |
+|---------------|-------------|
+| `You cannot send friend request to yourself!` | User trying to send request to their own ID. |
+| `User not found!` | The receiver user does not exist. |
+| `Friend request already sent!` | A pending request already exists between these users. |
+| `You are already friends!` | The users are already friends (request was accepted). |
+| `Cannot send friend request to this user!` | One of the users has blocked the other. |
 
 ---
 
@@ -781,11 +748,9 @@ file: <avatar image file>
 **Authorization**: Required (All roles)
 
 **URL Parameters**:
-
 - `requestId` (string, required): Friend request ID to accept
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -802,11 +767,11 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                                    | Description                               |
-| ------------------------------------------------ | ----------------------------------------- |
-| `Friend request not found!`                      | No request exists with the provided ID.   |
+| Error Message | Description |
+|---------------|-------------|
+| `Friend request not found!` | No request exists with the provided ID. |
 | `You are not authorized to accept this request!` | User is not the receiver of this request. |
-| `Friend request already accepted!`               | The request has already been accepted.    |
+| `Friend request already accepted!` | The request has already been accepted. |
 
 ---
 
@@ -819,11 +784,9 @@ file: <avatar image file>
 **Authorization**: Required (All roles)
 
 **URL Parameters**:
-
 - `friendId` (string, required): User ID of the friend to remove
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -837,8 +800,8 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                  | Description                                        |
-| ------------------------------ | -------------------------------------------------- |
+| Error Message | Description |
+|---------------|-------------|
 | `Friend connection not found!` | No accepted friendship exists between these users. |
 
 ---
@@ -852,11 +815,9 @@ file: <avatar image file>
 **Authorization**: Required (All roles)
 
 **URL Parameters**:
-
 - `friendId` (string, required): User ID to block
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -870,8 +831,8 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message     | Description                       |
-| ----------------- | --------------------------------- |
+| Error Message | Description |
+|---------------|-------------|
 | `User not found!` | The user to block does not exist. |
 
 ---
@@ -887,7 +848,6 @@ file: <avatar image file>
 **Authorization**: Required (All roles)
 
 **Request Body**:
-
 ```json
 {
   "group_name": "Tech Enthusiasts",
@@ -897,7 +857,6 @@ file: <avatar image file>
 ```
 
 **Success Response** (201 Created):
-
 ```json
 {
   "success": true,
@@ -921,10 +880,10 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                            | Description                               |
-| ---------------------------------------- | ----------------------------------------- |
+| Error Message | Description |
+|---------------|-------------|
 | `Only verified users can create groups!` | Unverified user trying to create a group. |
-| `Group name already exists!`             | A group with this name already exists.    |
+| `Group name already exists!` | A group with this name already exists. |
 
 ---
 
@@ -937,13 +896,11 @@ file: <avatar image file>
 **Authorization**: Required
 
 **Query Parameters**:
-
 - `page` (number, optional): Page number (default: 1)
 - `limit` (number, optional): Items per page (default: 10)
 - `sort` (string, optional): Sort field (default: `-createdAt`)
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -970,11 +927,9 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `groupId` (string, required): Group ID
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1007,10 +962,10 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                         | Description                           |
-| ------------------------------------- | ------------------------------------- |
-| `Group not found!`                    | No group exists with the provided ID. |
-| `You are not a member of this group!` | User is not a member of the group.    |
+| Error Message | Description |
+|---------------|-------------|
+| `Group not found!` | No group exists with the provided ID. |
+| `You are not a member of this group!` | User is not a member of the group. |
 
 ---
 
@@ -1023,11 +978,9 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `groupId` (string, required): Group ID
 
 **Request Body**:
-
 ```json
 {
   "userIds": ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"]
@@ -1035,7 +988,6 @@ file: <avatar image file>
 ```
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1047,12 +999,12 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                                | Description                              |
-| -------------------------------------------- | ---------------------------------------- |
-| `Group not found!`                           | No group exists with the provided ID.    |
-| `Only admins can invite users to the group!` | Non-admin trying to invite users.        |
-| `User are already members!`                  | All specified users are already members. |
-| `Some users not found!`                      | One or more user IDs do not exist.       |
+| Error Message | Description |
+|---------------|-------------|
+| `Group not found!` | No group exists with the provided ID. |
+| `Only admins can invite users to the group!` | Non-admin trying to invite users. |
+| `User are already members!` | All specified users are already members. |
+| `Some users not found!` | One or more user IDs do not exist. |
 
 ---
 
@@ -1065,11 +1017,9 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `groupId` (string, required): Group ID
 
 **Request Body**:
-
 ```json
 {
   "text": "Hello everyone!",
@@ -1079,7 +1029,6 @@ file: <avatar image file>
 ```
 
 **Success Response** (201 Created):
-
 ```json
 {
   "success": true,
@@ -1100,10 +1049,10 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                         | Description                           |
-| ------------------------------------- | ------------------------------------- |
-| `Group not found!`                    | No group exists with the provided ID. |
-| `You are not a member of this group!` | User is not a member of the group.    |
+| Error Message | Description |
+|---------------|-------------|
+| `Group not found!` | No group exists with the provided ID. |
+| `You are not a member of this group!` | User is not a member of the group. |
 
 ---
 
@@ -1116,17 +1065,14 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `groupId` (string, required): Group ID
 
 **Query Parameters**:
-
 - `page` (number, optional): Page number (default: 1)
 - `limit` (number, optional): Items per page (default: 10)
 - `sort` (string, optional): Sort field (default: `createdAt`)
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1153,10 +1099,10 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                         | Description                           |
-| ------------------------------------- | ------------------------------------- |
-| `Group not found!`                    | No group exists with the provided ID. |
-| `You are not a member of this group!` | User is not a member of the group.    |
+| Error Message | Description |
+|---------------|-------------|
+| `Group not found!` | No group exists with the provided ID. |
+| `You are not a member of this group!` | User is not a member of the group. |
 
 ---
 
@@ -1169,11 +1115,9 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `groupId` (string, required): Group ID
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1187,11 +1131,11 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                         | Description                                                |
-| ------------------------------------- | ---------------------------------------------------------- |
-| `Group not found!`                    | No group exists with the provided ID.                      |
-| `You are not a member of this group!` | User is not a member of the group.                         |
-| `Superadmin cannot leave the group!`  | Group creator must transfer ownership or delete the group. |
+| Error Message | Description |
+|---------------|-------------|
+| `Group not found!` | No group exists with the provided ID. |
+| `You are not a member of this group!` | User is not a member of the group. |
+| `Superadmin cannot leave the group!` | Group creator must transfer ownership or delete the group. |
 
 ---
 
@@ -1204,12 +1148,10 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `groupId` (string, required): Group ID
 - `memberId` (string, required): User ID of member to remove
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1223,11 +1165,11 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                     | Description                           |
-| --------------------------------- | ------------------------------------- |
-| `Group not found!`                | No group exists with the provided ID. |
-| `Only admins can remove members!` | Non-admin trying to remove members.   |
-| `Cannot remove the superadmin!`   | Trying to remove the group creator.   |
+| Error Message | Description |
+|---------------|-------------|
+| `Group not found!` | No group exists with the provided ID. |
+| `Only admins can remove members!` | Non-admin trying to remove members. |
+| `Cannot remove the superadmin!` | Trying to remove the group creator. |
 
 ---
 
@@ -1240,11 +1182,9 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `groupId` (string, required): Group ID
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1258,9 +1198,9 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                           | Description                                |
-| --------------------------------------- | ------------------------------------------ |
-| `Group not found!`                      | No group exists with the provided ID.      |
+| Error Message | Description |
+|---------------|-------------|
+| `Group not found!` | No group exists with the provided ID. |
 | `Only superadmin can delete the group!` | Non-superadmin trying to delete the group. |
 
 ---
@@ -1276,7 +1216,6 @@ file: <avatar image file>
 **Authorization**: Required
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1315,11 +1254,9 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `receiverId` (string, required): User ID of the recipient
 
 **Request Body**:
-
 ```json
 {
   "text": "Hello!",
@@ -1329,7 +1266,6 @@ file: <avatar image file>
 ```
 
 **Success Response** (201 Created):
-
 ```json
 {
   "success": true,
@@ -1354,12 +1290,12 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message                         | Description                            |
-| ------------------------------------- | -------------------------------------- |
-| `Receiver not found!`                 | The recipient user does not exist.     |
-| `Sender not found!`                   | The sender user does not exist.        |
-| `Message must contain text or image!` | Empty message (no text or image).      |
-| `Reply message not found!`            | The replyTo message ID does not exist. |
+| Error Message | Description |
+|---------------|-------------|
+| `Receiver not found!` | The recipient user does not exist. |
+| `Sender not found!` | The sender user does not exist. |
+| `Message must contain text or image!` | Empty message (no text or image). |
+| `Reply message not found!` | The replyTo message ID does not exist. |
 
 ---
 
@@ -1372,17 +1308,14 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `userId` (string, required): User ID of the chat partner
 
 **Query Parameters**:
-
 - `page` (number, optional): Page number (default: 1)
 - `limit` (number, optional): Items per page (default: 10)
 - `sort` (string, optional): Sort field (default: `createdAt`)
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1422,8 +1355,8 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message     | Description                           |
-| ----------------- | ------------------------------------- |
+| Error Message | Description |
+|---------------|-------------|
 | `User not found!` | The chat partner user does not exist. |
 
 ---
@@ -1437,11 +1370,9 @@ file: <avatar image file>
 **Authorization**: Required
 
 **URL Parameters**:
-
 - `userId` (string, required): User ID whose messages to mark as seen
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1456,15 +1387,214 @@ file: <avatar image file>
 
 **Possible Exceptions**:
 
-| Error Message     | Description              |
-| ----------------- | ------------------------ |
+| Error Message | Description |
+|---------------|-------------|
 | `User not found!` | The user does not exist. |
+
+---
+
+## Notifications
+
+### 6.1 Get Notification Preferences
+
+**Endpoint**: `GET /notification/preferences`
+
+**Description**: Get user's notification preferences settings.
+
+**Authorization**: Required
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Notification preferences fetched!",
+  "data": {
+    "push_notifications": true,
+    "email_notifications": true,
+    "friend_requests": true,
+    "event_updates": true
+  }
+}
+```
+
+---
+
+### 6.2 Update Notification Preferences
+
+**Endpoint**: `PATCH /notification/preferences`
+
+**Description**: Update user's notification preferences.
+
+**Authorization**: Required
+
+**Request Body**:
+```json
+{
+  "push_notifications": true,
+  "email_notifications": false,
+  "friend_requests": true
+}
+```
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Notification preferences updated!",
+  "data": { ... }
+}
+```
+
+---
+
+### 6.3 Get My Notifications
+
+**Endpoint**: `GET /notification/my_notifications`
+
+**Description**: Get all notifications for the authenticated user.
+
+**Authorization**: Required (All roles)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Notifications fetched!",
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439099",
+      "type": "FRIEND",
+      "title": "New Friend Request",
+      "description": "John Doe sent you a friend request",
+      "isRead": false,
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 6.4 Send System Notification
+
+**Endpoint**: `POST /notification/send_system_notificatin`
+
+**Description**: Send a system notification to users.
+
+**Authorization**: Required (ADMIN only)
+
+**Request Body**:
+```json
+{
+  "title": "System Update",
+  "description": "New features available!",
+  "targetUsers": ["all"]
+}
+```
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "System notification sent!",
+  "data": null
+}
+```
+
+---
+
+## Blocked Users
+
+### 7.1 Block User
+
+**Endpoint**: `POST /blocked_user`
+
+**Description**: Block a user to prevent interactions.
+
+**Authorization**: Required (All roles)
+
+**Request Body**:
+```json
+{
+  "blockedUserId": "507f1f77bcf86cd799439012"
+}
+```
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "User blocked successfully!",
+  "data": {
+    "blocker": "507f1f77bcf86cd799439011",
+    "blockedUser": "507f1f77bcf86cd799439012"
+  }
+}
+```
+
+---
+
+### 7.2 Get Blocked Users
+
+**Endpoint**: `GET /blocked_user`
+
+**Description**: Get list of all blocked users.
+
+**Authorization**: Required (All roles)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Blocked users fetched!",
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439099",
+      "blockedUser": {
+        "_id": "507f1f77bcf86cd799439012",
+        "fullName": "Jane Doe",
+        "avatar": "https://res.cloudinary.com/..."
+      },
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 7.3 Unblock User
+
+**Endpoint**: `GET /blocked_user/unblock/:blockedUserId`
+
+**Description**: Unblock a previously blocked user.
+
+**Authorization**: Required (All roles)
+
+**URL Parameters**:
+- `blockedUserId` (string, required): ID of the blocked user to unblock
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "User unblocked successfully!",
+  "data": null
+}
+```
 
 ---
 
 ## Events
 
-### 6.1 Create Event
+### 8.1 Create Event
 
 **Endpoint**: `POST /event`
 
@@ -1475,7 +1605,6 @@ file: <avatar image file>
 **Content-Type**: `multipart/form-data`
 
 **Request Body** (Form Data):
-
 ```
 title: Summer Music Festival
 description: Join us for an amazing music festival
@@ -1497,7 +1626,6 @@ files: <image file 2>
 ```
 
 **Field Definitions**:
-
 - `title` (string, required): Event title
 - `description` (string, required): Event description
 - `images` (array, optional): Event images (uploaded as files)
@@ -1513,7 +1641,6 @@ files: <image file 2>
 - `address` (object, required): City, state, postal, country
 
 **Success Response** (201 Created):
-
 ```json
 {
   "success": true,
@@ -1549,16 +1676,16 @@ files: <image file 2>
 
 **Possible Exceptions**:
 
-| Error Message                              | Description                                                                |
-| ------------------------------------------ | -------------------------------------------------------------------------- |
-| `Please verify your profile!`              | The user's profile is not verified. Only verified users can create events. |
-| `Category must be include!`                | No category ID was provided in the request.                                |
-| `An event already exists with this title!` | An event with the same title already exists in the database.               |
-| `Coord is empty`                           | The geocoding service could not convert the address to coordinates.        |
+| Error Message | Description |
+|---------------|-------------|
+| `Please verify your profile!` | The user's profile is not verified. Only verified users can create events. |
+| `Category must be include!` | No category ID was provided in the request. |
+| `An event already exists with this title!` | An event with the same title already exists in the database. |
+| `Coord is empty` | The geocoding service could not convert the address to coordinates. |
 
 ---
 
-### 6.2 Get Events
+### 8.2 Get Events
 
 **Endpoint**: `GET /event`
 
@@ -1567,7 +1694,6 @@ files: <image file 2>
 **Authorization**: Required (All roles)
 
 **Query Parameters**:
-
 - `category` (string, optional): Filter by category ID
 - `status` (string, optional): Filter by event status
 - `visibility` (string, optional): Filter by visibility
@@ -1578,7 +1704,6 @@ files: <image file 2>
 **Example**: `GET /event?category=507f1f77bcf86cd799439012&status=ACTIVE&page=1&limit=10`
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1622,7 +1747,7 @@ files: <image file 2>
 
 ---
 
-### 6.3 Get Interest Based Events
+### 8.3 Get Interest Based Events
 
 **Endpoint**: `GET /event/interested_event`
 
@@ -1631,7 +1756,6 @@ files: <image file 2>
 **Authorization**: Required (All roles)
 
 **Query Parameters**:
-
 - `page` (number, optional): Page number for pagination
 - `limit` (number, optional): Items per page
 - `sort` (string, optional): Sort field
@@ -1639,7 +1763,6 @@ files: <image file 2>
 **Example**: `GET /event/interested_event?page=1&limit=10`
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1667,7 +1790,7 @@ files: <image file 2>
 
 ---
 
-### 6.4 Get Event Details
+### 8.4 Get Event Details
 
 **Endpoint**: `GET /event/details/:eventId`
 
@@ -1676,11 +1799,9 @@ files: <image file 2>
 **Authorization**: Required (All roles)
 
 **URL Parameters**:
-
 - `eventId` (string, required): Event ID
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1733,15 +1854,15 @@ files: <image file 2>
 
 **Possible Exceptions**:
 
-| Error Message        | Description                                            |
-| -------------------- | ------------------------------------------------------ |
-| `Event id required!` | No event ID was provided in the URL parameters.        |
-| `User not found!`    | The authenticated user does not exist in the database. |
-| `No event found!`    | No event exists with the provided event ID.            |
+| Error Message | Description |
+|---------------|-------------|
+| `Event id required!` | No event ID was provided in the URL parameters. |
+| `User not found!` | The authenticated user does not exist in the database. |
+| `No event found!` | No event exists with the provided event ID. |
 
 ---
 
-### 6.5 Update Event
+### 8.5 Update Event
 
 **Endpoint**: `PATCH /event/:eventId`
 
@@ -1752,11 +1873,9 @@ files: <image file 2>
 **Content-Type**: `multipart/form-data`
 
 **URL Parameters**:
-
 - `eventId` (string, required): Event ID to update
 
 **Request Body** (Form Data):
-
 ```
 title: Updated Festival Name
 description: Updated description
@@ -1771,13 +1890,11 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 ```
 
 **Field Permission Levels**:
-
 - **Host & Co-Host only**: `venue`, `visibility`, `event_status`
 - **Host only**: `co_host`
 - **Admin only**: `featured`
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1794,22 +1911,22 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 
 **Possible Exceptions**:
 
-| Error Message                                                        | Description                                                     |
-| -------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `Event not found!`                                                   | No event exists with the provided event ID.                     |
-| `You can't update location manually!`                                | Location updates are done automatically based on venue changes. |
-| `Only Admin can change featured status!`                             | Non-admin user trying to change featured status.                |
-| `Only host and co-host can change venue!`                            | Unauthorized user trying to change venue.                       |
-| `Only host and co-host can change event visibility!`                 | Unauthorized user trying to change visibility.                  |
-| `You can't change co-host!`                                          | Co-host trying to change the co-host field.                     |
-| `You can't update event status to "COMPLETED" before the event end!` | Trying to mark event as completed before end date.              |
-| `You can't cancel an event before refund attendenced money!`         | Trying to cancel event without processing refunds.              |
+| Error Message | Description |
+|---------------|-------------|
+| `Event not found!` | No event exists with the provided event ID. |
+| `You can't update location manually!` | Location updates are done automatically based on venue changes. |
+| `Only Admin can change featured status!` | Non-admin user trying to change featured status. |
+| `Only host and co-host can change venue!` | Unauthorized user trying to change venue. |
+| `Only host and co-host can change event visibility!` | Unauthorized user trying to change visibility. |
+| `You can't change co-host!` | Co-host trying to change the co-host field. |
+| `You can't update event status to "COMPLETED" before the event end!` | Trying to mark event as completed before end date. |
+| `You can't cancel an event before refund attendenced money!` | Trying to cancel event without processing refunds. |
 
 ---
 
 ## Event Categories
 
-### 7.1 Create Event Category
+### 9.1 Create Event Category
 
 **Endpoint**: `POST /category`
 
@@ -1818,7 +1935,6 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 **Authorization**: Required (ADMIN only)
 
 **Request Body**:
-
 ```json
 {
   "category_name": "Music",
@@ -1827,7 +1943,6 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 ```
 
 **Success Response** (201 Created):
-
 ```json
 {
   "success": true,
@@ -1844,14 +1959,14 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 
 **Possible Exceptions**:
 
-| Error Message                      | Description                                                   |
-| ---------------------------------- | ------------------------------------------------------------- |
-| `Category name must required!`     | No category name was provided in the request body.            |
+| Error Message | Description |
+|---------------|-------------|
+| `Category name must required!` | No category name was provided in the request body. |
 | `{category_name} - already exist!` | A category with the same name already exists in the database. |
 
 ---
 
-### 7.2 Get Event Categories
+### 9.2 Get Event Categories
 
 **Endpoint**: `GET /category`
 
@@ -1860,13 +1975,11 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 **Authorization**: Required (All roles)
 
 **Query Parameters**:
-
 - `isDeleted` (boolean, optional): Include deleted categories (default: false)
 
 **Example**: `GET /category?isDeleted=false`
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1897,7 +2010,7 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 
 ---
 
-### 7.3 Update Event Category
+### 9.3 Update Event Category
 
 **Endpoint**: `PATCH /category/:categoryId`
 
@@ -1906,11 +2019,9 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 **Authorization**: Required (ADMIN only)
 
 **URL Parameters**:
-
 - `categoryId` (string, required): Category ID to update
 
 **Request Body**:
-
 ```json
 {
   "category_name": "Live Music",
@@ -1919,7 +2030,6 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 ```
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1936,13 +2046,13 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 
 **Possible Exceptions**:
 
-| Error Message         | Description                                       |
-| --------------------- | ------------------------------------------------- |
+| Error Message | Description |
+|---------------|-------------|
 | `Category not found!` | No category exists with the provided category ID. |
 
 ---
 
-### 7.4 Delete Event Category
+### 9.4 Delete Event Category
 
 **Endpoint**: `DELETE /category/:categoryId`
 
@@ -1951,11 +2061,9 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 **Authorization**: Required (ADMIN only)
 
 **URL Parameters**:
-
 - `categoryId` (string, required): Category ID to delete
 
 **Success Response** (200 OK):
-
 ```json
 {
   "success": true,
@@ -1967,10 +2075,545 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 
 **Possible Exceptions**:
 
-| Error Message                       | Description                                       |
-| ----------------------------------- | ------------------------------------------------- |
-| `Category not found!`               | No category exists with the provided category ID. |
-| `This category is already deleted!` | The category has already been soft-deleted.       |
+| Error Message | Description |
+|---------------|-------------|
+| `Category not found!` | No category exists with the provided category ID. |
+| `This category is already deleted!` | The category has already been soft-deleted. |
+
+---
+
+## Favourites
+
+### 10.1 Add Event to Favourites
+
+**Endpoint**: `POST /favourite/add`
+
+**Description**: Add an event to user's favourites list.
+
+**Authorization**: Required (All roles)
+
+**Request Body**:
+```json
+{
+  "eventId": "507f1f77bcf86cd799439015"
+}
+```
+
+**Success Response** (201 Created):
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Event added to favourites!",
+  "data": {
+    "user": "507f1f77bcf86cd799439011",
+    "event": "507f1f77bcf86cd799439015"
+  }
+}
+```
+
+---
+
+### 10.2 Get Favourite Events
+
+**Endpoint**: `GET /favourite`
+
+**Description**: Get all favourite events for the authenticated user.
+
+**Authorization**: Required (All roles)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Favourite events fetched!",
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439099",
+      "event": {
+        "_id": "507f1f77bcf86cd799439015",
+        "title": "Summer Music Festival",
+        "images": ["https://res.cloudinary.com/..."]
+      }
+    }
+  ]
+}
+```
+
+---
+
+### 10.3 Remove from Favourites
+
+**Endpoint**: `DELETE /favourite/:eventId`
+
+**Description**: Remove an event from favourites.
+
+**Authorization**: Required (All roles)
+
+**URL Parameters**:
+- `eventId` (string, required): Event ID to remove
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Event removed from favourites!",
+  "data": null
+}
+```
+
+---
+
+## Booking
+
+### 11.1 Book Event
+
+**Endpoint**: `POST /booking`
+
+**Description**: Book/register for an event.
+
+**Authorization**: Required (All roles)
+
+**Request Body**:
+```json
+{
+  "eventId": "507f1f77bcf86cd799439015",
+  "tickets": 2
+}
+```
+
+**Success Response** (201 Created):
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Event booked successfully!",
+  "data": {
+    "_id": "507f1f77bcf86cd799439099",
+    "user": "507f1f77bcf86cd799439011",
+    "event": "507f1f77bcf86cd799439015",
+    "status": "CONFIRMED"
+  }
+}
+```
+
+---
+
+### 11.2 Get My Bookings
+
+**Endpoint**: `GET /booking/my_bookings`
+
+**Description**: Get all bookings for the authenticated user.
+
+**Authorization**: Required (All roles)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Bookings fetched!",
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439099",
+      "event": {
+        "_id": "507f1f77bcf86cd799439015",
+        "title": "Summer Music Festival"
+      },
+      "status": "CONFIRMED",
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## Payments
+
+### 12.1 Create Stripe Connect Account
+
+**Endpoint**: `GET /payment/create_stripe_connect/:countryCode`
+
+**Description**: Create a Stripe Connect account for receiving payments.
+
+**Authorization**: Required (All roles)
+
+**URL Parameters**:
+- `countryCode` (string, required): Country code (e.g., "US", "GB")
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Stripe Connect account created!",
+  "data": {
+    "accountLink": "https://connect.stripe.com/..."
+  }
+}
+```
+
+---
+
+### 12.2 Check Stripe Account Status
+
+**Endpoint**: `GET /payment/check_stripe_connect`
+
+**Description**: Check if user has a connected Stripe account.
+
+**Authorization**: Required (All roles)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Stripe status checked!",
+  "data": {
+    "hasAccount": true,
+    "accountStatus": "ACTIVE"
+  }
+}
+```
+
+---
+
+### 12.3 Get Connected Bank Account
+
+**Endpoint**: `GET /payment/connected_payout_bank_account`
+
+**Description**: Get the connected bank account details from Stripe.
+
+**Authorization**: Required (All roles)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Bank account fetched!",
+  "data": {
+    "bankName": "Chase",
+    "last4": "4242"
+  }
+}
+```
+
+---
+
+### 12.4 Get Transaction History
+
+**Endpoint**: `GET /payment/transaction_history`
+
+**Description**: Get user's transaction history.
+
+**Authorization**: Required (All roles)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Transactions fetched!",
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439099",
+      "amount": 50,
+      "type": "PAYMENT",
+      "status": "COMPLETED",
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 12.5 Get All Transactions (Admin)
+
+**Endpoint**: `GET /payment/all_transaction_history`
+
+**Description**: Get all transactions in the system.
+
+**Authorization**: Required (ADMIN only)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "All transactions fetched!",
+  "data": { ... }
+}
+```
+
+---
+
+## Sponsored
+
+### 13.1 Create Sponsored Package (Admin)
+
+**Endpoint**: `POST /sponsored/create_package`
+
+**Description**: Create a new sponsored event package.
+
+**Authorization**: Required (ADMIN only)
+
+**Request Body**:
+```json
+{
+  "name": "Premium Package",
+  "price": 99.99,
+  "duration": 7,
+  "features": ["Featured placement", "Priority listing"]
+}
+```
+
+**Success Response** (201 Created):
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Package created!",
+  "data": { ... }
+}
+```
+
+---
+
+### 13.2 Get Available Packages
+
+**Endpoint**: `GET /sponsored/available_package`
+
+**Description**: Get all available sponsored packages.
+
+**Authorization**: Required (All roles)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Packages fetched!",
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439099",
+      "name": "Premium Package",
+      "price": 99.99,
+      "duration": 7
+    }
+  ]
+}
+```
+
+---
+
+### 13.3 Update Package (Admin)
+
+**Endpoint**: `PATCH /sponsored/update_package/:packageId`
+
+**Description**: Update an existing sponsored package.
+
+**Authorization**: Required (ADMIN only)
+
+**URL Parameters**:
+- `packageId` (string, required): Package ID to update
+
+---
+
+### 13.4 Request Event Sponsorship
+
+**Endpoint**: `POST /sponsored/event_sponsore`
+
+**Description**: Request sponsorship for an event.
+
+**Authorization**: Required (All roles)
+
+**Request Body**:
+```json
+{
+  "eventId": "507f1f77bcf86cd799439015",
+  "packageId": "507f1f77bcf86cd799439099"
+}
+```
+
+---
+
+### 13.5 Get Random Sponsored Events
+
+**Endpoint**: `GET /sponsored/random_sponsored_events`
+
+**Description**: Get random sponsored events for display.
+
+**Authorization**: Required (All roles)
+
+---
+
+### 13.6 Get All Sponsored Events
+
+**Endpoint**: `GET /sponsored/sponsored_events`
+
+**Description**: Get all sponsored events.
+
+**Authorization**: Required (All roles)
+
+---
+
+## Dashboard (Admin Only)
+
+### 14.1 Get Dashboard Statistics
+
+**Endpoint**: `GET /dashboard/dasboard_states`
+
+**Description**: Get overall dashboard statistics.
+
+**Authorization**: Required (ADMIN only)
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Dashboard stats fetched!",
+  "data": {
+    "totalUsers": 1500,
+    "totalEvents": 320,
+    "totalBookings": 890,
+    "revenue": 45000
+  }
+}
+```
+
+---
+
+### 14.2 Get User Activity
+
+**Endpoint**: `GET /dashboard/users_activity`
+
+**Description**: Get user activity analytics.
+
+**Authorization**: Required (ADMIN only)
+
+---
+
+### 14.3 Get Revenue
+
+**Endpoint**: `GET /dashboard/revenue`
+
+**Description**: Get revenue analytics.
+
+**Authorization**: Required (ADMIN only)
+
+---
+
+### 14.4 Get Sponsor Analytics
+
+**Endpoint**: `GET /dashboard/sponsore_analytics`
+
+**Description**: Get sponsored events analytics.
+
+**Authorization**: Required (ADMIN only)
+
+---
+
+### 14.5 Get Boosted Analytics
+
+**Endpoint**: `GET /dashboard/boosted_analytics`
+
+**Description**: Get boosted events analytics.
+
+**Authorization**: Required (ADMIN only)
+
+---
+
+### 14.6 Get Booking Analytics
+
+**Endpoint**: `GET /dashboard/booking_analytics`
+
+**Description**: Get booking analytics.
+
+**Authorization**: Required (ADMIN only)
+
+---
+
+## Voting
+
+### 15.1 Add Vote
+
+**Endpoint**: `GET /voting/add_vote/:eventId`
+
+**Description**: Add a vote to an event.
+
+**Authorization**: Required (All roles)
+
+**URL Parameters**:
+- `eventId` (string, required): Event ID to vote for
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Vote added!",
+  "data": {
+    "eventId": "507f1f77bcf86cd799439015",
+    "totalVotes": 42
+  }
+}
+```
+
+---
+
+### 15.2 Get Event Vote Count
+
+**Endpoint**: `GET /voting/get_event_vote/:eventId`
+
+**Description**: Get total vote count for an event.
+
+**Authorization**: Required (All roles)
+
+**URL Parameters**:
+- `eventId` (string, required): Event ID
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Vote count fetched!",
+  "data": {
+    "totalVotes": 42
+  }
+}
+```
+
+---
+
+### 15.3 Check User Vote
+
+**Endpoint**: `GET /voting/check_vote/:eventId`
+
+**Description**: Check if user has already voted for an event.
+
+**Authorization**: Required (All roles)
+
+**URL Parameters**:
+- `eventId` (string, required): Event ID
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Vote status checked!",
+  "data": {
+    "hasVoted": true
+  }
+}
+```
 
 ---
 
@@ -1996,22 +2639,21 @@ The API uses consistent error response format across all endpoints:
 
 ### Common HTTP Status Codes
 
-| Status Code | Description                                            |
-| ----------- | ------------------------------------------------------ |
-| 200         | Success - Request completed successfully               |
-| 201         | Created - Resource created successfully                |
-| 400         | Bad Request - Invalid input or validation error        |
-| 401         | Unauthorized - Missing or invalid authentication token |
-| 403         | Forbidden - User doesn't have permission               |
-| 404         | Not Found - Resource not found                         |
-| 409         | Conflict - Resource already exists                     |
-| 429         | Too Many Requests - Rate limit exceeded                |
-| 500         | Internal Server Error - Server-side error              |
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Success - Request completed successfully |
+| 201 | Created - Resource created successfully |
+| 400 | Bad Request - Invalid input or validation error |
+| 401 | Unauthorized - Missing or invalid authentication token |
+| 403 | Forbidden - User doesn't have permission |
+| 404 | Not Found - Resource not found |
+| 409 | Conflict - Resource already exists |
+| 429 | Too Many Requests - Rate limit exceeded |
+| 500 | Internal Server Error - Server-side error |
 
 ### Common Error Scenarios
 
 #### 1. Validation Error (400)
-
 ```json
 {
   "success": false,
@@ -2031,7 +2673,6 @@ The API uses consistent error response format across all endpoints:
 ```
 
 #### 2. Authentication Error (401)
-
 ```json
 {
   "success": false,
@@ -2041,7 +2682,6 @@ The API uses consistent error response format across all endpoints:
 ```
 
 #### 3. Authorization Error (403)
-
 ```json
 {
   "success": false,
@@ -2051,7 +2691,6 @@ The API uses consistent error response format across all endpoints:
 ```
 
 #### 4. Not Found Error (404)
-
 ```json
 {
   "success": false,
@@ -2061,7 +2700,6 @@ The API uses consistent error response format across all endpoints:
 ```
 
 #### 5. Rate Limit Error (429)
-
 ```json
 {
   "success": false,
@@ -2082,7 +2720,6 @@ The API implements rate limiting to prevent abuse:
 - **Response**: 429 status code when limit exceeded
 
 To check your remaining requests, examine the response headers:
-
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -2096,7 +2733,6 @@ X-RateLimit-Reset: 1625097600
 All API responses follow a consistent structure:
 
 ### Success Response
-
 ```json
 {
   "success": true,
@@ -2109,7 +2745,6 @@ All API responses follow a consistent structure:
 ```
 
 ### Error Response
-
 ```json
 {
   "success": false,
@@ -2149,7 +2784,6 @@ The API supports file uploads for avatars and event images:
   - Event images: Multiple file upload (array)
 
 **Upload Example** (User Avatar):
-
 ```
 Content-Type: multipart/form-data
 
@@ -2165,7 +2799,6 @@ bio: Event enthusiast
 ### Socket.IO Integration
 
 The API includes real-time functionality using Socket.IO for:
-
 - Real-time messaging
 - Event notifications
 - Live updates
@@ -2173,7 +2806,6 @@ The API includes real-time functionality using Socket.IO for:
 ### Firebase Cloud Messaging (FCM)
 
 Push notifications are supported through Firebase:
-
 - Event reminders
 - New message notifications
 - Updates to followed events
@@ -2181,7 +2813,6 @@ Push notifications are supported through Firebase:
 ### Email Notifications
 
 Automated emails are sent for:
-
 - Account verification (OTP)
 - Password reset (OTP)
 - Event confirmations
@@ -2205,9 +2836,9 @@ Create a `.env` file with the following variables:
 
 ```env
 # Server
-PORT=3002
+PORT=5002
 NODE_ENV=development
-BACKEND_URL=http://localhost:3002
+BACKEND_URL=http://localhost:5002
 
 # Database
 MONGO_URI=mongodb://localhost:27017/linkup
@@ -2268,7 +2899,7 @@ npm run format
 npm run lint
 ```
 
-The server will start on `http://localhost:3002` (or your configured PORT).
+The server will start on `http://localhost:5002` (or your configured PORT).
 
 ---
 
