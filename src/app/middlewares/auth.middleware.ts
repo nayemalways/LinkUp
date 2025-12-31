@@ -11,17 +11,18 @@ export const checkAuth =
   (...restRole: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const accessToken = req.headers.authorization; // GET TOKEN
+      const authHeader = req.headers.authorization as string ; // GET TOKEN
+      const accessToken = authHeader.split(" ")[1];
+      
+      if(!authHeader || !authHeader.startsWith("Bearer ")) {
+        throw new AppError(httpStatus.UNAUTHORIZED, "Token not provided!");
+      }
 
       if (!accessToken) {
         throw new AppError(401, 'Unauthorized! token must required.');
       }
 
-      // if(!authHeader || !authHeader.startsWith("Bearer ")) {
-      //   throw new AppError(httpStatus.UNAUTHORIZED, "Token not provided!");
-      // }
 
-      // const accessToken = authHeader.split(" ")[1];
 
       // VERIFY ACCESS TOKEN
       const verifyUser = verifyToken(
