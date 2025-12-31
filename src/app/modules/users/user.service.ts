@@ -141,7 +141,23 @@ const getMeService = async (userId: string) => {
     { upsert: true } // create if missing
   );
 
-  return user[0];
+
+  // REPUTATION AS HOST OR ORGANIZER
+  const myEvents = await Event.find({ host: userId }); // MY EVENTS
+  const myEventIds = myEvents.map((e) => e._id.toString()); // EXTRACT EVENT ID
+  const getMyEventVoting = await EventVote.find({ event: { $in: myEventIds } }); // GET VOTE FOR MY EVENTS
+
+  const totalUpvote = getMyEventVoting.filter(
+    (v) => v.voteType === VotingType.UPVOTE
+  ); // FILTER ONLY UPVOTE
+  const totalDownvote = getMyEventVoting.filter(
+    (v) => v.voteType === VotingType.DOWNVOTE
+  ); // FILTER ONLY DOWNVOTE
+
+  const host_or_organizer_reputation =
+    totalUpvote.length - totalDownvote.length;
+
+  return {...user[0], reputation: host_or_organizer_reputation};
 };
 
 // GET PROFILD
