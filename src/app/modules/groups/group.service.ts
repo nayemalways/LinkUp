@@ -115,7 +115,7 @@ const getSingleGroupService = async (user: JwtPayload, groupId: string) => {
   return group;
 };
 
-// INVITE USERS TO GROUP
+// ADD USERS TO GROUP
 const addUsersToGroupService = async (
   user: JwtPayload,
   groupId: string,
@@ -177,7 +177,7 @@ const addUsersToGroupService = async (
       // Send notifications to invited users
       sendMultiNotification({
         receiverIds: newUserIds.map((id) => new Types.ObjectId(id)),
-        type: NotificationType.CHAT,
+        type: NotificationType.GROUP,
         title: 'Someone added you to a group!',
         description: `${inviter?.fullName} added you to ${group.group_name}`,
         data: {
@@ -185,6 +185,7 @@ const addUsersToGroupService = async (
           groupName: group.group_name,
           inviterId: userId,
           inviterName: inviter?.fullName,
+          image: group.group_image && group.group_image
         },
       });
     } catch (error) {

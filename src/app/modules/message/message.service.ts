@@ -89,7 +89,7 @@ const sendDirectMessageService = async (
     title: 'New Message',
     description: `${sender.fullName} sent you a message`,
     data: {
-      senderId: sender?._id,
+      senderId: sender?._id.toString(),
       message: message.message.text || message.message.image,
       image: sender?.avatar,
     },

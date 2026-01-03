@@ -3,6 +3,7 @@ import { Types } from 'mongoose';
 
 export enum NotificationType {
   CHAT = 'CHAT',
+  GROUP = "GROUP",
   FRIEND = 'FRIEND',
   EVENT = 'EVENT',
   SYSTEM = 'SYSTEM',
