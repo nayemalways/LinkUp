@@ -185,7 +185,7 @@ const addUsersToGroupService = async (
           groupName: group.group_name,
           inviterId: userId,
           inviterName: inviter?.fullName,
-          image: group.group_image && group.group_image
+          image: group.group_image && group.group_image,
         },
       });
     } catch (error) {

@@ -23,9 +23,12 @@ router.post(
   authController.resetPassword
 );
 
-
 // GOOGLE LOGIN HANDLE
 router.get('/google', authController.googleLogin);
-router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login'}), authController.googleCallback);
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  authController.googleCallback
+);
 
 export const authRouter = router;

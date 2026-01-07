@@ -2,11 +2,7 @@ import { Request, Response } from 'express';
 import { CatchAsync } from '../../utils/CatchAsync';
 import { SendResponse } from '../../utils/SendResponse';
 import { userServices } from './user.service';
-import { createUserTokens } from '../../utils/user.tokens';
-import { SetCookies } from '../../utils/setCookie';
 import { JwtPayload } from 'jsonwebtoken';
-import { Role } from './user.interface';
-import { Types } from 'mongoose';
 
 // REGISTER ACCOUNT
 const registerUser = CatchAsync(async (req: Request, res: Response) => {
@@ -101,42 +97,27 @@ const userDelete = CatchAsync(async (req: Request, res: Response) => {
 });
 
 // VERIFY USER
-const verifyUser = CatchAsync(async (req: Request, res: Response) => {
-  const email = req.cookies['email'] as string;
-  const otp = req.params.otp;
-
-  const result = await userServices.verifyUserService(email, otp);
-
-  const jwtPayload = {
-    userId: result?._id as Types.ObjectId,
-    email: result?.email as string,
-    role: result?.role as Role,
-    isVerified: result?.isVerified,
-  };
-
-  // Set refreshToken and accessToken in Cookies
-  const userTokens = await createUserTokens(jwtPayload);
-  SetCookies(res, userTokens);
+const userVefification = CatchAsync(async (req: Request, res: Response) => {
+  const user = req.user as JwtPayload;
+  const result = await userServices.verifyUserService(user.userId);
 
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'User verified successful!',
-    data: {
-      data: result,
-    },
+    message: 'OTP has been sent!',
+    data: result,
   });
 });
 
 // RESEND OTP
-const resendOTP = CatchAsync(async (req: Request, res: Response) => {
-  const email = req.cookies['email'] as string;
-  await userServices.resendOTPService(email);
+const verifyOTP = CatchAsync(async (req: Request, res: Response) => {
+  const { phoneNumber, otp } = req.body;
+  await userServices.verifyOTPService(phoneNumber, otp);
 
   SendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'OTP Sent successful!',
+    message: 'Your are verified!',
     data: null,
   });
 });
@@ -144,8 +125,8 @@ const resendOTP = CatchAsync(async (req: Request, res: Response) => {
 // EXPORT ALL CONTROLLERS
 export const userControllers = {
   registerUser,
-  verifyUser,
-  resendOTP,
+  userVefification,
+  verifyOTP,
   getMe,
   userUpdate,
   userDelete,

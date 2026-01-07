@@ -96,5 +96,5 @@ export const dashboardControllers = {
   getRevenue,
   sponsoredAnalytics,
   bookingEventsAnalytics,
-  boostedAnalytics
+  boostedAnalytics,
 };

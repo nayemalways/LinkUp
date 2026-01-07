@@ -157,7 +157,8 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     TWILIO_AUTH_TOKEN: process.env.AUTH_TOKEN as string,
     TWILIO_ACCOUNT_SID: process.env.ACCOUNT_SID as string,
-    TWILIO_MESSAGING_SERVICE_SID: process.env.TWILIO_MESSAGING_SERVICE_SID as string,
+    TWILIO_MESSAGING_SERVICE_SID: process.env
+      .TWILIO_MESSAGING_SERVICE_SID as string,
     TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER as string,
 
     CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET as string,

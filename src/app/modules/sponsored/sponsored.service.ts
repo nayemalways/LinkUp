@@ -21,7 +21,6 @@ import { QueryBuilder } from '../../utils/QueryBuilder';
 const createSponsoredPackageService = async (
   paylod: Partial<ISponsoredPackage>
 ) => {
-
   // CHECK IS SPONSORED PACKAGE EXIST BY THE TYPE
   const isExist = await SponsoredPackage.findOne({
     type: paylod.type?.toLocaleUpperCase(),

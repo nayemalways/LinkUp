@@ -866,7 +866,6 @@ const acceptCoHostInvitationService = async (
           },
         });
 
-
         if (onlineUsers[inviterId]) {
           await sendPersonalNotification(notificationPayload);
         } else {

@@ -655,14 +655,14 @@ const boostEventsAnalytics = async () => {
   // Get data for this week
   const bosstThisWeek = await Sponsored.find({
     sponsor_status: SponsorStatus.APPROVED,
-    sponsor_type: ISponsored.BOOSTED, // Don't confused here: THIS ENUM SHOULD BE 'SponsoredPackage Type'. But Unfortunatly I forget to make BOOST TO BOOSTED.  Thats why I used ISPONSRED here. 
+    sponsor_type: ISponsored.BOOSTED, // Don't confused here: THIS ENUM SHOULD BE 'SponsoredPackage Type'. But Unfortunatly I forget to make BOOST TO BOOSTED.  Thats why I used ISPONSRED here.
     createdAt: { $gte: thisWeekStart },
   });
 
   // Get data for last week
   const boostedLastWeek = await Sponsored.find({
     sponsor_status: SponsorStatus.APPROVED,
-    sponsor_type: ISponsored.BOOSTED, // Don't confused here: THIS ENUM SHOULD BE 'SponsoredPackage Type'. But Unfortunatly I forget to make BOOST TO BOOSTED.  Thats why I used ISPONSRED here. 
+    sponsor_type: ISponsored.BOOSTED, // Don't confused here: THIS ENUM SHOULD BE 'SponsoredPackage Type'. But Unfortunatly I forget to make BOOST TO BOOSTED.  Thats why I used ISPONSRED here.
     createdAt: { $gte: lastWeekStart, $lt: thisWeekStart }, // Last week range
   });
 
@@ -810,5 +810,5 @@ export const dashboardService = {
   getRevenueService,
   sponsoredEventsAnalytics,
   bookingEventsAnalytics,
-  boostEventsAnalytics
+  boostEventsAnalytics,
 };

@@ -17,6 +17,8 @@ import env from '../../config/env';
 import axios from 'axios';
 import EventVote from '../voting/voting.model';
 import { VotingType } from '../voting/voting.interface';
+import { redisClient } from '../../config/redis.config';
+import { sendEmail } from '../../utils/sendMail';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -141,7 +143,6 @@ const getMeService = async (userId: string) => {
     { upsert: true } // create if missing
   );
 
-
   // REPUTATION AS HOST OR ORGANIZER
   const myEvents = await Event.find({ host: userId }); // MY EVENTS
   const myEventIds = myEvents.map((e) => e._id.toString()); // EXTRACT EVENT ID
@@ -157,10 +158,10 @@ const getMeService = async (userId: string) => {
   const host_or_organizer_reputation =
     totalUpvote.length - totalDownvote.length;
 
-  return {...user[0], reputation: host_or_organizer_reputation};
+  return { ...user[0], reputation: host_or_organizer_reputation };
 };
 
-// GET PROFILD
+// GET PROFILE
 const getProfileService = async (userId: string) => {
   if (!userId) {
     throw new AppError(400, 'User ID is required');
@@ -366,7 +367,7 @@ const userUpdateService = async (
   return updatedUser;
 };
 
-// DELTE USER
+// DELETE USER
 const userDeleteService = async (userId: string, decodedToken: JwtPayload) => {
   const user = await User.findById(userId);
   if (!user) {
@@ -392,93 +393,69 @@ const userDeleteService = async (userId: string, decodedToken: JwtPayload) => {
 };
 
 // VERIFY USER
-const verifyUserService = async (email: string, otp: string) => {
-  if (!email || !otp) {
-    throw new AppError(400, 'OTP required!');
+const verifyUserService = async (userId: string) => {
+  const findUser = await User.findOne({ _id: userId });
+  if (!findUser) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User not found!');
   }
 
-  const isUser = await User.findOne({ email }).select('-password -auths');
-  if (!isUser) {
-    throw new AppError(400, 'User not found by this email!');
-  }
+  const phoneNumber = findUser.phone;
+  const otp = randomOTPGenerator(100000, 999999);
 
-  // if (isUser.otp !== otp || otp.length < 4) {
-  //   throw new AppError(400, 'Invalid OTP!');
-  // }
+  await redisClient.set(`${phoneNumber}`, otp, {
+    EX: 300,
+  });
 
-  const updateUser = await User.findOneAndUpdate(
-    { email },
-    { isVerified: true, otp: 0, $unset: { deleteAfter: '' } },
-    {
-      runValidators: true,
-      new: true,
-      projection: {
-        password: 0,
-        otp: 0,
-        auths: 0,
-        otpExpireAt: 0,
-        updatedAt: 0,
-        createdAt: 0,
-      },
-    }
-  );
+  sendEmail({
+    to: findUser.email,
+    subject: `Phone number verification`,
+    templateName: 'test',
+    templateData: {
+      otp: otp,
+      name: findUser.fullName,
+    },
+  });
 
-  return updateUser;
+  return null;
 };
 
-// RESEND OTP
-const resendOTPService = async (email: string) => {
-  if (!email) {
-    throw new AppError(400, 'Email required!');
+// VERIFY OTP
+const verifyOTPService = async (phoneNumber: string, otp: string) => {
+  const findUser = await User.findOne({ phone: phoneNumber });
+  if (!findUser) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'User not found by this phone number!'
+    );
   }
 
-  const isUser = await User.findOne({ email });
-  if (!isUser) {
-    throw new AppError(400, 'User not found by this email!');
+  if (otp.length !== 6) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid OTP!');
   }
 
-  if (isUser.isVerified) {
-    throw new AppError(400, 'User already verified!');
+  const getOTP = await redisClient.get(`${phoneNumber}`);
+  if (!getOTP) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'OTP has expired or invalid!');
   }
 
-  const generateOTP = randomOTPGenerator(1000, 9999);
-  const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 min
+  if (getOTP !== otp) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Invalid isn't matched!");
+  }
 
-  await User.findOneAndUpdate(
-    { email },
-    { otp: generateOTP, otpExpireAt: otpExpiry },
-    {
-      runValidators: true,
-      new: true,
-      projection: {
-        password: 0,
-        otp: 0,
-        auths: 0,
-        otpExpireAt: 0,
-        updatedAt: 0,
-        createdAt: 0,
-      },
-    }
-  );
+  if (findUser.isVerified) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'You are already verified!');
+  }
 
-  // Send OTP to verify
-  // sendEmail({
-  //   to: isUser.email,
-  //   subject: 'User verify OTP',
-  //   templatefullName: 'otp',
-  //   templateData: {
-  //     fullName: isUser.fullName,
-  //     otp: generateOTP,
-  //   },
-  // });
+  findUser.isVerified = true;
+  await findUser.save();
 
-  return isUser;
+  return null;
 };
 
 // EXPORT ALL SERVICE
 export const userServices = {
   createUserService,
-  resendOTPService,
+  verifyOTPService,
   verifyUserService,
   getMeService,
   userUpdateService,

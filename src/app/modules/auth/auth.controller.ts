@@ -103,26 +103,29 @@ const resetPassword = CatchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 // GOOGLE LOGIN HANDLING
-const googleLogin = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-   passport.authenticate('google', {
-    scope: ['profile', 'email'],
-    prompt: 'consent select_account'
-   })(req, res, next)
-})
-
-const googleCallback = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const user = req.user as JwtPayload;
-  if (!user) {
-    throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+const googleLogin = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate('google', {
+      scope: ['profile', 'email'],
+      prompt: 'consent select_account',
+    })(req, res, next);
   }
+);
 
-  const { refreshToken, accessToken } = await createUserTokens(user);
-  res.redirect(`${env.FRONTEND_URL}?refresh=${refreshToken}&access=${accessToken}`);
-})
+const googleCallback = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as JwtPayload;
+    if (!user) {
+      throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+    }
 
-
+    const { refreshToken, accessToken } = await createUserTokens(user);
+    res.redirect(
+      `${env.FRONTEND_URL}?refresh=${refreshToken}&access=${accessToken}`
+    );
+  }
+);
 
 export const authController = {
   credentialsLogin,
@@ -132,5 +135,5 @@ export const authController = {
   verifyOTP,
   resetPassword,
   googleCallback,
-  googleLogin
+  googleLogin,
 };

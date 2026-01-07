@@ -75,22 +75,22 @@ passport.use(
       let user = await User.findOne({ email });
 
       if (!user) {
-          user = await User.create({
-            name: profile.displayName,
-            email,
-            avatar: profile.photos?.[0].value,
-            role: Role.USER,
-            isVerified: false,
-            auths: [
-              {
-                provider: 'google',
-                providerId: profile.id,
-              },
-            ],
-          });
-        }
+        user = await User.create({
+          fullName: profile.displayName,
+          email,
+          avatar: profile.photos?.[0].value,
+          role: Role.USER,
+          isVerified: false,
+          auths: [
+            {
+              provider: 'google',
+              providerId: profile.id,
+            },
+          ],
+        });
+      }
 
-        return cb(null, user);
+      return cb(null, user);
     }
   )
 );
