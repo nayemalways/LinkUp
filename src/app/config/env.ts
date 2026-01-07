@@ -19,6 +19,7 @@ interface EnvInterfaces {
   TWILIO_AUTH_TOKEN: string;
   TWILIO_ACCOUNT_SID: string;
   TWILIO_MESSAGING_SERVICE_SID: string;
+  TWILIO_PHONE_NUMBER: string;
 
   CLOUDINARY_SECRET: string;
   CLOUDINARY_API_KEY: string;
@@ -86,6 +87,7 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'TWILIO_ACCOUNT_SID',
     'TWILIO_AUTH_TOKEN',
     'TWILIO_MESSAGING_SERVICE_SID',
+    'TWILIO_PHONE_NUMBER',
 
     'CLOUDINARY_NAME',
     'CLOUDINARY_SECRET',
@@ -155,8 +157,8 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     TWILIO_AUTH_TOKEN: process.env.AUTH_TOKEN as string,
     TWILIO_ACCOUNT_SID: process.env.ACCOUNT_SID as string,
-    TWILIO_MESSAGING_SERVICE_SID: process.env
-      .TWILIO_MESSAGING_SERVICE_SID as string,
+    TWILIO_MESSAGING_SERVICE_SID: process.env.TWILIO_MESSAGING_SERVICE_SID as string,
+    TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER as string,
 
     CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET as string,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
