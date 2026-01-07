@@ -2,8 +2,15 @@
 /* eslint-disable no-console */
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
+import {
+  Strategy as GoogleStrategy,
+  Profile,
+  VerifyCallback,
+} from 'passport-google-oauth20';
 import User from '../modules/users/user.model';
 import bcrypt from 'bcrypt';
+import env from './env';
+import { Role } from '../modules/users/user.interface';
 
 // CREDENTIALS LOGIN LOCAL STRATEGY
 passport.use(
@@ -16,14 +23,14 @@ passport.use(
           return done(null, false, { message: 'User does not exist!' });
         }
 
-        // Check instagram user
-        const isInstagramUser = user.auths?.some(
-          (provider) => provider.provider === 'instagram'
+        // Check Google User
+        const isGoogleUser = user.auths?.some(
+          (provider) => provider.provider === 'google'
         );
 
-        if (isInstagramUser) {
+        if (isGoogleUser) {
           return done(null, false, {
-            message: 'Please Login with instagram!',
+            message: 'Please Login with Google!',
           });
         }
 
@@ -42,6 +49,48 @@ passport.use(
         console.log('Passport Local login error: ', error);
         done(error);
       }
+    }
+  )
+);
+
+// GOOGLE REGISTRATION
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: env.GOOGLE_OAUTH_ID,
+      clientSecret: env.GOOGLE_OAUTH_SECRET,
+      callbackURL: env.GOOGLE_CALLBACK_URL,
+    },
+    async function (
+      _accessToken: string,
+      _refreshToken: string,
+      profile: Profile,
+      cb: VerifyCallback
+    ) {
+      const email = profile.emails?.[0].value;
+      if (!email) {
+        return cb(null, false, { message: 'No email found' });
+      }
+
+      let user = await User.findOne({ email });
+
+      if (!user) {
+          user = await User.create({
+            name: profile.displayName,
+            email,
+            avatar: profile.photos?.[0].value,
+            role: Role.USER,
+            isVerified: false,
+            auths: [
+              {
+                provider: 'google',
+                providerId: profile.id,
+              },
+            ],
+          });
+        }
+
+        return cb(null, user);
     }
   )
 );
