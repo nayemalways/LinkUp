@@ -21,6 +21,8 @@ import { QueryBuilder } from '../../utils/QueryBuilder';
 const createSponsoredPackageService = async (
   paylod: Partial<ISponsoredPackage>
 ) => {
+
+  // CHECK IS SPONSORED PACKAGE EXIST BY THE TYPE
   const isExist = await SponsoredPackage.findOne({
     type: paylod.type?.toLocaleUpperCase(),
   });
@@ -31,6 +33,7 @@ const createSponsoredPackageService = async (
     );
   }
 
+  // IF ALREADY EXIST SEND ERROR
   if (isExist) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
@@ -38,6 +41,7 @@ const createSponsoredPackageService = async (
     );
   }
 
+  // CREATE PACKAGE
   const createPackage = await SponsoredPackage.create(paylod);
   return createPackage;
 };
