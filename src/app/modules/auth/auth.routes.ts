@@ -4,6 +4,7 @@ import { checkAuth } from '../../middlewares/auth.middleware';
 import { Role } from '../users/user.interface';
 import { validateRequest } from '../../middlewares/validateRequest';
 import { passwordZodSchema } from '../users/user.validate';
+import passport from 'passport';
 
 const router = Router();
 
@@ -21,5 +22,10 @@ router.post(
   validateRequest(passwordZodSchema),
   authController.resetPassword
 );
+
+
+// GOOGLE LOGIN HANDLE
+router.get('/google', authController.googleLogin);
+router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login'}), authController.googleCallback);
 
 export const authRouter = router;
