@@ -49,6 +49,7 @@
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "cloudinary": "^1.41.3",
+    "connect-redis": "^9.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dayjs": "^1.11.19",

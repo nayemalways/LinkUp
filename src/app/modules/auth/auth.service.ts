@@ -202,20 +202,11 @@ const resetPasswordService = async (token: string, newPassword: string) => {
   return null;
 };
 
-// GOOGLE LOGIN HANDLER
-const googleLoginService = async () => {
-  return null;
-};
-const googleCallbackService = async () => {
-  return null;
-};
 
 export const authService = {
   getNewAccessTokenService,
   changePasswordService,
   forgetPasswrodService,
   verifyOTPService,
-  resetPasswordService,
-  googleCallbackService,
-  googleLoginService,
+  resetPasswordService
 };

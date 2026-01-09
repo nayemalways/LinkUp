@@ -13,6 +13,10 @@ import './app/config/passport.config';
 import http from 'http';
 import { initSocket } from './app/socket';
 import { paymentControllers } from './app/modules/payments/payment.controller';
+import  {RedisStore} from 'connect-redis';
+import { redisClient } from './app/config/redis.config';
+
+
 
 const app = express();
 const server = http.createServer(app);
@@ -23,9 +27,15 @@ initSocket(server);
 app.set('trust proxy', 1);
 app.use(
   expressSession({
+    store: new RedisStore({ client: redisClient }), 
     secret: env.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      secure: env.NODE_ENV === 'production', 
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24, 
+    },
   })
 );
 
@@ -41,7 +51,7 @@ app.post(
   paymentControllers.handleSponsoredWebHook
 );
 
-app.use(passport.initialize()); // Initilazed Passport
+app.use(passport.initialize()); // Initialize Passport
 app.use(passport.session()); // Create a session
 app.use(express.json());
 app.use(
