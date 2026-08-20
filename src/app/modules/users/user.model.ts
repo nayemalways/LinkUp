@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose, { model, Types } from 'mongoose';
 import {
   IAuthProvider,
@@ -80,18 +79,15 @@ const userSchema = new mongoose.Schema<IUser>(
 );
 
 // Hashed password
-userSchema.pre('save', async function (next) {
-  if (!this?.password) return next();
-
-  try {
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;  // Only hash the password if it has been modified
+  
+  if (this.password) {
     const hashedPassword = await bcrypt.hash(
-      this?.password as string,
-      parseInt(env?.BCRYPT_SALT_ROUND)
+      this.password,
+      parseInt(env.BCRYPT_SALT_ROUND)
     );
     this.password = hashedPassword;
-    next();
-  } catch (error: any) {
-    next(error);
   }
 });
 

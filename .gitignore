@@ -7,3 +7,4 @@ error.txt
 .vercel
 .env*.local
 .env.draft
+.env.prod

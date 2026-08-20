@@ -8,16 +8,17 @@ import { NotificationType } from '../modules/notifications/notification.interfac
 import { IPayment, PaymentStatus } from '../modules/payments/payment.interface';
 import Payment from '../modules/payments/payment.model';
 import User from '../modules/users/user.model';
-import { sendPersonalNotification } from './notificationsendhelper/user.notification.utils';
+import { sendPersonalNotification } from './notificationSendHelper/user.notification.utils';
 import { sendEmail } from './sendMail';
 import env from '../config/env';
 import Group from '../modules/groups/group.model';
 import { GroupMemberRole } from '../modules/groups/group.interface';
 import { Types } from 'mongoose';
 import { io } from '../socket';
+import { trackEventBooking } from './eventBookingCount';
 
-// PYAMENT SUCCESS HANDLE
-export const payemntSuccessHandler = async (object: any) => {
+// PAYMENT SUCCESS HANDLE
+export const paymentSuccessHandler = async (object: any) => {
   // Meta Data From Payment to update DB
   const metadata = object.metadata;
 
@@ -39,6 +40,7 @@ export const payemntSuccessHandler = async (object: any) => {
     };
 
     // UPDATE DATABASE
+    // UPDATE PAYMENT DATA
     const paymentPromise = Payment.findByIdAndUpdate(
       metadata.payment,
       {
@@ -54,6 +56,7 @@ export const payemntSuccessHandler = async (object: any) => {
       { new: true, runValidators: true }
     );
 
+    // UPDATE BOOKING DATA
     const bookingConfirmPromise = Booking.findByIdAndUpdate(
       metadata.booking,
       { booking_status: BookingStatus.CONFIRMED },
@@ -68,7 +71,7 @@ export const payemntSuccessHandler = async (object: any) => {
 
     // ADD USER TO EVENT CHAT GROUP
     const joinUserToEventChatGroup = await Group.findOne({
-      event: metadata.event,
+      event: bookingConfirm?.event,
     });
 
     if (joinUserToEventChatGroup) {
@@ -93,11 +96,20 @@ export const payemntSuccessHandler = async (object: any) => {
         description: `You've successfully booked an event and have been automatically added to the event chat group. You can now start chatting with other participants. Check chat group`,
         type: NotificationType.CHAT,
         data: {
-          goupId: joinUserToEventChatGroup._id,
+          groupId: joinUserToEventChatGroup._id,
           image: joinUserToEventChatGroup.group_image,
         },
       });
     }
+
+    // ADD TRENDING BOOKING COUNT
+    setImmediate(async () => {
+      try {
+        await trackEventBooking(bookingConfirm?.event.toString() as string);
+      } catch (error) {
+        console.log('Trending event booking count error: ', error);
+      }
+    });
 
     // NOTIFY USER HE IS JOINED THE EVENT
     if (
@@ -145,7 +157,7 @@ export const payemntSuccessHandler = async (object: any) => {
 };
 
 // PAYMENT FAILED HANDLE
-export const paymetFailedHandler = async (object: any) => {
+export const paymentFailedHandler = async (object: any) => {
   const metadata = object.metadata;
 
   if (metadata.booking && metadata.payment && metadata.transaction_id) {
@@ -276,12 +288,8 @@ export const paymentCanceledHandler = async (paymentIntent: any) => {
 export const chargeSucceededHandler = async (object: any) => {
   try {
     const metadata = object.metadata;
-    if (
-      metadata.event &&
-      metadata.package &&
-      metadata.sponsored &&
-      metadata.payment
-    ) {
+
+    if (metadata.transaction_id && metadata.booking && metadata.payment) {
       await Payment.findByIdAndUpdate(object.metadata.payment, {
         invoiceURL: object.receipt_url,
       });

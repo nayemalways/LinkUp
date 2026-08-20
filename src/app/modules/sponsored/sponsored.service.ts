@@ -84,6 +84,7 @@ const sponsoredPaymentIntentService = async (
     throw new AppError(StatusCodes.NOT_FOUND, 'No event found!');
   }
 
+  // CHECK HOST OR ORGANIZER
   if (userId !== event.host.toString()) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
@@ -93,6 +94,11 @@ const sponsoredPaymentIntentService = async (
 
   // USER
   const user = (await User.findOne({ _id: userId })) as IUser;
+
+  const pkgType =
+    sponsoredPackage.type === SponsoredPackageType.SPONSORED
+      ? SponsoredPackageType.SPONSORED
+      : ISponsored.BOOSTED;
 
   // CHECK PENDING SPONSORSHIP
   let sponsored = await Sponsored.findOne({
@@ -105,16 +111,20 @@ const sponsoredPaymentIntentService = async (
   const alreadySponsored = await Sponsored.findOne({
     event: eventId,
     sponsor_status: SponsorStatus.APPROVED,
+    sponsor_type: pkgType,
     user: userId,
-  });
+    endDate: { $gt: new Date() }, // only active
+  }).sort({ endDate: -1 }); // latest
 
-  if ((alreadySponsored?.endDate as Date) > new Date()) {
+  // SAME SPONSORESHIP CAN'T SPONOSRED UNTILL CURRENT SPONSORESHIP EXPIRED
+  if (alreadySponsored) {
     throw new AppError(
       StatusCodes.CONFLICT,
-      `Already sponsored as ${alreadySponsored?.sponsor_type}. You cannot ${alreadySponsored?.sponsor_type} again until the current sponsorship ends.`
+      `You already  ${alreadySponsored.sponsor_type} this event!`
     );
   }
 
+  // PAYMENT INITIALIZATION
   let payment;
 
   if (!sponsored) {
@@ -133,6 +143,7 @@ const sponsoredPaymentIntentService = async (
 
     payment = await Payment.create({
       sponsored: sponsored._id,
+      user: userId,
       transaction_amount: sponsoredPackage.price,
       transaction_id: generateTransactionId(),
       payment_status: PaymentStatus.PENDING,
@@ -174,7 +185,7 @@ const sponsoredPaymentIntentService = async (
   }
 
   // Create the payment intent
-  const idempotencyKey = `sponsored_intent_${sponsored._id.toString()}_${new Date().toISOString()}`;
+  const idempotencyKey = `sponsored_intent_${sponsored._id.toString()}`;
   const paymentIntent = await stripe.paymentIntents.create(paymentIntentData, {
     idempotencyKey,
   });
@@ -192,6 +203,7 @@ const getRandomSponsoredEventsService = async () => {
       $match: {
         sponsor_status: SponsorStatus.APPROVED,
         sponsor_type: SponsoredPackageType.SPONSORED,
+        endDate: { $gt: new Date() },
       },
     },
     {
@@ -234,6 +246,7 @@ const getSponsoredEventsService = async (query: Record<string, string>) => {
     Sponsored.find({
       sponsor_status: SponsorStatus.APPROVED,
       sponsor_type: SponsoredPackageType.SPONSORED,
+      endDate: { $gt: new Date() },
     })
       .populate({
         path: 'payment',

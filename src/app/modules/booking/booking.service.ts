@@ -10,6 +10,7 @@ import { generateTransactionId } from '../../utils/generateTransactionId';
 import { PaymentStatus } from '../payments/payment.interface';
 import {
   EventJoinRequestType,
+  EventStatus,
   EventVisibility,
 } from '../events/event.interface';
 import Stripe from 'stripe';
@@ -27,6 +28,13 @@ const bookingIntentService = async (
   const isEventExist = await Event.findOne({ _id: payload.event });
   if (!isEventExist)
     throw new AppError(StatusCodes.NOT_FOUND, 'Event not found!');
+
+  if (isEventExist.event_status === EventStatus.COMPLETED) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "This event has been finished, you can't join."
+    );
+  }
 
   const isUser = await User.findOne({ _id: userId });
   if (!isUser) throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
@@ -79,12 +87,12 @@ const bookingIntentService = async (
     booking = await Booking.create({
       event: isEventExist._id,
       user: isUser._id,
-      price: isEventExist.price,
       booking_status: BookingStatus.PENDING,
     });
 
     payment = await Payment.create({
       booking: booking._id,
+      user: isUser._id,
       transaction_amount: isEventExist.price,
       transaction_id: generateTransactionId(),
       payment_status: PaymentStatus.PENDING,
@@ -106,6 +114,12 @@ const bookingIntentService = async (
       booking.payment = payment._id;
       await booking.save();
     }
+
+    // Why re-generate?
+    // For Stripe idempotencyKey. Strip do not accept payment if the idempotencyKey key same (When re pay).
+    // So this new transaction id will generate new idempotencyKey key later
+    payment.transaction_id = generateTransactionId();
+    await payment.save();
   }
 
   // 6. CALCULATION (Using Math.round)
@@ -136,7 +150,8 @@ const bookingIntentService = async (
   // 8. IDEMPOTENCY
   // Now strictly tied to the specific booking ID.
   // Since we reuse pending bookings (Step 5), this key stays the same for retries!
-  const idempotencyKey = `booking_intent_${booking._id.toString()}`;
+
+  const idempotencyKey = `booking_${booking._id}_txn_${payment.transaction_id}`;
 
   const paymentIntent = await stripe.paymentIntents.create(paymentIntentData, {
     idempotencyKey,

@@ -7,7 +7,6 @@ import { JwtPayload } from 'jsonwebtoken';
 import { validatePhone } from '../../utils/phoneNumberValidatior';
 import { Types } from 'mongoose';
 import { QueryBuilder } from '../../utils/QueryBuilder';
-import { NotificationPreference } from '../notifications/notification.model';
 import Booking from '../booking/booking.model';
 import Event from '../events/event.model';
 import BlockedUser from '../BlockedUser/blocked.model';
@@ -18,7 +17,9 @@ import axios from 'axios';
 import EventVote from '../voting/voting.model';
 import { VotingType } from '../voting/voting.interface';
 import { redisClient } from '../../config/redis.config';
-import { sendEmail } from '../../utils/sendMail';
+import { deleteImageFromCLoudinary } from '../../config/cloudinary.config';
+import { twilio } from '../../config/twilio.config';
+import { NotificationPreferenceCreate } from '../../utils/notificationPreferenceCreate';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -37,7 +38,7 @@ const createUserService = async (payload: Partial<IUser>) => {
 
   const userPayload = {
     email,
-    auths: authUser,
+    auths: [authUser],
     ...rest,
   };
 
@@ -48,24 +49,7 @@ const createUserService = async (payload: Partial<IUser>) => {
   const creatUser = await User.create(userPayload); // Create user
 
   // Notification preference setup can be added here in future
-  await NotificationPreference.create({
-    user: creatUser?._id,
-    channel: {
-      push: true,
-      email: true,
-      inApp: true,
-    },
-    directmsg: true,
-    app: {
-      product_updates: true,
-      special_offers: true,
-    },
-    event: {
-      event_invitations: true,
-      event_changes: true,
-      event_reminders: true,
-    },
-  });
+  NotificationPreferenceCreate(creatUser._id.toString());
 
   return creatUser;
 };
@@ -258,6 +242,11 @@ const userUpdateService = async (
     );
   }
 
+  // Delete previous avatar from cloudinary
+  if (payload.avatar) {
+    deleteImageFromCLoudinary(user?.avatar as string);
+  }
+
   // Block password update from this route
   if (payload.password) {
     throw new AppError(
@@ -392,7 +381,7 @@ const userDeleteService = async (userId: string, decodedToken: JwtPayload) => {
   return null;
 };
 
-// VERIFY USER
+// SEND VERIFICATION OTP
 const verifyUserService = async (userId: string) => {
   const findUser = await User.findOne({ _id: userId });
   if (!findUser) {
@@ -406,22 +395,18 @@ const verifyUserService = async (userId: string) => {
     EX: 300,
   });
 
-  sendEmail({
-    to: findUser.email,
-    subject: `Phone number verification`,
-    templateName: 'test',
-    templateData: {
-      otp: otp,
-      name: findUser.fullName,
-    },
+  await twilio.messages.create({
+    to: findUser.phone as string,
+    from: env.TWILIO_PHONE_NUMBER,
+    body: `Your verification code is: ${otp}. This code will expire in 5 minutes. Do not share this code with anyone.`,
   });
 
   return null;
 };
 
-// VERIFY OTP
-const verifyOTPService = async (phoneNumber: string, otp: string) => {
-  const findUser = await User.findOne({ phone: phoneNumber });
+// VERIFY OTP AND VERIFY USER
+const verifyOTPService = async (userId: string, otp: string) => {
+  const findUser = await User.findOne({ _id: userId });
   if (!findUser) {
     throw new AppError(
       StatusCodes.NOT_FOUND,
@@ -433,7 +418,7 @@ const verifyOTPService = async (phoneNumber: string, otp: string) => {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid OTP!');
   }
 
-  const getOTP = await redisClient.get(`${phoneNumber}`);
+  const getOTP = await redisClient.get(`${findUser.phone}`);
   if (!getOTP) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'OTP has expired or invalid!');
   }

@@ -13,10 +13,8 @@ import './app/config/passport.config';
 import http from 'http';
 import { initSocket } from './app/socket';
 import { paymentControllers } from './app/modules/payments/payment.controller';
-import  {RedisStore} from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import { redisClient } from './app/config/redis.config';
-
-
 
 const app = express();
 const server = http.createServer(app);
@@ -27,14 +25,14 @@ initSocket(server);
 app.set('trust proxy', 1);
 app.use(
   expressSession({
-    store: new RedisStore({ client: redisClient }), 
+    store: new RedisStore({ client: redisClient }),
     secret: env.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: env.NODE_ENV === 'production', 
+      secure: env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24, 
+      maxAge: 1000 * 60 * 60 * 24,
     },
   })
 );
@@ -72,12 +70,26 @@ const limiter = rateLimit({
     statusCode: 400,
     message: 'Too many requests, please try again later.',
   },
+
+  keyGenerator: (req) => {
+    let ip =
+      req.headers['x-forwarded-for'] ||
+      req.ip ||
+      req.socket.remoteAddress ||
+      '';
+
+    // if proxy sends multiple IPs
+    if (Array.isArray(ip)) ip = ip[0];
+
+    // remove port if exists
+    return String(ip).split(':').pop() as string;
+  },
 });
 
 app.use(limiter);
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('<h1>Congratulations! Your server is running</h1>');
+  res.redirect('https://linkupapp.ca');
 });
 
 // GLOBAL ROUTES

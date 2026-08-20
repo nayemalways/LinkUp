@@ -30,8 +30,6 @@ interface EnvInterfaces {
 
   REDIS_HOST: string;
   REDIS_PORT: string;
-  REDIS_USERNAME: string;
-  REDIS_PASSWORD: string;
 
   REQUEST_RATE_LIMIT: number;
   REQUEST_RATE_LIMIT_TIME: number;
@@ -39,6 +37,8 @@ interface EnvInterfaces {
   EMAIL_HOST: string;
   EMAIL_PORT: string;
   EMAIL_USER: string;
+  EMAIL_FROM: string;
+  EMAIL_FROM_NAME: string;
   EMAIL_PASSWORD: string;
 
   GOOGLE_OAUTH_ID: string;
@@ -48,7 +48,6 @@ interface EnvInterfaces {
   GOOGLE_MAP_API_KEY: string;
 
   EXPRESS_SESSION_SECRET: string;
-  BACKEND_URL: string;
 
   TYPE: string;
   PROJECT_ID: string;
@@ -101,11 +100,12 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     'REDIS_HOST',
     'REDIS_PORT',
-    'REDIS_USERNAME',
-    'REDIS_PASSWORD',
+
     'EMAIL_HOST',
     'EMAIL_PORT',
     'EMAIL_USER',
+    'EMAIL_FROM',
+    'EMAIL_FROM_NAME',
     'EMAIL_PASSWORD',
 
     'GOOGLE_OAUTH_SECRET',
@@ -114,7 +114,6 @@ const loadEnvVarbles = (): EnvInterfaces => {
     'GOOGLE_MAP_API_KEY',
 
     'EXPRESS_SESSION_SECRET',
-    'BACKEND_URL',
 
     'TYPE',
     'PROJECT_ID',
@@ -175,11 +174,11 @@ const loadEnvVarbles = (): EnvInterfaces => {
 
     REDIS_HOST: process.env.REDIS_HOST as string,
     REDIS_PORT: process.env.REDIS_PORT as string,
-    REDIS_USERNAME: process.env.REDIS_USERNAME as string,
-    REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
 
     EMAIL_PASSWORD: process.env.EMAIL_PASSWORD as string,
     EMAIL_USER: process.env.EMAIL_USER as string,
+    EMAIL_FROM: process.env.EMAIL_FROM as string,
+    EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME as string,
     EMAIL_PORT: process.env.EMAIL_PORT as string,
     EMAIL_HOST: process.env.EMAIL_HOST as string,
 
@@ -189,7 +188,6 @@ const loadEnvVarbles = (): EnvInterfaces => {
     GOOGLE_MAP_API_KEY: process.env.GOOGLE_MAP_API_KEY as string,
 
     EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET as string,
-    BACKEND_URL: process.env.BACKEND_URL as string,
 
     TYPE: process.env.TYPE as string,
     PROJECT_ID: process.env.PROJECT_ID as string,

@@ -17,7 +17,7 @@ import {
   SponsoredPackage,
 } from '../modules/sponsored/sponsored.model';
 import User from '../modules/users/user.model';
-import { sendPersonalNotification } from './notificationsendhelper/user.notification.utils';
+import { sendPersonalNotification } from './notificationSendHelper/user.notification.utils';
 import { sendEmail } from './sendMail';
 
 // SPONSORSHIP PAYMENT SUCCESS HANDLER
@@ -42,7 +42,7 @@ export const sponsoredSuccessHandler = async (paymentIntent: any) => {
       currency: paymentIntent?.currency,
     };
 
-    // UPDATE DATABASE
+    // SEARCH PACKAGE
     const sponsoredPackage = (await SponsoredPackage.findOne({
       _id: metadata.package,
     })) as ISponsoredPackage;
@@ -92,20 +92,6 @@ export const sponsoredSuccessHandler = async (paymentIntent: any) => {
         sponsoredPromise,
       ]);
 
-      // WITHDRAW SPONSORSHIP AFTER DURATION END
-      setTimeout(
-        async () => {
-          await Sponsored.findByIdAndUpdate(sponsored?._id, {
-            sponsor_status: SponsorStatus.EXPIRED,
-          });
-
-          if (sponsoredPackage.type === SponsoredPackageType.BOOST) {
-            await Event.findByIdAndUpdate(metadata.event, { boosted: false });
-          }
-        },
-        Number(sponsoredPackage.duration) * 24 * 60 * 60 * 1000
-      );
-
       // NOTIFY HOST THAT HIS PAYMENT SUCCESSFULL AND HIS EVENT ARE SPONSORED
       setImmediate(async () => {
         try {
@@ -136,7 +122,7 @@ export const sponsoredSuccessHandler = async (paymentIntent: any) => {
             // SEND EMAIL
             sendEmail({
               to: host?.email as string,
-              subject: `LinkUp - Your event "${capitalize(sponsored.sponsor_type)}" payment is successful`,
+              subject: `LinkUp - Your event ${capitalize(sponsored.sponsor_type)} payment is successful`,
               templateName:
                 sponsored.sponsor_type === ISponsored.SPONSORED
                   ? 'eventSponsoredUpdate'
@@ -144,11 +130,15 @@ export const sponsoredSuccessHandler = async (paymentIntent: any) => {
               templateData: {
                 event_title: event?.title,
                 event_venue: event?.venue,
+                eventId: event?._id,
                 event_date: dayjs(event?.event_start).format(
                   'MM/DD/YYYY, hh:mm:ss A'
                 ),
                 sponsor_name: 'LinkUp',
                 support_email: env?.ADMIN_GMAIL,
+                amount: payment.transaction_amount,
+                currency: payment.currency,
+                date: dayjs(new Date()).format('dddd, MMMM D, YYYY h:mm A'),
               },
             });
           }

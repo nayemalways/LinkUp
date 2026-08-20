@@ -40,7 +40,7 @@ process.on('SIGTERM', () => {
   if (server) {
     server.close(() => {
       // server closing
-      console.log('server closed');
+      console.log('server closed for SIGTERM');
       process.exit(1); // exit from server
     });
   } else {
@@ -57,7 +57,7 @@ process.on('SIGINT', (error) => {
   if (server) {
     server.close(() => {
       // server closing
-      console.log('server closed');
+      console.log('server closed for SIGINT');
       process.exit(1); // exit from server
     });
   } else {
@@ -65,7 +65,7 @@ process.on('SIGINT', (error) => {
   }
 });
 
-// Unhandled rejection eror
+// Unhandled rejection error
 process.on('unhandledRejection', (error) => {
   console.log(
     'Unhandled rejection detected and server shutting down...',
@@ -73,7 +73,7 @@ process.on('unhandledRejection', (error) => {
   );
 });
 
-// Unhandled rejection eror
+// Unhandled rejection error
 process.on('uncaughtException', (error) => {
   console.log('Uncaught exception detected and server shutting down...', error);
 });
