@@ -1,4 +1,4 @@
-import admin from 'firebase-admin';
+import * as admin from 'firebase-admin';
 import env from './env';
 
 const serviceAccountData = {
@@ -15,8 +15,33 @@ const serviceAccountData = {
   universe_domain: env.UNIVERSE_DOMAIN,
 };
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccountData as admin.ServiceAccount),
-});
+const firebaseAdmin: any = (admin as any).default || admin;
 
-export default admin;
+if (!firebaseAdmin.apps?.length) {
+  try {
+    const certFn = firebaseAdmin.credential?.cert || firebaseAdmin.cert;
+    if (env.PRIVATE_KEY && env.PRIVATE_KEY.includes('BEGIN PRIVATE KEY')) {
+      firebaseAdmin.initializeApp({
+        credential: certFn(serviceAccountData),
+      });
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn('⚠️ Firebase PRIVATE_KEY is using placeholder or not configured. Push notifications disabled.');
+    }
+  } catch (err: any) {
+    // eslint-disable-next-line no-console
+    console.warn('⚠️ Firebase initialization skipped:', err?.message || err);
+  }
+}
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getMessaging } = require('firebase-admin/messaging');
+  if (getMessaging && !firebaseAdmin.messaging) {
+    firebaseAdmin.messaging = () => getMessaging();
+  }
+} catch {
+  // messaging fallback
+}
+
+export default firebaseAdmin;

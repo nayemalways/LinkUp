@@ -65,6 +65,7 @@ app.use(safeSanitizeMiddleware);
 const limiter = rateLimit({
   windowMs: env.REQUEST_RATE_LIMIT_TIME * 60 * 1000, // Assuming time in minutes from env
   max: env.REQUEST_RATE_LIMIT,
+  validate: { keyGeneratorIpFallback: false },
   message: {
     success: false,
     statusCode: 400,

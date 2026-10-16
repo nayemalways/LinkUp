@@ -17,7 +17,7 @@ import {
   SponsoredPackage,
 } from '../modules/sponsored/sponsored.model';
 import User from '../modules/users/user.model';
-import { sendPersonalNotification } from './notificationSendHelper/user.notification.utils';
+import { sendPersonalNotification } from './notificationsendhelper/user.notification.utils';
 import { sendEmail } from './sendMail';
 
 // SPONSORSHIP PAYMENT SUCCESS HANDLER

@@ -4,7 +4,6 @@ import User, { UserActivity } from './user.model';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
-import { validatePhone } from '../../utils/phoneNumberValidatior';
 import { Types } from 'mongoose';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import Booking from '../booking/booking.model';
@@ -18,8 +17,9 @@ import EventVote from '../voting/voting.model';
 import { VotingType } from '../voting/voting.interface';
 import { redisClient } from '../../config/redis.config';
 import { deleteImageFromCLoudinary } from '../../config/cloudinary.config';
-import { twilio } from '../../config/twilio.config';
+// import { twilio } from '../../config/twilio.config';
 import { NotificationPreferenceCreate } from '../../utils/notificationPreferenceCreate';
+import { validatePhone } from '../../utils/phoneNumberValidator';
 
 // CREATE USER
 const createUserService = async (payload: Partial<IUser>) => {
@@ -27,7 +27,7 @@ const createUserService = async (payload: Partial<IUser>) => {
 
   const isUser = await User.findOne({ email });
   if (isUser) {
-    throw new AppError(400, 'User aleready exist. Please login!');
+    throw new AppError(400, 'User already exist. Please login!');
   }
 
   // Save User Auth
@@ -46,12 +46,12 @@ const createUserService = async (payload: Partial<IUser>) => {
     userPayload.role = Role.ORGANIZER;
   }
 
-  const creatUser = await User.create(userPayload); // Create user
+  const createUser = await User.create(userPayload); // Create user
 
   // Notification preference setup can be added here in future
-  NotificationPreferenceCreate(creatUser._id.toString());
+  NotificationPreferenceCreate(createUser._id.toString());
 
-  return creatUser;
+  return createUser;
 };
 
 // GET ALL USERS
@@ -182,7 +182,7 @@ const getProfileService = async (userId: string) => {
   // Total count
   const totalEventsJoinedPromise = Booking.countDocuments({ user: user?._id });
   const totalEventsOrganizedPromise = Event.countDocuments({ host: user?._id });
-  const totalFriendsPormise = FriendRequest.countDocuments({
+  const totalFriendsPromise = FriendRequest.countDocuments({
     $or: [
       { sender: user?._id, status: RequestStatus.ACCEPTED },
       { receiver: user?._id, status: RequestStatus.ACCEPTED },
@@ -208,7 +208,7 @@ const getProfileService = async (userId: string) => {
     await Promise.all([
       totalEventsJoinedPromise,
       totalEventsOrganizedPromise,
-      totalFriendsPormise,
+      totalFriendsPromise,
     ]);
 
   return {
@@ -308,14 +308,16 @@ const userUpdateService = async (
   if (payload.coord) {
     const { lat, long } = payload.coord;
     const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&key=${env.GOOGLE_MAP_API_KEY}`;
-    const response = await axios.get(url);
-    const address = response.data.results[0].formatted_address
-      .split(', ')
-      .slice(-2)
-      .join(', ');
+    const response = await axios.get<any>(url);
+    const address = response?.data?.results?.[0]?.formatted_address
+      ?.split(', ')
+      ?.slice(-2)
+      ?.join(', ');
 
     // update location field
-    payload.location = address;
+    if (address) {
+      payload.location = address;
+    }
   }
 
   // FIELD WHITELISTING for USER & ORGANIZER
@@ -395,11 +397,11 @@ const verifyUserService = async (userId: string) => {
     EX: 300,
   });
 
-  await twilio.messages.create({
-    to: findUser.phone as string,
-    from: env.TWILIO_PHONE_NUMBER,
-    body: `Your verification code is: ${otp}. This code will expire in 5 minutes. Do not share this code with anyone.`,
-  });
+  // await twilio.messages.create({
+  //   to: findUser.phone as string,
+  //   from: env.TWILIO_PHONE_NUMBER,
+  //   body: `Your verification code is: ${otp}. This code will expire in 5 minutes. Do not share this code with anyone.`,
+  // });
 
   return null;
 };

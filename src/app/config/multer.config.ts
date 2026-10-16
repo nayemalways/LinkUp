@@ -1,9 +1,15 @@
 import multer from 'multer';
 import { Request } from 'express';
 import { cloudinaryUpload } from './cloudinary.config';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-const storage = new CloudinaryStorage({
+// Supports both multer-storage-cloudinary v2 (function) and v4 (class)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const cloudinaryStorageLib = require('multer-storage-cloudinary');
+const createCloudinaryStorage = cloudinaryStorageLib.CloudinaryStorage
+  ? (opts: any) => new cloudinaryStorageLib.CloudinaryStorage(opts)
+  : (opts: any) => cloudinaryStorageLib(opts);
+
+const storage = createCloudinaryStorage({
   cloudinary: cloudinaryUpload,
   params: {
     public_id: (req: Request, file: Express.Multer.File) => {

@@ -21,7 +21,7 @@ import AppError from '../../errorHelpers/AppError';
 import { addressToLongLat } from '../../utils/geocodeConvert.utils';
 import FriendRequest from '../friends/friend.model';
 import { RequestStatus } from '../friends/friend.interface';
-import { sendMultiNotification } from '../../utils/notificationSendHelper/friends.notification.utils';
+import { sendMultiNotification } from '../../utils/notificationsendhelper/friends.notification.utils';
 import { NotificationType } from '../notifications/notification.interface';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { ICoord, IUser, Role } from '../users/user.interface';
@@ -36,9 +36,9 @@ import {
   Notification,
   NotificationPreference,
 } from '../notifications/notification.model';
-import { sendPersonalNotification } from '../../utils/notificationSendHelper/user.notification.utils';
+import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
 import { onlineUsers } from '../../socket';
-import { sendPushAndSave } from '../../utils/notificationSendHelper/push.notification.utils';
+import { sendPushAndSave } from '../../utils/notificationsendhelper/push.notification.utils';
 import BlockedUser from '../BlockedUser/blocked.model';
 import { trackEventView } from '../../utils/eventViewCount';
 
@@ -787,7 +787,7 @@ const inviteCoHostService = async (
     event: new Types.ObjectId(eventId),
     inviter: new Types.ObjectId(userId),
     invitee: new Types.ObjectId(inviteeId),
-    status: 'PENDING',
+    status: CoHostStatus.PENDING,
   });
 
   // Send invitation notification asynchronously

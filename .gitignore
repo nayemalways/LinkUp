@@ -8,3 +8,4 @@ error.txt
 .env*.local
 .env.draft
 .env.prod
+frontend

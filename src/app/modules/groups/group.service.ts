@@ -10,7 +10,7 @@ import { NotificationType } from '../notifications/notification.interface';
 import { io } from '../../socket';
 import Message from '../message/message.model';
 import { MessageStatus } from '../message/message.interface';
-import { sendMultiNotification } from '../../utils/notificationSendHelper/friends.notification.utils';
+import { sendMultiNotification } from '../../utils/notificationsendhelper/friends.notification.utils';
 import { deleteImageFromCLoudinary } from '../../config/cloudinary.config';
 
 // CREATE GROUP - Only verified users

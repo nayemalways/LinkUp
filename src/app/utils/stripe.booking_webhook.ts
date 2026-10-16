@@ -8,7 +8,7 @@ import { NotificationType } from '../modules/notifications/notification.interfac
 import { IPayment, PaymentStatus } from '../modules/payments/payment.interface';
 import Payment from '../modules/payments/payment.model';
 import User from '../modules/users/user.model';
-import { sendPersonalNotification } from './notificationSendHelper/user.notification.utils';
+import { sendPersonalNotification } from './notificationsendhelper/user.notification.utils';
 import { sendEmail } from './sendMail';
 import env from '../config/env';
 import Group from '../modules/groups/group.model';
