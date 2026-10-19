@@ -8,8 +8,8 @@ import {
 const notificationSchema = new Schema<INotification>(
   {
     user: { type: Schema.Types.ObjectId, ref: 'user' },
-    eventId: { type: Schema.Types.ObjectId, ref: 'user' },
-    chatId: { type: Schema.Types.ObjectId, ref: 'user' },
+    eventId: { type: Schema.Types.ObjectId, ref: 'event' },
+    chatId: { type: Schema.Types.ObjectId, ref: 'group' },
     receiverIds: [{ type: Schema.Types.ObjectId, ref: 'user' }],
     type: {
       type: String,

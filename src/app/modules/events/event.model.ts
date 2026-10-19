@@ -30,7 +30,7 @@ export const InviteCoHost = mongoose.model('inviteCoHost', CoHostInviteSchema);
 const eventJoinRequestSchema = new Schema<IEventJoinRequest>(
   {
     user: { type: Schema.Types.ObjectId, ref: 'user', required: true },
-    event: { type: Schema.Types.ObjectId, ref: 'user', required: true },
+    event: { type: Schema.Types.ObjectId, ref: 'event', required: true },
     approval: {
       type: String,
       enum: [...Object.keys(EventJoinRequestType)],

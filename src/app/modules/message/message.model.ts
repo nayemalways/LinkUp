@@ -14,7 +14,7 @@ const messageSchema = new Schema<IMessage>(
     },
     group: {
       type: Schema.Types.ObjectId,
-      ref: 'Group',
+      ref: 'group',
     },
     message: { type: { text: String, image: String }, _id: false },
     status: {
@@ -24,7 +24,7 @@ const messageSchema = new Schema<IMessage>(
     },
     replyTo: {
       type: Schema.Types.ObjectId,
-      ref: 'Message',
+      ref: 'message',
     },
   },
   {
