@@ -10,7 +10,7 @@ import {
 import User from '../modules/users/user.model';
 import bcrypt from 'bcrypt';
 import env from './env';
-import { Role } from '../modules/users/user.interface';
+import { IsActive, Role } from '../modules/users/user.interface';
 import { NotificationPreferenceCreate } from '../utils/notificationPreferenceCreate';
 
 // CREDENTIALS LOGIN LOCAL STRATEGY
@@ -22,6 +22,21 @@ passport.use(
         const user = await User.findOne({ email }).select('+password');
         if (!user) {
           return done(null, false, { message: 'User does not exist!' });
+        }
+
+        if (user.isDeleted) {
+          return done(null, false, {
+            message: 'The user account has been deleted!',
+          });
+        }
+
+        if (
+          user.isActive === IsActive.BLOCKED ||
+          user.isActive === IsActive.INACTIVE
+        ) {
+          return done(null, false, {
+            message: 'User account is blocked or inactive!',
+          });
         }
 
         // Check Google User
@@ -75,7 +90,22 @@ passport.use(
 
       let user = await User.findOne({ email });
 
-      if (!user) {
+      if (user) {
+        if (user.isDeleted) {
+          return cb(null, false, {
+            message: 'The user account has been deleted!',
+          });
+        }
+
+        if (
+          user.isActive === IsActive.BLOCKED ||
+          user.isActive === IsActive.INACTIVE
+        ) {
+          return cb(null, false, {
+            message: 'User account is blocked or inactive!',
+          });
+        }
+      } else {
         user = await User.create({
           fullName: profile.displayName,
           email,
@@ -90,8 +120,8 @@ passport.use(
           ],
         });
 
-         // Notification preference setup can be added here in future
-          NotificationPreferenceCreate(user._id.toString());
+        // Notification preference setup can be added here in future
+        NotificationPreferenceCreate(user._id.toString());
       }
 
       return cb(null, user);

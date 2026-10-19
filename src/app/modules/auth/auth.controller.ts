@@ -10,15 +10,39 @@ import { SendResponse } from '../../utils/SendResponse';
 import { authService } from './auth.service';
 import { JwtPayload } from 'jsonwebtoken';
 import env from '../../config/env';
+import { IsActive } from '../users/user.interface';
 
 // Login User
 const credentialsLogin = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate('local', async (err: any, user: any, info: any) => {
-      if (err) next(err);
+      if (err) return next(err);
 
       if (!user) {
-        return next(new AppError(httpStatus.FORBIDDEN, info.message));
+        return next(
+          new AppError(httpStatus.FORBIDDEN, info?.message || 'Login failed')
+        );
+      }
+
+      if (user.isDeleted) {
+        return next(
+          new AppError(
+            httpStatus.FORBIDDEN,
+            'The user account has been deleted!'
+          )
+        );
+      }
+
+      if (
+        user.isActive === IsActive.BLOCKED ||
+        user.isActive === IsActive.INACTIVE
+      ) {
+        return next(
+          new AppError(
+            httpStatus.FORBIDDEN,
+            'User account is blocked or inactive!'
+          )
+        );
       }
 
       const userTokens = await createUserTokens(user);
