@@ -12,11 +12,11 @@ import {
 import { Sponsored } from '../sponsored/sponsored.model';
 import User, { UserActivity } from '../users/user.model';
 
-const last_week = new Date();
-last_week.setDate(last_week.getDate() - 7); // Get the date 7 days ago
-
 // DASHBOARD ANALYTICS
 const dashboardStatsService = async () => {
+  const last_week = new Date();
+  last_week.setDate(last_week.getDate() - 7); // Dynamically evaluated 7 days ago
+
   // TOTAL EVENT AND LAST WEEK PARCHENTAGE
   const eventPromise = Event.aggregate([
     {
