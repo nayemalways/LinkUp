@@ -5,7 +5,10 @@ import { FavouriteEvent } from './favourite.model';
 
 // CREATE FAVOURITE EVENT SERVICE
 const addEventFavouriteService = async (payload: IFavouriteEvent) => {
-  const isAlreadyExist = await FavouriteEvent.findOne({ event: payload.event });
+  const isAlreadyExist = await FavouriteEvent.findOne({
+    event: payload.event,
+    user: payload.user,
+  });
   if (isAlreadyExist) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Event already in favourite!');
   }
