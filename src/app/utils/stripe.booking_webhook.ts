@@ -26,7 +26,10 @@ export const paymentSuccessHandler = async (object: any) => {
     const paymentPayload: Partial<IPayment> = {
       payment_intent: object?.id,
       payment_method_id: object?.payment_method,
-      withdrawable_amount: object.transfer_data.amount,
+      withdrawable_amount:
+        object?.transfer_data?.amount !== undefined
+          ? object.transfer_data.amount
+          : object?.amount || 0,
       payment_status:
         object?.status === 'succeeded'
           ? PaymentStatus.PAID
@@ -85,10 +88,16 @@ export const paymentSuccessHandler = async (object: any) => {
         joinedAt: new Date(),
       };
 
-      await Group.updateOne(
-        { event: bookingConfirm?.event },
-        { $push: { group_members: memberPayload } }
+      const isAlreadyMember = joinUserToEventChatGroup.group_members?.some(
+        (m) => m.user?.toString() === memberPayload.user.toString()
       );
+
+      if (!isAlreadyMember) {
+        await Group.updateOne(
+          { event: bookingConfirm?.event },
+          { $push: { group_members: memberPayload } }
+        );
+      }
 
       io.to(memberPayload.user.toString() as string).emit('notification', {
         user: memberPayload.user,

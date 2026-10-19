@@ -73,12 +73,12 @@ const getStripeVendorLoginLink = CatchAsync(
 // HANDLE STRIPE WEBHOOK TO LISTEN EVENT
 const handleWebHook = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    await paymentServices.handleWebHookService(req as Request);
+    const result = await paymentServices.handleWebHookService(req as Request);
     SendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: 'Webhook listened',
-      data: null,
+      data: result,
     });
   }
 );
@@ -86,12 +86,13 @@ const handleWebHook = CatchAsync(
 // HANDLE STRIPE SPONSORED PAYMENT WEBHOOK TO LISTEN EVENT
 const handleSponsoredWebHook = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    await paymentServices.handleSponsoredWebHookService(req as Request);
+    const result =
+      await paymentServices.handleSponsoredWebHookService(req as Request);
     SendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: 'Webhook listened',
-      data: null,
+      data: result,
     });
   }
 );

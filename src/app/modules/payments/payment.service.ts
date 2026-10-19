@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from 'http-status-codes';
+import Stripe from 'stripe';
 import { stripe } from '../../config/stripe.config';
 import AppError from '../../errorHelpers/AppError';
 import User from '../users/user.model';
@@ -23,7 +24,8 @@ import {
 import Payment from './payment.model';
 import { PaymentStatus } from './payment.interface';
 
-// ======================  STRIPE PAYMENT QUERY ====================
+
+
 // CREATE STRIPE CONNECT ACCOUNT
 const createStripeConnectAccountService = async (
   userId: string,
@@ -126,92 +128,101 @@ const getStripeVendorLoginLinkService = async (userId: string) => {
   return loginLink.url;
 };
 
+// REUSABLE HELPER TO CONSTRUCT & VERIFY STRIPE EVENT
+const constructStripeEvent = (
+  req: Request,
+  webhookSecret: string
+): Stripe.Event => {
+  const sig = req.headers['stripe-signature'];
+  if (!sig || typeof sig !== 'string') {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Missing or invalid stripe-signature header'
+    );
+  }
+
+  try {
+    return stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (error: any) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      `Stripe webhook signature verification failed: ${error.message}`
+    );
+  }
+};
+
 // STRIPE WEBHOOK - FOR EVENT JOINING
 const handleWebHookService = async (req: Request) => {
-  try {
-    const sig = req.headers['stripe-signature'] as string;
-    const event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      env.STRIPE_WEBHOOK_SECRET
-    );
+  const event = constructStripeEvent(req, env.STRIPE_WEBHOOK_SECRET);
 
-    // Handle the event
-    switch (event.type) {
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object;
-        await paymentSuccessHandler(paymentIntent);
-        break;
-      }
-
-      case 'payment_intent.payment_failed': {
-        const paymentFailed = event.data.object;
-        await paymentFailedHandler(paymentFailed);
-        break;
-      }
-
-      case 'payment_intent.canceled': {
-        const paymentIntent = event.data.object;
-        await paymentCanceledHandler(paymentIntent);
-        break;
-      }
-
-      case 'charge.succeeded': {
-        const charge = event.data.object;
-        await chargeSucceededHandler(charge);
-        break;
-      }
-
-      default: {
-        console.log(`Unhandled event type: ${event.type}`);
-      }
+  // Handle the event
+  switch (event.type) {
+    case 'payment_intent.succeeded': {
+      const paymentIntent = event.data.object;
+      await paymentSuccessHandler(paymentIntent);
+      break;
     }
-    return [];
-  } catch (error: any) {
-    console.log('Webhook error: ', error.message);
+
+    case 'payment_intent.payment_failed': {
+      const paymentFailed = event.data.object;
+      await paymentFailedHandler(paymentFailed);
+      break;
+    }
+
+    case 'payment_intent.canceled': {
+      const paymentIntent = event.data.object;
+      await paymentCanceledHandler(paymentIntent);
+      break;
+    }
+
+    case 'charge.succeeded': {
+      const charge = event.data.object;
+      await chargeSucceededHandler(charge);
+      break;
+    }
+
+    default: {
+      console.log(`Unhandled event type: ${event.type}`);
+    }
   }
+  return { received: true };
 };
 
 // STRIPE WEBHOOK - FOR SPONSOR EVENT
 const handleSponsoredWebHookService = async (req: Request) => {
-    const sig = req.headers['stripe-signature'] as string;
-    const event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      env.STRIPE_SPONSORED_WEBHOOK_SECRET
-    );
+  const event = constructStripeEvent(req, env.STRIPE_SPONSORED_WEBHOOK_SECRET);
 
-    // Handle the event
-    switch (event.type) {
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object;
-        await sponsoredSuccessHandler(paymentIntent);
-        break;
-      }
-
-      case 'payment_intent.payment_failed': {
-        const paymentFailed = event.data.object;
-        await sponsoredFailedHandler(paymentFailed);
-        break;
-      }
-
-      case 'payment_intent.canceled': {
-        const paymentIntent = event.data.object;
-        await sponsoredCancelledHandler(paymentIntent);
-        break;
-      }
-
-      case 'charge.succeeded': {
-        const charge = event.data.object;
-        await chargeSucceededHandler(charge);
-        break;
-      }
-
-      default: {
-        console.log(`Unhandled event type: ${event.type}`);
-      }
+  // Handle the event
+  switch (event.type) {
+    case 'payment_intent.succeeded': {
+      const paymentIntent = event.data.object;
+      await sponsoredSuccessHandler(paymentIntent);
+      break;
     }
-    return [];
+
+    case 'payment_intent.payment_failed': {
+      const paymentFailed = event.data.object;
+      await sponsoredFailedHandler(paymentFailed);
+      break;
+    }
+
+    case 'payment_intent.canceled': {
+      const paymentIntent = event.data.object;
+      await sponsoredCancelledHandler(paymentIntent);
+      break;
+    }
+
+    case 'charge.succeeded': {
+      const charge = event.data.object;
+      await chargeSucceededHandler(charge);
+      break;
+    }
+
+    default: {
+      console.log(`Unhandled event type: ${event.type}`);
+    }
+  }
+  return { received: true };
 };
 
 // ======================  PAYMENT TRANSACTION QUERY ====================
