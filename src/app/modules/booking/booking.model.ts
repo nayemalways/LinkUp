@@ -18,6 +18,9 @@ const bookingSchema = new mongoose.Schema<IBooking>(
   }
 );
 
+bookingSchema.index({ event: 1, booking_status: 1 });
+bookingSchema.index({ user: 1, event: 1 });
+
 const Booking = mongoose.model<IBooking>('booking', bookingSchema);
 
 export default Booking;

@@ -36,6 +36,13 @@ const bookingIntentService = async (
     );
   }
 
+  if (isEventExist.event_status === EventStatus.CANCELLED) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "This event has been cancelled, you can't join."
+    );
+  }
+
   const isUser = await User.findOne({ _id: userId });
   if (!isUser) throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
   if (!isUser.isVerified)
@@ -52,7 +59,26 @@ const bookingIntentService = async (
     throw new AppError(StatusCodes.CONFLICT, 'You already joined this event!');
   }
 
-  // 3. CHECK HOST PAYOUTS
+  // 3. CHECK EVENT ATTENDANCE / CAPACITY
+  if (
+    isEventExist.max_attendence !== undefined &&
+    isEventExist.max_attendence !== null &&
+    isEventExist.max_attendence > 0
+  ) {
+    const totalConfirmedBookings = await Booking.countDocuments({
+      event: isEventExist._id,
+      booking_status: BookingStatus.CONFIRMED,
+    });
+
+    if (totalConfirmedBookings >= isEventExist.max_attendence) {
+      throw new AppError(
+        StatusCodes.BAD_REQUEST,
+        'This event has reached its maximum attendance capacity!'
+      );
+    }
+  }
+
+  // 4. CHECK HOST PAYOUTS
   const hostPayoutAccount = await User.findOne({ _id: isEventExist.host });
   if (!hostPayoutAccount?.stripeAccountId) {
     throw new AppError(
@@ -61,7 +87,7 @@ const bookingIntentService = async (
     );
   }
 
-  // 4. PRIVATE EVENT CHECK
+  // 5. PRIVATE EVENT CHECK
   if (isEventExist.visibility === EventVisibility.PRIVATE) {
     const isApproved = await EventJoinRequest.findOne({
       user: userId,
@@ -72,7 +98,7 @@ const bookingIntentService = async (
       throw new AppError(StatusCodes.FORBIDDEN, 'Approval required!');
   }
 
-  // 5. PREVENT DUPLICATE PENDING BOOKINGS (Reuse logic)
+  // 6. PREVENT DUPLICATE PENDING BOOKINGS (Reuse logic)
   // If user clicked "Pay", failed, and clicked again, don't make a new booking. Reuse the pending one.
   let booking = await Booking.findOne({
     user: userId,
@@ -122,7 +148,7 @@ const bookingIntentService = async (
     await payment.save();
   }
 
-  // 6. CALCULATION (Using Math.round)
+  // 7. CALCULATION (Using Math.round)
   const totalAmountCents = Math.round(isEventExist.price * 100);
 
   // STRIPE FEE CALCULATION
@@ -130,7 +156,7 @@ const bookingIntentService = async (
   const stripeFeeCents = Math.round(totalAmountCents * 0.029) + 30;
   const amountToHostCents = totalAmountCents - stripeFeeCents;
 
-  // 7. STRIPE INTENT
+  // 8. STRIPE INTENT
   const paymentIntentData: Stripe.PaymentIntentCreateParams = {
     amount: totalAmountCents,
     currency: 'usd',
