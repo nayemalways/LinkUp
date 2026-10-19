@@ -93,7 +93,7 @@ router.get(
 );
 
 // EVENT JOIN REQUEST
-router.get(
+router.post(
   '/join_request/:eventId',
   checkAuth(...Object.keys(Role)),
   eventControllers.eventJoinRequest
