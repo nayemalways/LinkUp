@@ -106,7 +106,7 @@
 7. [Blocked Users](#blocked-users)
 8. [Events](#events)
 9. [Event Categories](#event-categories)
-10. [Favourites](#favourites)
+10. [Favorites](#favorites)
 11. [Booking](#booking)
 12. [Payments](#payments)
 13. [Sponsored](#sponsored)
@@ -396,7 +396,7 @@ Authorization: Bearer <access_token>
 
 | Error Message                        | Description                                          |
 | ------------------------------------ | ---------------------------------------------------- |
-| `User aleready exist. Please login!` | A user with this email already exists in the system. |
+| `User already exist. Please login!` | A user with this email already exists in the system. |
 
 ---
 
@@ -578,7 +578,7 @@ fullName: John Updated Doe
 bio: Updated biography
 phone: +1234567891
 gender: male
-instagramHandle: @johndoe
+instagramHandle: @johnie
 file: <avatar image file>
 ```
 
@@ -1561,7 +1561,7 @@ file: <avatar image file>
 
 ### 6.4 Send System Notification
 
-**Endpoint**: `POST /notification/send_system_notificatin`
+**Endpoint**: `POST /notification/send_system_notification`
 
 **Description**: Send a system notification to users.
 
@@ -2192,13 +2192,13 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 
 ---
 
-## Favourites
+## Favorites
 
-### 10.1 Add Event to Favourites
+### 10.1 Add Event to Favorites
 
 **Endpoint**: `POST /favourite/add`
 
-**Description**: Add an event to user's favourites list.
+**Description**: Add an event to user's favorites list.
 
 **Authorization**: Required (All roles)
 
@@ -2216,7 +2216,7 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 {
   "success": true,
   "statusCode": 201,
-  "message": "Event added to favourites!",
+  "message": "Event added to favorites!",
   "data": {
     "user": "507f1f77bcf86cd799439011",
     "event": "507f1f77bcf86cd799439015"
@@ -2226,7 +2226,7 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 
 ---
 
-### 10.2 Get Favourite Events
+### 10.2 Get Favorite Events
 
 **Endpoint**: `GET /favourite`
 
@@ -2256,11 +2256,11 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 
 ---
 
-### 10.3 Remove from Favourites
+### 10.3 Remove from Favorites
 
 **Endpoint**: `DELETE /favourite/:eventId`
 
-**Description**: Remove an event from favourites.
+**Description**: Remove an event from favorites.
 
 **Authorization**: Required (All roles)
 
@@ -2274,7 +2274,7 @@ deletedImages: ["https://cloudinary.com/old-image.jpg"]
 {
   "success": true,
   "statusCode": 200,
-  "message": "Event removed from favourites!",
+  "message": "Event removed from favorites!",
   "data": null
 }
 ```

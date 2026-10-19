@@ -174,7 +174,6 @@ const handleWebHookService = async (req: Request) => {
 
 // STRIPE WEBHOOK - FOR SPONSOR EVENT
 const handleSponsoredWebHookService = async (req: Request) => {
-  try {
     const sig = req.headers['stripe-signature'] as string;
     const event = stripe.webhooks.constructEvent(
       req.body,
@@ -213,9 +212,6 @@ const handleSponsoredWebHookService = async (req: Request) => {
       }
     }
     return [];
-  } catch (error: any) {
-    console.log('Webhook Error: ', error.message);
-  }
 };
 
 // ======================  PAYMENT TRANSACTION QUERY ====================

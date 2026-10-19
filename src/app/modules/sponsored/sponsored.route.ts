@@ -22,9 +22,9 @@ router.patch(
   SponsoredController.updatePackage
 );
 
-// SPONSORE EVENT
+// SPONSOR EVENT
 router.post(
-  '/event_sponsore',
+  '/event_sponsor',
   checkAuth(...Object.keys(Role)),
   SponsoredController.requestSponsoredEvent
 );

@@ -28,7 +28,7 @@ router.get(
   NotificationController.getUserNotifications
 );
 router.post(
-  '/send_system_notificatin',
+  '/send_system_notification',
   checkAuth(Role.ADMIN),
   NotificationController.sendSystemNotification
 );

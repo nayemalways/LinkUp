@@ -6,7 +6,7 @@ const trendingSchema = new Schema<ITrendingEvent>(
   {
     event: {
       type: Schema.Types.ObjectId,
-      ref: 'events',
+      ref: 'event',
       required: true,
       unique: true,
     },
@@ -32,7 +32,6 @@ const trendingSchema = new Schema<ITrendingEvent>(
   }
 );
 
-trendingSchema.index({ event: 1 });
 trendingSchema.index({ last_interaction: -1 });
 
 export const Trending = model<ITrendingEvent>(

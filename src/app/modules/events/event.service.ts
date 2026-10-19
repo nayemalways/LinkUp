@@ -310,6 +310,14 @@ const updateEventService = async (
     event.co_host && user.userId === event.co_host?._id.toString();
   const isHostOrCoHost = isHost || isCoHost;
 
+  // Without Host or Co-Host or Admin, You can update
+  if (!isHostOrCoHost && user.role !== Role.ADMIN) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'You are not authorized to update this event!'
+    );
+  }
+
   // OK: lOCATION WILL UPDATE DYNAMICALLY
   if (payload.location) {
     throw new AppError(
@@ -327,26 +335,6 @@ const updateEventService = async (
       StatusCodes.FORBIDDEN,
       'Only Admin can change featured!'
     );
-  }
-
-  // OK : ONLY HOST AND CO-HOST CAN CHANGE VENUE
-  if (payload?.venue) {
-    if (!isHostOrCoHost) {
-      throw new AppError(
-        StatusCodes.FORBIDDEN,
-        'Only host and co-host can change venue!'
-      );
-    }
-  }
-
-  // OK: ONLY HOST AND CO-HOST CAN CHANGE EVENT VISIBILITY
-  if (payload?.visibility) {
-    if (!isHost && !isCoHost) {
-      throw new AppError(
-        StatusCodes.FORBIDDEN,
-        'Only host and co-host can change event visibility!'
-      );
-    }
   }
 
   // OK: CO-HOST CAN'T CHANGE HIMSELF
