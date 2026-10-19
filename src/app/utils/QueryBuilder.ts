@@ -135,18 +135,46 @@ export class QueryBuilder<T> {
     return this;
   }
 
-  // JOIN COLLECTION DYNAMICALLY
-  join(): this {
+  // JOIN COLLECTION DYNAMICALLY WITH WHITELIST & SCHEMA REF VALIDATION
+  join(allowedFields?: string[]): this {
     const joinQuery = this.query?.join;
 
-    if (!joinQuery) {
+    if (!joinQuery || typeof joinQuery !== 'string') {
       return this;
     }
 
-    const refs = joinQuery.split(',');
+    const schema = (this.queryModel as any)?.schema;
+    const schemaRefPaths: string[] = schema?.paths
+      ? Object.keys(schema.paths).filter((p) => {
+          const pathObj = schema.paths[p];
+          return Boolean(
+            pathObj?.options?.ref || pathObj?.caster?.options?.ref
+          );
+        })
+      : [];
 
-    refs.forEach((ref) => {
-      return (this.queryModel = this.queryModel.populate({ path: ref }));
+    const requestedRefs = joinQuery
+      .split(',')
+      .map((ref) => ref.trim())
+      .filter(Boolean);
+
+    requestedRefs.forEach((ref) => {
+      // Must be a valid identifier (prevents prototype pollution and path traversal)
+      if (!/^[a-zA-Z0-9_]+$/.test(ref)) {
+        return;
+      }
+
+      // If developer explicitly provided allowedFields, ref must be in allowedFields
+      if (allowedFields && !allowedFields.includes(ref)) {
+        return;
+      }
+
+      // If schema exists and has ref paths defined, ref must be a valid reference path
+      if (schemaRefPaths.length > 0 && !schemaRefPaths.includes(ref)) {
+        return;
+      }
+
+      this.queryModel = this.queryModel.populate({ path: ref });
     });
 
     return this;
