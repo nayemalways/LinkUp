@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { StatusCodes } from 'http-status-codes';
 import { router } from './app/routes';
 import { globalErrorHandler } from './app/middlewares/globalErrorHandler';
 import { NotFound } from './app/middlewares/NotFound';
@@ -61,29 +62,17 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(safeSanitizeMiddleware);
 
-// THROTTLING
+// THROTTLING / RATE LIMITING
 const limiter = rateLimit({
-  windowMs: env.REQUEST_RATE_LIMIT_TIME * 60 * 1000, // Assuming time in minutes from env
-  max: env.REQUEST_RATE_LIMIT,
-  validate: { keyGeneratorIpFallback: false },
+  windowMs: env.REQUEST_RATE_LIMIT_TIME * 60 * 1000,
+  limit: env.REQUEST_RATE_LIMIT,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  statusCode: StatusCodes.TOO_MANY_REQUESTS,
   message: {
     success: false,
-    statusCode: 400,
+    statusCode: StatusCodes.TOO_MANY_REQUESTS,
     message: 'Too many requests, please try again later.',
-  },
-
-  keyGenerator: (req) => {
-    let ip =
-      req.headers['x-forwarded-for'] ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      '';
-
-    // if proxy sends multiple IPs
-    if (Array.isArray(ip)) ip = ip[0];
-
-    // remove port if exists
-    return String(ip).split(':').pop() as string;
   },
 });
 
