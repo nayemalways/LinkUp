@@ -396,6 +396,7 @@ const verifyUserService = async (userId: string) => {
   await redisClient.set(`${phoneNumber}`, otp, {
     EX: 300,
   });
+  await redisClient.del(`otp_attempts:${phoneNumber}`);
 
   // await twilio.messages.create({
   //   to: findUser.phone as string,
@@ -420,13 +421,40 @@ const verifyOTPService = async (userId: string, otp: string) => {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid OTP!');
   }
 
+  const attemptsKey = `otp_attempts:${findUser.phone}`;
+  const currentAttempts = await redisClient.get(attemptsKey);
+
+  if (currentAttempts && Number(currentAttempts) >= 5) {
+    await redisClient.del(`${findUser.phone}`);
+    throw new AppError(
+      StatusCodes.TOO_MANY_REQUESTS,
+      'Maximum verification attempts exceeded. This OTP has been invalidated, please request a new one.'
+    );
+  }
+
   const getOTP = await redisClient.get(`${findUser.phone}`);
   if (!getOTP) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'OTP has expired or invalid!');
   }
 
   if (getOTP !== otp) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "Invalid isn't matched!");
+    const attempts = await redisClient.incr(attemptsKey);
+    if (attempts === 1) {
+      await redisClient.expire(attemptsKey, 300);
+    }
+    if (attempts >= 5) {
+      await redisClient.del(`${findUser.phone}`);
+      await redisClient.del(attemptsKey);
+      throw new AppError(
+        StatusCodes.TOO_MANY_REQUESTS,
+        'Too many failed attempts. This OTP has been invalidated, please request a new one.'
+      );
+    }
+    const remaining = 5 - attempts;
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      `Invalid OTP. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`
+    );
   }
 
   if (findUser.isVerified) {
@@ -435,6 +463,10 @@ const verifyOTPService = async (userId: string, otp: string) => {
 
   findUser.isVerified = true;
   await findUser.save();
+
+  // CLEAN UP OTP AND ATTEMPT COUNTERS
+  await redisClient.del(`${findUser.phone}`);
+  await redisClient.del(attemptsKey);
 
   return null;
 };

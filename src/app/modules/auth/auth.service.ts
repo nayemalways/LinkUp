@@ -114,8 +114,9 @@ const forgetPasswrodService = async (email: string) => {
   const otp = randomOTPGenerator(100000, 999999).toString(); // Generate OTP
   const hashedOTP = await bcrypt.hash(otp, Number(env.BCRYPT_SALT_ROUND)); // Hashed OTP
 
-  // CACHED OTP TO REDIS
+  // CACHED OTP TO REDIS & RESET ATTEMPTS
   await redisClient.set(`otp:${user.email}`, hashedOTP, { EX: 120 }); // 2 min
+  await redisClient.del(`otp_attempts:${user.email}`);
 
   // SENDING OTP TO EMAIL
   await sendEmail({
@@ -131,7 +132,7 @@ const forgetPasswrodService = async (email: string) => {
   return null;
 };
 
-// VERIFY RESET PASSWORD OTP
+// VERIFY RESET PASSWORD OTP WITH RATE-LIMITING
 const verifyOTPService = async (email: string, otp: string) => {
   if (!email) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Email required!');
@@ -147,6 +148,18 @@ const verifyOTPService = async (email: string, otp: string) => {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Wrong OTP!');
   }
 
+  const attemptsKey = `otp_attempts:${email}`;
+  const currentAttempts = await redisClient.get(attemptsKey);
+
+  // If already reached max attempts (5)
+  if (currentAttempts && Number(currentAttempts) >= 5) {
+    await redisClient.del(`otp:${email}`);
+    throw new AppError(
+      StatusCodes.TOO_MANY_REQUESTS,
+      'Maximum verification attempts exceeded. This OTP has been invalidated, please request a new one.'
+    );
+  }
+
   // OTP MATCHING PART
   const getOTP = await redisClient.get(`otp:${email}`);
 
@@ -157,7 +170,25 @@ const verifyOTPService = async (email: string, otp: string) => {
   const isOTPMatched = await bcrypt.compare(otp, getOTP); // COMPARE WITH OTP
 
   if (!isOTPMatched) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'OTP is not matched!');
+    const attempts = await redisClient.incr(attemptsKey);
+    if (attempts === 1) {
+      await redisClient.expire(attemptsKey, 300); // 5 minutes window
+    }
+
+    if (attempts >= 5) {
+      await redisClient.del(`otp:${email}`);
+      await redisClient.del(attemptsKey);
+      throw new AppError(
+        StatusCodes.TOO_MANY_REQUESTS,
+        'Too many failed attempts. This OTP has been invalidated, please request a new one.'
+      );
+    }
+
+    const remaining = 5 - attempts;
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      `Incorrect OTP. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`
+    );
   }
 
   const jwtPayload = { email, verified: true };
@@ -165,8 +196,9 @@ const verifyOTPService = async (email: string, otp: string) => {
     expiresIn: env.OTP_JWT_ACCESS_EXPIRATION,
   } as SignOptions);
 
-  // DELETED OTP AFTER USED
+  // CLEAN UP OTP AND ATTEMPT COUNTERS AFTER SUCCESSFUL VERIFICATION
   await redisClient.del(`otp:${email}`);
+  await redisClient.del(attemptsKey);
   return jwtToken;
 };
 
