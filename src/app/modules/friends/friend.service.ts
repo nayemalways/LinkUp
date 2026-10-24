@@ -13,7 +13,7 @@ import { Types } from 'mongoose';
 import { onlineUsers } from '../../socket';
 import BlockedUser from '../BlockedUser/blocked.model';
 
-// GET ALL FRIENDS OF THE USER WHERE REQUEST ACCPTED
+// GET ALL FRIENDS OF THE USER WHERE REQUEST ACCEPTED
 const getAllFriendsService = async (
   user: JwtPayload,
   query: Record<string, string>
@@ -68,7 +68,7 @@ const getAllFriendsService = async (
   return { meta, friends };
 };
 
-// GET FRIEND REQUEST WITHOUT ACCPTED
+// GET FRIEND REQUEST WITHOUT ACCEPTED
 const getFriendRequest = async (
   userId: Types.ObjectId,
   query: Record<string, string>
@@ -357,6 +357,13 @@ const blockFriendService = async (user: JwtPayload, friendId: string) => {
       status: RequestStatus.BLOCKED,
     });
   }
+
+  // Synchronize with BlockedUser collection so messaging, event filtering, and search also block this user
+  await BlockedUser.findOneAndUpdate(
+    { user: userId, blockedUser: friendId },
+    { user: userId, blockedUser: friendId },
+    { upsert: true, new: true }
+  );
 
   return { message: 'User blocked successfully!' };
 };
