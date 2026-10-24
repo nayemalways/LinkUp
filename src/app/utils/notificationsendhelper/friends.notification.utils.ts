@@ -1,4 +1,4 @@
-import admin from 'firebase-admin';
+import admin from '../../config/firebase.config';
 import {
   Notification,
   NotificationPreference,
@@ -16,7 +16,7 @@ export const sendMultiNotification = async (payload: INotification) => {
   const onlineFriends: string[] = [];
   const offlineFriendIds: Types.ObjectId[] = [];
 
-  // FILTER ONLIN/OFFLINE FRIENDS
+  // FILTER ONLINE/OFFLINE FRIENDS
   (payload.receiverIds as Types.ObjectId[]).forEach(async (friendId) => {
     const friendIdStr = friendId.toString();
     if (onlineUsers[friendIdStr]) {
@@ -60,18 +60,32 @@ export const sendMultiNotification = async (payload: INotification) => {
     }
 
     // SEND MULTIPLE NOTIFICATION
-    await Promise.all(
-      batches.map((batchTokens) =>
-        admin.messaging().sendEachForMulticast({
-          tokens: batchTokens as string[],
-          notification: {
-            title: notification.title,
-            body: notification.description || '',
-          },
-          data: notification.data,
-        })
-      )
-    );
+    const formattedData: Record<string, string> = {};
+    if (notification.data) {
+      for (const [key, val] of Object.entries(notification.data)) {
+        if (val !== undefined && val !== null) {
+          formattedData[key] = String(val);
+        }
+      }
+    }
+
+    try {
+      await Promise.all(
+        batches.map((batchTokens) =>
+          admin.messaging().sendEachForMulticast({
+            tokens: batchTokens as string[],
+            notification: {
+              title: notification.title,
+              body: notification.description || '',
+            },
+            data: formattedData,
+          })
+        )
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error sending multicast notification:', err);
+    }
   }
 
   return notification;

@@ -20,16 +20,25 @@ export const sendPushAndSave = async (payload: INotification) => {
 
     // IF USER ALLOWED PUSH NOTIFICATION
     if (receiverNotificationPreferences?.channel.push) {
+      const formattedData: Record<string, string> = {};
+      if (payload.data) {
+        for (const [key, val] of Object.entries(payload.data)) {
+          if (val !== undefined && val !== null) {
+            formattedData[key] = String(val);
+          }
+        }
+      }
+
       const message = {
         token: user.fcmToken,
         notification: {
           title: payload.title,
           body: payload.description,
         },
-        data: payload.data || {}, // optional key-value pairs
+        data: formattedData, // optional key-value pairs (must be string values)
       };
 
-      const result = await admin.messaging().send(message); // Send notificaton via FCM
+      const result = await admin.messaging().send(message); // Send notification via FCM
       console.log('Push sent: ', result);
     }
 
