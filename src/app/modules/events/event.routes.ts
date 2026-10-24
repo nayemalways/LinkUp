@@ -56,11 +56,11 @@ router.get(
   eventControllers.getMyEvents
 );
 
-// GET EVENT ANYLYTICS
+// GET EVENT ANALYTICS
 router.get(
   '/event_analytics/:eventId',
   checkAuth(...Object.keys(Role)),
-  eventControllers.geteventAnalytics
+  eventControllers.getEventAnalytics
 );
 // INVITE CO-HOST
 router.post(

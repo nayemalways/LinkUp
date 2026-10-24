@@ -106,10 +106,10 @@ const createEventService = async (payload: IEvent, _user: JwtPayload) => {
   createChatGroup.event = createEvent._id; // Important to add
   await createChatGroup.save();
 
-  // => ========SEND NOTIFICATION ASYNCHRONUSLY (FIRE-AND-FORGET)========= <=
+  // => ========SEND NOTIFICATION ASYNCHRONOUSLY (FIRE-AND-FORGET)========= <=
   setImmediate(async () => {
     try {
-      // GET - ACCPTED FRIENDS
+      // GET - ACCEPTED FRIENDS
       const friends = await FriendRequest.find({
         $or: [
           { sender: _user.userId, status: RequestStatus.ACCEPTED },
@@ -142,7 +142,7 @@ const createEventService = async (payload: IEvent, _user: JwtPayload) => {
     }
   });
 
-  // => RETUNR RESPONSE BEFORE SENDING NOTIFICATION
+  // => RETURN RESPONSE BEFORE SENDING NOTIFICATION
   return { event: createEvent, chatGroup: createChatGroup };
 };
 
@@ -166,8 +166,8 @@ const getEventsService = async (
   };
 
   // Query Builder
-  const qeuryBuilder = new QueryBuilder(Event.find(filter), query);
-  const events = await qeuryBuilder
+  const queryBuilder = new QueryBuilder(Event.find(filter), query);
+  const events = await queryBuilder
     .nearby(user?.coord as ICoord)
     .filter()
     .category()
@@ -180,7 +180,7 @@ const getEventsService = async (
     .build();
 
   // Meta data
-  const metaData = await qeuryBuilder.getMeta();
+  const metaData = await queryBuilder.getMeta();
   return {
     events,
     metaData,
@@ -222,8 +222,8 @@ const getInterestEventsService = async (
   const user = await User.findById(_user.userId);
 
   // Query Builder
-  const qeuryBuilder = new QueryBuilder(Event.find(), query);
-  const events = await qeuryBuilder
+  const queryBuilder = new QueryBuilder(Event.find(), query);
+  const events = await queryBuilder
     .nearby(user?.coord as ICoord)
     .filter()
     .dateFilter()
@@ -236,7 +236,7 @@ const getInterestEventsService = async (
     .build();
 
   // Meta data
-  const metaData = await qeuryBuilder.getMeta();
+  const metaData = await queryBuilder.getMeta();
   return {
     metaData,
     events,
@@ -358,11 +358,11 @@ const updateEventService = async (
   if (payload.event_status === EventStatus.CANCELLED) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
-      "You can't cancel an event before refund attendenced money!"
+      "You can't cancel an event before refund attendence money!"
     );
   }
 
-  // ========= Image Update and Deletation from Cloudinary ==================
+  // ========= Image Update and Deletion from Cloudinary ==================
   if (
     payload.images &&
     payload.images.length > 0 &&
@@ -448,7 +448,7 @@ const updateEventService = async (
           description: `The title "${event.title}" of your event has been updated to: "${payload.title}"`,
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
-            eventId: event?._id,
+            eventId: String(event?._id),
             image: event?.images[0],
           },
         });
@@ -462,7 +462,7 @@ const updateEventService = async (
           description: `${event.title} - description "${event.description.slice(0, 20)}..." of your event has been updated to: "${updateEvent?.description.slice(1, 15)}..."`,
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
-            eventId: event?._id,
+            eventId: String(event?._id),
             image: event?.images[0],
           },
         });
@@ -475,7 +475,7 @@ const updateEventService = async (
           description: `'${event.title}' - visibility changed from '${event.visibility}' to ${updateEvent.visibility}`,
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
-            eventId: event?._id,
+            eventId: String(event?._id),
             image: event?.images[0],
           },
         });
@@ -506,7 +506,7 @@ const updateEventService = async (
           description: `Your event "${event.title}" venue has been changed. New venue is "${updateEvent?.venue}".`,
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
-            eventId: event?._id,
+            eventId: String(event?._id),
             image: updateEvent?.images[0],
           },
         });
@@ -533,7 +533,7 @@ const updateEventService = async (
           description: `Your event "${event.title}" beginning date has been changed. New starting date is "${dayjs(updateEvent?.event_start).format('MM/DD/YYYY, hh:mm:ss A')}".`,
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
-            eventId: event?._id,
+            eventId: String(event?._id),
             image: event?.images[0],
           },
         });
@@ -562,7 +562,7 @@ const updateEventService = async (
           description: `Your event "${event.title}" ending date has been changed. New ending date is "${updateEvent?.event_end}".`,
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
-            eventId: event?._id,
+            eventId: String(event?._id),
             image: event?.images[0],
           },
         });
@@ -589,7 +589,7 @@ const updateEventService = async (
           description: `Your event "${event.title}" Time Zone has been changed. New Time Zone is "${updateEvent?.time_zone}".`,
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
-            eventId: event?._id,
+            eventId: String(event?._id),
             image: event?.images[0],
           },
         });
@@ -616,7 +616,7 @@ const updateEventService = async (
           description: `Your event "${event.title}" has been started now.`,
           receiverIds: bookedMembersId as Types.ObjectId[],
           data: {
-            eventId: event?._id,
+            eventId: String(event?._id),
             image: event?.images[0],
           },
         });
@@ -671,7 +671,7 @@ const getMyEventsService = async (
 };
 
 // GET SINGLE EVENT ANALYTICS SERVICE
-const geteventAnalyticsService = async (userId: string, eventId: string) => {
+const getEventAnalyticsService = async (userId: string, eventId: string) => {
   const eventPromise = Event.findOne({
     _id: eventId,
     $or: [
@@ -871,7 +871,7 @@ const acceptCoHostInvitationService = async (
           user: invitation.inviter,
           description: `Your invitation to be a co-host for the event "${event.title}" has been accepted.`,
           data: {
-            eventId: event._id,
+            eventId: String(event._id),
             image: event.images[0] || '',
           },
         };
@@ -898,7 +898,7 @@ const acceptCoHostInvitationService = async (
         await sendEmail({
           to: inviter?.email as string,
           subject: `Co-Host Invitation Accepted!`,
-          templateName: 'invitationAccpted',
+          templateName: 'invitationAccepted',
           templateData: {
             event_title: event.title,
           },
@@ -1068,22 +1068,22 @@ const getJoinRequestService = async (
     throw new AppError(StatusCodes.BAD_REQUEST, 'Event id required!');
   }
 
-  const querBuilder = new QueryBuilder(
+  const queryBuilder = new QueryBuilder(
     EventJoinRequest.find({ event: eventId }),
     query
   );
-  const joinRequestsPromise = await querBuilder
+  const joinRequestsPromise = await queryBuilder
     .filter()
     .join()
     .select()
     .sort()
     .paginate()
     .build();
-  const getmetaPromise = await querBuilder.getMeta();
+  const getMetaPromise = await queryBuilder.getMeta();
 
   const [joinRequests, getMeta] = await Promise.all([
     joinRequestsPromise,
-    getmetaPromise,
+    getMetaPromise,
   ]);
   getMeta.total = joinRequests.length; // Only This For This event
   getMeta.totalPage = Math.ceil(getMeta.total / getMeta.limit);
@@ -1115,7 +1115,7 @@ export const eventServices = {
   getInterestEventsService,
   updateEventService,
   getMyEventsService,
-  geteventAnalyticsService,
+  getEventAnalyticsService,
   inviteCoHostService,
   acceptCoHostInvitationService,
   removeCoHostService,

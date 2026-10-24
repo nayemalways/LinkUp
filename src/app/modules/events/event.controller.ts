@@ -145,12 +145,12 @@ const getMyEvents = CatchAsync(
 );
 
 // UPDATE EVENT CONTROLLER
-const geteventAnalytics = CatchAsync(
+const getEventAnalytics = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as JwtPayload;
     const { eventId } = req.params;
 
-    const result = await eventServices.geteventAnalyticsService(
+    const result = await eventServices.getEventAnalyticsService(
       user.userId,
       eventId
     );
@@ -314,7 +314,7 @@ export const eventControllers = {
   getInterestEvents,
   updateEvent,
   getMyEvents,
-  geteventAnalytics,
+  getEventAnalytics,
   inviteCoHost,
   approvalCoHostInvitation,
   removeCoHost,
