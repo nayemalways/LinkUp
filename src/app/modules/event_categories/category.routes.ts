@@ -12,7 +12,6 @@ router.post(
 );
 router.get(
   '/',
-  checkAuth(...Object.values(Role)),
   categoryControllers.getEventCategory
 );
 router.patch(
