@@ -15,6 +15,14 @@ import {
 } from '../events/event.interface';
 import Stripe from 'stripe';
 import { QueryBuilder } from '../../utils/QueryBuilder';
+import Group from '../groups/group.model';
+import { GroupMemberRole } from '../groups/group.interface';
+import { trackEventBooking } from '../../utils/eventBookingCount';
+import { sendPersonalNotification } from '../../utils/notificationsendhelper/user.notification.utils';
+import { sendEmail } from '../../utils/sendMail';
+import env from '../../config/env';
+import { io } from '../../socket';
+import { NotificationType } from '../notifications/notification.interface';
 
 // BOOK EVENT SERVICE
 const bookingIntentService = async (
@@ -78,16 +86,7 @@ const bookingIntentService = async (
     }
   }
 
-  // 4. CHECK HOST PAYOUTS
-  const hostPayoutAccount = await User.findOne({ _id: isEventExist.host });
-  if (!hostPayoutAccount?.stripeAccountId) {
-    throw new AppError(
-      StatusCodes.FORBIDDEN,
-      "Host hasn't registered payouts!"
-    );
-  }
-
-  // 5. PRIVATE EVENT CHECK
+  // 4. PRIVATE EVENT CHECK
   if (isEventExist.visibility === EventVisibility.PRIVATE) {
     const isApproved = await EventJoinRequest.findOne({
       user: userId,
@@ -98,7 +97,163 @@ const bookingIntentService = async (
       throw new AppError(StatusCodes.FORBIDDEN, 'Approval required!');
   }
 
-  // 6. PREVENT DUPLICATE PENDING BOOKINGS (Reuse logic)
+  // 5. FREE EVENT BYPASS ($0 Events)
+  if (!isEventExist.price || isEventExist.price <= 0) {
+    let booking = await Booking.findOne({
+      user: userId,
+      event: payload.event,
+      booking_status: BookingStatus.PENDING,
+    });
+
+    const transactionId = generateTransactionId();
+    let payment;
+
+    if (!booking) {
+      booking = await Booking.create({
+        event: isEventExist._id,
+        user: isUser._id,
+        booking_status: BookingStatus.CONFIRMED,
+      });
+
+      payment = await Payment.create({
+        booking: booking._id,
+        user: isUser._id,
+        transaction_amount: 0,
+        transaction_id: transactionId,
+        payment_status: PaymentStatus.PAID,
+        payment_method_id: 'free_event',
+        payment_method_type: 'free',
+        currency: 'usd',
+      });
+
+      booking.payment = payment._id;
+      await booking.save();
+    } else {
+      booking.booking_status = BookingStatus.CONFIRMED;
+      payment = await Payment.findOne({ booking: booking._id });
+      if (!payment) {
+        payment = await Payment.create({
+          booking: booking._id,
+          user: isUser._id,
+          transaction_amount: 0,
+          transaction_id: transactionId,
+          payment_status: PaymentStatus.PAID,
+          payment_method_id: 'free_event',
+          payment_method_type: 'free',
+          currency: 'usd',
+        });
+      } else {
+        payment.payment_status = PaymentStatus.PAID;
+        payment.transaction_amount = 0;
+        await payment.save();
+      }
+      booking.payment = payment._id;
+      await booking.save();
+    }
+
+    // Add user to event chat group
+    const joinUserToEventChatGroup = await Group.findOne({
+      event: isEventExist._id,
+    });
+
+    if (joinUserToEventChatGroup) {
+      const isAlreadyMember = joinUserToEventChatGroup.group_members?.some(
+        (m) => m.user?.toString() === userId.toString()
+      );
+
+      if (!isAlreadyMember) {
+        await Group.updateOne(
+          { event: isEventExist._id },
+          {
+            $push: {
+              group_members: {
+                user: isUser._id,
+                role: GroupMemberRole.MEMBER,
+                joinedAt: new Date(),
+              },
+            },
+          }
+        );
+      }
+
+      io.to(userId.toString()).emit('notification', {
+        user: userId,
+        title: 'You have been added chat group!',
+        description:
+          "You've successfully booked an event and have been automatically added to the event chat group. You can now start chatting with other participants. Check chat group",
+        type: NotificationType.CHAT,
+        data: {
+          groupId: joinUserToEventChatGroup._id ? String(joinUserToEventChatGroup._id) : '',
+          image: joinUserToEventChatGroup.group_image || '',
+        },
+      });
+    }
+
+    // Increment trending booking count
+    setImmediate(async () => {
+      try {
+        await trackEventBooking(isEventExist._id.toString());
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.log('Trending event booking count error: ', error);
+      }
+    });
+
+    // Notify user & send confirmation email
+    const currentDate = new Date();
+    setImmediate(async () => {
+      try {
+        await sendPersonalNotification({
+          user: isUser._id,
+          title: 'Congratulations! Your booking has confirmed!🎉',
+          description: `You have joined - ${isEventExist?.title} event!`,
+          type: NotificationType.EVENT,
+          data: {
+            eventId: isEventExist?._id ? String(isEventExist._id) : '',
+            image: isEventExist?.images?.[0] || '',
+          },
+        });
+
+        if (isUser.email) {
+          sendEmail({
+            to: isUser.email,
+            subject: 'LinkUp - Your event booking is confirmed',
+            templateName: 'bookingConfirmation',
+            templateData: {
+              event_title: isEventExist?.title,
+              user_name: isUser?.fullName,
+              amount: 0,
+              transaction_id: payment.transaction_id,
+              date: currentDate,
+              year: currentDate.getFullYear(),
+              support: env.ADMIN_GMAIL,
+            },
+          });
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.log('Free event notification error: ', err);
+      }
+    });
+
+    return {
+      free: true,
+      booking,
+      payment,
+      message: 'Free event booked successfully!',
+    };
+  }
+
+  // 6. CHECK HOST PAYOUTS (Paid events only)
+  const hostPayoutAccount = await User.findOne({ _id: isEventExist.host });
+  if (!hostPayoutAccount?.stripeAccountId) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      "Host hasn't registered payouts!"
+    );
+  }
+
+  // 7. PREVENT DUPLICATE PENDING BOOKINGS (Reuse logic)
   // If user clicked "Pay", failed, and clicked again, don't make a new booking. Reuse the pending one.
   let booking = await Booking.findOne({
     user: userId,
