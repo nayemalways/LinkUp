@@ -11,6 +11,8 @@ const blockedUserSchema = new Schema<IBlockedUser>(
   }
 );
 
+blockedUserSchema.index({ user: 1, blockedUser: 1 }, { unique: true });
+
 const BlockedUser = model<IBlockedUser>('blockedUser', blockedUserSchema);
 
 export default BlockedUser;

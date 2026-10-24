@@ -1,7 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
+import { Types } from 'mongoose';
 import AppError from '../../errorHelpers/AppError';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import BlockedUser from './blocked.model';
+import FriendRequest from '../friends/friend.model';
+import { RequestStatus } from '../friends/friend.interface';
 
 const createBlockedUserService = async (
   userId: string,
@@ -12,13 +15,37 @@ const createBlockedUserService = async (
     blockedUser: blockedUserId,
   });
   if (isBlocked) {
-    throw new Error('User is already blocked');
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User is already blocked');
   }
 
   const blockedUser = await BlockedUser.create({
     user: userId,
     blockedUser: blockedUserId,
   });
+
+  // Synchronize with FriendRequest collection
+  const friendRequest = await FriendRequest.findOne({
+    $or: [
+      { sender: userId, receiver: blockedUserId },
+      { sender: blockedUserId, receiver: userId },
+    ],
+  });
+
+  if (friendRequest) {
+    friendRequest.status = RequestStatus.BLOCKED;
+    if (friendRequest.sender.toString() !== userId) {
+      friendRequest.sender = new Types.ObjectId(userId);
+      friendRequest.receiver = new Types.ObjectId(blockedUserId);
+    }
+    await friendRequest.save();
+  } else {
+    await FriendRequest.create({
+      sender: userId,
+      receiver: blockedUserId,
+      status: RequestStatus.BLOCKED,
+    });
+  }
+
   return blockedUser;
 };
 
@@ -57,6 +84,14 @@ const unblockUserService = async (userId: string, blockedUserId: string) => {
   }
 
   const unblock = await BlockedUser.findByIdAndDelete(isUserBlocked._id);
+
+  // Synchronize with FriendRequest: remove BLOCKED request initiated by this user
+  await FriendRequest.findOneAndDelete({
+    sender: userId,
+    receiver: blockedUserId,
+    status: RequestStatus.BLOCKED,
+  });
+
   return unblock;
 };
 
